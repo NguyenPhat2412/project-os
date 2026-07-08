@@ -9,8 +9,13 @@ export function proxy(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // Check session cookie (NextAuth v5 stores JWT in __Secure-next-auth.session-token)
-  const sessionToken = req.cookies.get('__Secure-next-auth.session-token')?.value || req.cookies.get('next-auth.session-token')?.value;
+  // Check session cookie. Auth.js/NextAuth v5 uses authjs.* names; keep the
+  // next-auth.* fallbacks for older local cookies during migration.
+  const sessionToken =
+    req.cookies.get('__Secure-authjs.session-token')?.value ||
+    req.cookies.get('authjs.session-token')?.value ||
+    req.cookies.get('__Secure-next-auth.session-token')?.value ||
+    req.cookies.get('next-auth.session-token')?.value;
 
   // No session → redirect to login
   if (!sessionToken) {

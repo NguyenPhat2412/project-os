@@ -13,7 +13,10 @@
  *   POST /api/seed/create-test-user
  *   (see src/app/api/seed/create-test-user/route.ts)
  */
+import { loadEnvConfig } from '@next/env';
 import { createUser } from '../src/lib/users';
+
+loadEnvConfig(process.cwd());
 
 async function main() {
   const email = process.argv[2] ?? 'admin@claudecode.ai';
