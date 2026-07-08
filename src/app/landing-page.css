@@ -1,0 +1,78 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Landing Page — Standalone Dark Theme
+   This theme is independent from the app's theme system.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ─── Backgrounds ─── */
+  --lp-bg-base: #07080a;
+  --lp-bg-surface: #0d0e12;
+  --lp-bg-elevated: #13141a;
+  --lp-bg-hover: #1a1b22;
+
+  /* ─── Borders ─── */
+  --lp-border: #1e1f27;
+  --lp-border-hover: #2a2b35;
+
+  /* ─── Text ─── */
+  --lp-text-primary: #f0f1f4;
+  --lp-text-secondary: #9ca3af;
+  --lp-text-muted: #6b7280;
+
+  /* ─── Brand & Accents ─── */
+  --lp-primary: #8b7cf7;
+  --lp-primary-hover: #a595fc;
+  --lp-primary-muted: rgba(139, 124, 247, 0.12);
+  --lp-primary-border: rgba(139, 124, 247, 0.25);
+
+  --lp-success: #34d399;
+  --lp-success-muted: rgba(52, 211, 153, 0.12);
+
+  --lp-danger: #f87171;
+  --lp-danger-muted: rgba(248, 113, 113, 0.12);
+
+  --lp-warning: #fbbf24;
+
+  --lp-info: #38bdf8;
+
+  /* ─── Gradients ─── */
+  --lp-gradient-hero: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(139, 124, 247, 0.18) 0%, transparent 60%);
+  --lp-gradient-card: linear-gradient(145deg, rgba(139, 124, 247, 0.06) 0%, transparent 50%);
+  --lp-gradient-glow: radial-gradient(circle, rgba(176, 110, 243, 0.15) 0%, transparent 70%);
+
+  /* ─── Shadows ─── */
+  --lp-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
+  --lp-shadow-md: 0 8px 32px rgba(0, 0, 0, 0.5);
+  --lp-shadow-lg: 0 24px 80px rgba(0, 0, 0, 0.6);
+  --lp-shadow-glow: 0 0 60px rgba(139, 124, 247, 0.2);
+
+  /* ─── Scrollbar ─── */
+  --lp-scrollbar-track: #0d0e12;
+  --lp-scrollbar-thumb: #1e1f27;
+  --lp-scrollbar-thumb-hover: #2a2b35;
+}
+
+/* ─── Apply to landing page root ─── */
+[data-landing-page],
+.landing-page-root {
+  background-color: var(--lp-bg-base);
+  color: var(--lp-text-primary);
+}
+
+/* ─── Scrollbar styling ─── */
+@media (prefers-color-scheme: dark) {
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--lp-scrollbar-track);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--lp-scrollbar-thumb);
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--lp-scrollbar-thumb-hover);
+  }
+}

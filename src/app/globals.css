@@ -1,0 +1,470 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+/* Theme customizer — circular reveal animation (View Transitions API) */
+@import '../components/theme-customizer/circular-transition.css';
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-sans: var(--font-inter);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+:root {
+  --font-inter: 'Inter', 'Segoe UI', Helvetica, Arial, sans-serif;
+  --radius: 0.625rem;
+  --card-radius: var(--radius); /* Panels / containers — responds to theme customizer */
+
+  /* ── Shadows (theme-customizer aware) ── */
+  /* Uses tweakcn shadow vars if set, falls back to tasteful dark-neutral shadows */
+  --shadow-sm: 0 1px 3px oklch(0 0 0 / 8%), 0 1px 2px oklch(0 0 0 / 6%);
+  --shadow:   0 4px 6px oklch(0 0 0 / 7%), 0 2px 4px oklch(0 0 0 / 6%);
+  --shadow-md: 0 8px 16px oklch(0 0 0 / 8%), 0 4px 6px oklch(0 0 0 / 6%);
+  --shadow-lg: 0 16px 32px oklch(0 0 0 / 9%), 0 8px 12px oklch(0 0 0 / 6%);
+  --shadow-xl: 0 24px 48px oklch(0 0 0 / 12%), 0 12px 20px oklch(0 0 0 / 8%);
+  --shadow-2xl: 0 32px 64px oklch(0 0 0 / 14%), 0 16px 28px oklch(0 0 0 / 10%);
+  --shadow-card: var(--shadow-sm); /* Card panels — subtle by default */
+  --shadow-modal: var(--shadow-2xl); /* Modal dialogs — most prominent */
+  --shadow-tooltip: 0 4px 12px oklch(0 0 0 / 14%), 0 2px 4px oklch(0 0 0 / 10%);
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+}
+
+.dark {
+  /* ── Shadows (dark mode — darker, richer shadows) ── */
+  --shadow-sm:   0 1px 3px oklch(0 0 0 / 30%), 0 1px 2px oklch(0 0 0 / 20%);
+  --shadow:      0 4px 6px oklch(0 0 0 / 28%), 0 2px 4px oklch(0 0 0 / 20%);
+  --shadow-md:   0 8px 16px oklch(0 0 0 / 32%), 0 4px 6px oklch(0 0 0 / 24%);
+  --shadow-lg:   0 16px 32px oklch(0 0 0 / 36%), 0 8px 12px oklch(0 0 0 / 28%);
+  --shadow-xl:   0 24px 48px oklch(0 0 0 / 42%), 0 12px 20px oklch(0 0 0 / 32%);
+  --shadow-2xl:  0 32px 64px oklch(0 0 0 / 50%), 0 16px 28px oklch(0 0 0 / 40%);
+  --shadow-card: var(--shadow-sm);
+  --shadow-modal: var(--shadow-2xl);
+  --shadow-tooltip: 0 4px 12px oklch(0 0 0 / 48%), 0 2px 4px oklch(0 0 0 / 36%);
+
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground font-sans;
+    font-family: var(--font-inter);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* ── Panel / Container ───────────────────────────────────────────────────────── */
+/* Standard card panel: responds to --card-radius (syncs with theme customizer) */
+@layer utilities {
+  .panel {
+    @apply bg-card border border-border;
+    border-radius: var(--card-radius);
+  }
+  /* Inner panel: secondary background, same radius semantics */
+  .panel-inner {
+    @apply bg-secondary border border-border;
+    border-radius: var(--card-radius);
+  }
+  /* Shadow utilities that respond to theme customizer */
+  .shadow-card { box-shadow: var(--shadow-card); }
+  .shadow-modal { box-shadow: var(--shadow-modal); }
+  .shadow-tooltip-custom { box-shadow: var(--shadow-tooltip); }
+  /* Chart tooltip: slightly stronger than regular tooltip */
+  .chart-tooltip {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--card-radius);
+    box-shadow: var(--shadow-lg);
+  }
+  /* Panel with modal shadow (for dialogs/dropdowns) */
+  .panel-modal {
+    @apply bg-card border border-border;
+    border-radius: var(--card-radius);
+    box-shadow: var(--shadow-modal);
+  }
+  /* Panel with sheet shadow (sidebar sheets) */
+  .panel-sheet {
+    @apply bg-background;
+    box-shadow: var(--shadow-lg);
+  }
+}
+
+/* ── Component Overrides (must be inside @layer for Tailwind v4) ──────────────── */
+@layer components {
+  /* DropdownMenu — override hardcoded shadow-lg in Radix primitives */
+  [data-slot='dropdown-menu-content'] {
+    box-shadow: var(--shadow-modal) !important;
+  }
+  [data-slot='dropdown-menu-sub-content'] {
+    box-shadow: var(--shadow-modal) !important;
+  }
+
+  /* SelectTrigger dark mode — prevent transparent overlay */
+  .dark [data-slot='select-trigger'] {
+    background-color: var(--card);
+  }
+  .dark [data-slot='select-trigger']:hover:not(:disabled) {
+    background-color: var(--muted);
+  }
+
+  /* Sidebar "none" mode height */
+  .sidebar-none-mode [data-slot='sidebar'] {
+    height: 100vh !important;
+    min-height: 100vh !important;
+  }
+
+  /* Right-side inset variant */
+  @media (min-width: 768px) {
+    [data-side='right'][data-variant='inset'] ~ [data-slot='sidebar-inset'] {
+      margin-right: 0 !important;
+    }
+    [data-side='right'][data-variant='inset'][data-state='collapsed'] ~ [data-slot='sidebar-inset'] {
+      margin-right: 0.5rem !important;
+    }
+  }
+}
+
+/* Font rendering — must be outside @layer (applies globally) */
+@media (-webkit-min-device-pixel-ratio: 1.5), (min-resolution: 144dpi) {
+  body {
+    -webkit-font-smoothing: subpixel-antialiased;
+  }
+}
+
+/* Smooth scrolling for the entire page */
+html {
+  scroll-behavior: smooth;
+  color-scheme: light;
+}
+
+.dark {
+  color-scheme: dark;
+}
+
+/* Logo carousel animation */
+@keyframes logo-scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-144rem); /* 12 items * 12rem = 144rem */
+  }
+}
+
+.animate-logo-scroll {
+  animation: logo-scroll 30s linear infinite;
+}
+
+.animate-logo-scroll:hover {
+  animation-play-state: paused;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: var(--radius-sm);
+}
+
+/* ── Animations ─────────────────────────────────────────────────────────────── */
+@keyframes collapsible-down {
+  from {
+    height: 0;
+    opacity: 0;
+  }
+  to {
+    height: var(--radix-collapsible-content-height);
+    opacity: 1;
+  }
+}
+@keyframes collapsible-up {
+  from {
+    height: var(--radix-collapsible-content-height);
+    opacity: 1;
+  }
+  to {
+    height: 0;
+    opacity: 0;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.fade-in {
+  animation: fadeIn 0.22s ease both;
+}
+
+@keyframes pulse-dot {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(0.8);
+  }
+}
+.pulse-dot {
+  animation: pulse-dot 2s infinite;
+}
+
+/* Font utility classes */
+.font-sans {
+  font-family: var(--font-sans), sans-serif;
+}
+.font-mono {
+  font-family: var(--font-mono), monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Markdown wiki content ──────────────────────────────────────────────────── */
+.wiki-content {
+  font-size: 13.5px;
+  line-height: 1.75;
+}
+.wiki-content h1 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 0.75rem;
+  margin-top: 1.25rem;
+}
+.wiki-content h2 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+.wiki-content h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-top: 1rem;
+  margin-bottom: 0.4rem;
+  color: var(--muted-foreground);
+}
+.wiki-content h4 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-top: 0.75rem;
+  margin-bottom: 0.3rem;
+  color: var(--muted-foreground);
+}
+.wiki-content p {
+  margin-bottom: 0.75rem;
+}
+.wiki-content ul {
+  list-style: disc;
+  padding-left: 1.4rem;
+  margin-bottom: 0.75rem;
+}
+.wiki-content ol {
+  list-style: decimal;
+  padding-left: 1.4rem;
+  margin-bottom: 0.75rem;
+}
+.wiki-content li {
+  margin-bottom: 0.25rem;
+}
+.wiki-content li > ul,
+.wiki-content li > ol {
+  margin-top: 0.25rem;
+  margin-bottom: 0;
+}
+.wiki-content blockquote {
+  border-left: 3px solid var(--primary);
+  padding: 0.5rem 0.85rem;
+  margin: 0.75rem 0;
+  color: var(--muted-foreground);
+  font-style: italic;
+  background: color-mix(in oklch, var(--primary) 12%, transparent);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+.wiki-content code {
+  font-family: monospace;
+  background: var(--muted);
+  padding: 0.15em 0.4em;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  color: oklch(0.646 0.222 303.9);
+}
+.wiki-content pre {
+  background: var(--muted);
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-md);
+  overflow-x: auto;
+  margin-bottom: 0.75rem;
+  border: 1px solid var(--border);
+}
+.wiki-content pre code {
+  background: none;
+  padding: 0;
+  font-size: 12px;
+  color: var(--muted-foreground);
+}
+
+.wiki-content a {
+  color: var(--primary);
+  text-decoration: underline;
+}
+.wiki-content a:hover {
+  opacity: 0.8;
+}
+.wiki-content strong {
+  font-weight: 600;
+}
+.wiki-content em {
+  font-style: italic;
+  color: var(--muted-foreground);
+}
+.wiki-content del {
+  text-decoration: line-through;
+  color: var(--muted-foreground);
+}
+.wiki-content hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 1rem 0;
+}
+.wiki-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 0.75rem;
+  font-size: 13px;
+}
+.wiki-content th {
+  background: var(--secondary);
+  border: 1px solid var(--border);
+  padding: 0.4rem 0.7rem;
+  font-weight: 600;
+  text-align: left;
+}
+.wiki-content td {
+  border: 1px solid var(--border);
+  padding: 0.4rem 0.7rem;
+}
+.wiki-content tr:nth-child(even) td {
+  background: color-mix(in srgb, var(--secondary) 30%, transparent);
+}
+.wiki-content input[type='checkbox'] {
+  margin-right: 0.4em;
+  accent-color: var(--primary);
+}
+.wiki-content h1:first-child,
+.wiki-content h2:first-child,
+.wiki-content h3:first-child {
+  margin-top: 0;
+}

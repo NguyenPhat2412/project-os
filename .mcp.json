@@ -1,0 +1,19 @@
+{
+  "mcpServers": {
+    "shadcn": {
+      "command": "npx",
+      "args": [
+        "shadcn@latest",
+        "mcp"
+      ]
+    },
+    "firebase": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "firebase-tools@latest",
+        "mcp"
+      ]
+    }
+  }
+}
