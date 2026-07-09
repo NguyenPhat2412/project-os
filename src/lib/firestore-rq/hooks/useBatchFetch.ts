@@ -34,7 +34,6 @@ export function useBatchFetch(items: BatchItem[], queryKeyName?: string): BatchR
       }
       return acc;
     },
-    staleTime: 60_000,
   });
 
   return {

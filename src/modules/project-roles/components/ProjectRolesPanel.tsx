@@ -6,7 +6,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { ShieldIcon, ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react';
 import { useReactTable, getCoreRowModel, getFilteredRowModel, getSortedRowModel, flexRender, createColumnHelper, type SortingState } from '@tanstack/react-table';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ModalShell, ModalHeaderBar } from '@/components/ui/shared/modal-shell';
@@ -14,7 +13,6 @@ import { ConfirmDialog } from '@/components/ui/shared/confirm-dialog';
 import { PageLoader } from '@/components/ui/page-loader';
 import { RoleFilterBar } from './RoleFilterBar';
 import { roleDefinitionsCollection } from '@/modules/project-roles/collections/role-definitions';
-import { projectMembersCollection } from '@/modules/team/collections/team';
 import { projectRolesCollection } from '@/modules/project-roles/collections/project-roles';
 import type { ProjectRole } from '@/modules/project-roles/types/project-role';
 import { DEFAULT_ROLE_DEFINITIONS } from '@/modules/project-roles/types/role-definition';
@@ -278,7 +276,7 @@ export function ProjectRolesPanel({ projectId }: Props) {
     });
   }, [roles, globalFilter, filterColor]);
 
-  const handleSeed = () => {
+  const handleCreateDefaults = () => {
     DEFAULT_ROLE_DEFINITIONS.forEach((def) => {
       setDef.mutate({ id: slugify(def.name), data: { ...def } as never });
     });
@@ -362,7 +360,7 @@ export function ProjectRolesPanel({ projectId }: Props) {
           onColorChange={setFilterColor}
           rolesCount={roles.length}
           filteredRolesCount={filteredRoles.length}
-          onSeed={handleSeed}
+          onCreateDefaults={handleCreateDefaults}
           onCreate={() => {
             setEditDef(null);
             setShowModal(true);
@@ -409,7 +407,7 @@ export function ProjectRolesPanel({ projectId }: Props) {
                       <ShieldIcon size={28} className='text-muted-foreground/40' />
                       <div>
                         <p className='text-[13px] text-muted-foreground mb-1'>Chưa có role nào.</p>
-                        <p className='text-[12px] text-muted-foreground/60'>Nhấn &quot;Seed mặc định&quot; để tạo nhanh hoặc thêm thủ công.</p>
+                        <p className='text-[12px] text-muted-foreground/60'>Nhấn &quot;Tạo mặc định&quot; để tạo nhanh hoặc thêm thủ công.</p>
                       </div>
                     </div>
                   ) : (

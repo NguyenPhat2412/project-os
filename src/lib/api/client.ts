@@ -46,12 +46,14 @@ class ApiClient {
         return this.withQuery(`collections/${pathname}`, query);
       }
       // root-level: /projects, /projects/{id} → /api/projects, /api/projects/{id}
-      return this.withQuery(`projects/${segments.slice(1).join('/')}`, query);
+      const rootProjectPath = segments.slice(1).join('/');
+      return this.withQuery(rootProjectPath ? `projects/${rootProjectPath}` : 'projects', query);
     }
 
     if (segments[0] === 'members') {
       // root-level: /members, /members/{id} → /api/members, /api/members/{id}
-      return this.withQuery(`members/${segments.slice(1).join('/')}`, query);
+      const rootMemberPath = segments.slice(1).join('/');
+      return this.withQuery(rootMemberPath ? `members/${rootMemberPath}` : 'members', query);
     }
 
     return this.withQuery(pathname, query);

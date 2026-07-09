@@ -21,7 +21,7 @@
  * ```
  */
 import { db } from '@/lib/firestore-admin';
-import { ROOT_ADMIN_ROLE, ADMIN_EMAILS } from '@/store/auth-store';
+import { getServerAdminEmails, isAdminEmail, ROOT_ADMIN_ROLE } from '@/lib/admin-emails';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -121,7 +121,6 @@ export function pathToResource(collectionPath: string): Resource | 'projects' | 
 const PROJECT_ADMIN_ROLES = ['Project Admin', 'Administrators'];
 
 /** Root admin roles — grant full access everywhere. */
-const ROOT_ADMIN_ROLES = [ROOT_ADMIN_ROLE];
 
 /**
  * Fetch a user's project-level roles from `projects/{projectId}/project_roles/{uid}`.
@@ -138,8 +137,8 @@ async function getProjectRoles(uid: string, projectId: string): Promise<string[]
  * Check if the given email matches the configured admin email.
  * This mirrors the ADMIN_EMAIL check in auth-store.
  */
-function isAdminEmail(email: string | null): boolean {
-  return email != null && ADMIN_EMAILS.includes(email);
+function isConfiguredAdminEmail(email: string | null): boolean {
+  return isAdminEmail(email, getServerAdminEmails());
 }
 
 // ─── Core permission checks ───────────────────────────────────────────────────
@@ -153,6 +152,10 @@ export async function getEffectiveRoles(
   projectId?: string,
   sessionEmail?: string | null,
 ): Promise<{ rootRoles: string[]; projectRoles: string[]; isRootAdmin: boolean }> {
+  if (isConfiguredAdminEmail(sessionEmail ?? null)) {
+    return { rootRoles: [ROOT_ADMIN_ROLE], projectRoles: [], isRootAdmin: true };
+  }
+
   const [memberSnap, ...rest] = await Promise.all([
     db.collection('members').doc(uid).get(),
     ...(projectId ? [getProjectRoles(uid, projectId)] : []),
@@ -163,7 +166,7 @@ export async function getEffectiveRoles(
   const email = sessionEmail ?? memberData?.email ?? null;
 
   const projectRoles = projectId ? rest[0] : [];
-  const isRootAdmin = rootRoles.includes(ROOT_ADMIN_ROLE) || isAdminEmail(email);
+  const isRootAdmin = rootRoles.includes(ROOT_ADMIN_ROLE) || isConfiguredAdminEmail(email);
 
   return { rootRoles, projectRoles, isRootAdmin };
 }
@@ -178,10 +181,6 @@ function hasProjectAdminRole(roles: string[]): boolean {
 /**
  * Check if any of the given roles match a root-admin role name.
  */
-function hasRootAdminRole(roles: string[]): boolean {
-  return ROOT_ADMIN_ROLES.some((r) => roles.includes(r));
-}
-
 // ─── Public API ──────────────────────────────────────────────────────────────
 
 /**
@@ -204,8 +203,16 @@ export async function checkPermission(ctx: PermissionContext): Promise<boolean> 
   const { uid, email, projectId, action, resource } = ctx;
 
   // ── 'projects' top-level collection ──────────────────────────────────────
-  // Any authenticated user can access the projects collection.
-  if (resource === 'projects') return true;
+  // Any authenticated user can read projects; only root admins can mutate them.
+  if (resource === 'projects') {
+    if (action === 'read') return true;
+    try {
+      const { isRootAdmin } = await getEffectiveRoles(uid, undefined, email);
+      return isRootAdmin;
+    } catch {
+      return false;
+    }
+  }
 
   // ── Require projectId for project-scoped resources ────────────────────────
   if (!projectId) {

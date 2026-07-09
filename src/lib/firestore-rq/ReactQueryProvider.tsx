@@ -19,7 +19,8 @@ export function ReactQueryProvider({ children }: Props) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: 1000 * 60, // 1 minute
+            staleTime: 5 * 60_000,
+            gcTime: 30 * 60_000,
             refetchOnWindowFocus: false,
             retry: (failureCount, error) => {
               if (error instanceof ApiError) return false;

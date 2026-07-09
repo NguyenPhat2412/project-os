@@ -34,7 +34,7 @@
   - Full CRUD for role definitions (create/edit/delete) via Firestore
   - Inline grant/revoke RBAC roles with dropdown + dismissible badge buttons
   - Immutable "Project Admin" role definition protected from edit/delete
-  - "Seed mặc định" button populates default role definitions
+  - "Tạo mặc định" button creates default role definitions
 - **ProjectMembersTable** — RBAC roles column with checkbox modal for multi-select role assignment
 - Firestore collections: `members`, `project_roles`, `role_definitions`
 
@@ -115,7 +115,7 @@
   - Dashboard, Tasks, Sprint, Backlog, Timeline
   - Team, Budget, Risk, Documents, Meetings
   - Reports, Activity
-- Seed data system (`/seed` admin page)
+- Empty-start data flow with Firestore-backed records
 - Firebase Auth integration (Google + Email)
 - ProjectDataContext global state management
 

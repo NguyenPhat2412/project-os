@@ -209,7 +209,7 @@ src/modules/{module}/
 │ └── {entity}.ts ← TypeScript types (WithId<T>, CreateInput<T>...)
 ├── hooks/
 │ └── use{Module}.ts ← Business logic hook dùng collection
-└── mock.ts / seed.ts ← Mock & seed helpers
+└── README.md ← module notes (optional)
 ```
 
 ---
@@ -876,7 +876,7 @@ const enriched = projectMemberships.map(pm => ({
 
 > **Note:** `ProjectTeamMember` đã denormalize display fields (name, initials, gradient, email) nên **không cần join** cho mục đích hiển thị. JOIN chỉ cần khi cần đọc thêm fields từ root document.
 
-### Seed Pattern
+### Project Membership Write Pattern
 
 ```typescript
 await teamCollection.helpers.set(memberId, {

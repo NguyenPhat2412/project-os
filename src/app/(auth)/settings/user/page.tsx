@@ -11,9 +11,11 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Upload } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Separator } from '@/components/ui/separator';
 import { Logo } from '@/components/logo';
+import { useAuth } from '@/contexts/auth-context';
+import type { UserProfile } from '@/lib/project-config';
 
 const userFormSchema = z.object({
   firstName: z.string().min(1, 'First name is required'),
@@ -31,31 +33,134 @@ const userFormSchema = z.object({
 
 type UserFormValues = z.infer<typeof userFormSchema>;
 
+const EMPTY_VALUES: UserFormValues = {
+  firstName: '',
+  lastName: '',
+  email: '',
+  phone: '',
+  website: '',
+  location: '',
+  role: '',
+  bio: '',
+  company: '',
+  timezone: '',
+  language: '',
+};
+
+function settingsKey(uid: string) {
+  return `projectos-user-settings:${uid}`;
+}
+
+function splitName(displayName?: string | null) {
+  const parts = (displayName ?? '').trim().split(/\s+/).filter(Boolean);
+  return { firstName: parts[0] ?? '', lastName: parts.slice(1).join(' ') };
+}
+
+function readLocalSettings(uid: string): { values?: Partial<UserFormValues>; profileImage?: string | null } {
+  if (typeof window === 'undefined') return {};
+  try {
+    return JSON.parse(window.localStorage.getItem(settingsKey(uid)) ?? '{}');
+  } catch {
+    return {};
+  }
+}
+
 export default function UserSettingsPage() {
+  const { user, profile, refreshProfile } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [useDefaultIcon, setUseDefaultIcon] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [apiError, setApiError] = useState('');
+  const [savedValues, setSavedValues] = useState<UserFormValues>(EMPTY_VALUES);
+  const [savedImage, setSavedImage] = useState<string | null>(null);
+  const userId = user?.uid;
+  const userEmail = user?.email;
+  const userDisplayName = user?.displayName;
+  const userPhotoURL = user?.photoURL;
 
   const form = useForm<UserFormValues>({
     resolver: zodResolver(userFormSchema),
-    defaultValues: {
-      firstName: '',
-      lastName: '',
-      email: '',
-      phone: '',
-      website: '',
-      location: '',
-      role: '',
-      bio: '',
-      company: '',
-      timezone: '',
-      language: '',
-    },
+    defaultValues: EMPTY_VALUES,
   });
 
-  function onSubmit(data: UserFormValues) {
-    console.log('Form submitted:', data);
-    // Here you would typically save the data
+  useEffect(() => {
+    if (!userId) return;
+
+    const local = readLocalSettings(userId);
+    const names = splitName(profile?.displayName ?? userDisplayName);
+    const values: UserFormValues = {
+      ...EMPTY_VALUES,
+      ...local.values,
+      firstName: local.values?.firstName ?? names.firstName,
+      lastName: local.values?.lastName ?? names.lastName,
+      email: profile?.email ?? userEmail ?? local.values?.email ?? '',
+      phone: profile?.phone ?? local.values?.phone ?? '',
+      location: profile?.address ?? local.values?.location ?? '',
+      role: profile?.title ?? local.values?.role ?? '',
+      bio: profile?.bio ?? local.values?.bio ?? '',
+      company: profile?.department ?? local.values?.company ?? '',
+      timezone: profile?.timezone ?? local.values?.timezone ?? '',
+    };
+
+    form.reset(values);
+    const avatar = local.profileImage ?? profile?.photoURL ?? userPhotoURL ?? null;
+    setProfileImage(avatar);
+    setSavedValues(values);
+    setSavedImage(avatar);
+    setUseDefaultIcon(!avatar);
+  }, [form, profile, userDisplayName, userEmail, userId, userPhotoURL]);
+
+  async function onSubmit(data: UserFormValues) {
+    if (!user) {
+      setApiError('Please sign in before saving your profile.');
+      return;
+    }
+
+    setSaving(true);
+    setSaved(false);
+    setApiError('');
+
+    try {
+      const displayName = `${data.firstName} ${data.lastName}`.trim();
+      const payload: Partial<UserProfile> = {
+        uid: user.uid,
+        email: user.email ?? data.email,
+        displayName,
+        photoURL: profile?.photoURL ?? user.photoURL ?? undefined,
+        phone: data.phone?.trim() || undefined,
+        department: data.company?.trim() || undefined,
+        title: data.role?.trim() || undefined,
+        address: data.location?.trim() || undefined,
+        timezone: data.timezone || undefined,
+        bio: data.bio?.trim() || undefined,
+        createdAt: profile?.createdAt ?? new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      const response = await fetch('/api/users/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({}));
+        throw new Error(body.error?.message ?? body.error ?? 'Could not save profile.');
+      }
+
+      window.localStorage.setItem(settingsKey(user.uid), JSON.stringify({ values: data, profileImage }));
+      await refreshProfile().catch(() => undefined);
+      setSavedValues(data);
+      setSavedImage(profileImage);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (error) {
+      setApiError(error instanceof Error ? error.message : 'Could not save profile. Please try again.');
+    } finally {
+      setSaving(false);
+    }
   }
 
   const handleFileUpload = () => {
@@ -65,6 +170,10 @@ export default function UserSettingsPage() {
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      if (file.size > 800 * 1024) {
+        setApiError('Photo is too large. Please choose an image under 800K.');
+        return;
+      }
       const reader = new FileReader();
       reader.onload = (e) => {
         setProfileImage(e.target?.result as string);
@@ -80,6 +189,14 @@ export default function UserSettingsPage() {
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
+  };
+
+  const handleCancel = () => {
+    form.reset(savedValues);
+    setProfileImage(savedImage);
+    setUseDefaultIcon(!savedImage);
+    setApiError('');
+    setSaved(false);
   };
 
   return (
@@ -106,15 +223,15 @@ export default function UserSettingsPage() {
                 )}
                 <div className='flex flex-col gap-2'>
                   <div className='flex gap-2'>
-                    <Button variant='default' size='sm' onClick={handleFileUpload} className='cursor-pointer'>
+                    <Button type='button' variant='default' size='sm' onClick={handleFileUpload} className='cursor-pointer'>
                       <Upload className='mr-2 h-4 w-4' />
                       Upload new photo
                     </Button>
-                    <Button variant='outline' size='sm' onClick={handleReset} className='cursor-pointer'>
+                    <Button type='button' variant='outline' size='sm' onClick={handleReset} className='cursor-pointer'>
                       Reset
                     </Button>
                   </div>
-                  <p className='text-xs text-muted-foreground'>Allowed JPG, GIF or PNG. Max size of 800K</p>
+                  <p className='text-xs text-muted-foreground'>Allowed JPG, GIF or PNG. Max 800K. Photo preview is saved on this device until avatar storage is connected.</p>
                 </div>
                 <input ref={fileInputRef} type='file' accept='image/jpeg,image/gif,image/png' onChange={handleFileChange} className='hidden' />
               </div>
@@ -315,11 +432,14 @@ export default function UserSettingsPage() {
               />
 
               {/* Action Buttons */}
+              {apiError && <div className='rounded-sm border border-red-500/30 bg-red-500/10 px-3 py-2 text-[13px] text-red-400'>{apiError}</div>}
+              {saved && <div className='rounded-sm border border-green-500/30 bg-green-500/10 px-3 py-2 text-[13px] text-green-400'>Profile saved.</div>}
+
               <div className='flex justify-start gap-3'>
-                <Button type='submit' className='cursor-pointer'>
+                <Button type='submit' className='cursor-pointer' disabled={saving}>
                   Save Changes
                 </Button>
-                <Button variant='outline' type='button' className='cursor-pointer'>
+                <Button variant='outline' type='button' className='cursor-pointer' onClick={handleCancel} disabled={saving}>
                   Cancel
                 </Button>
               </div>

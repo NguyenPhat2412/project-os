@@ -11,6 +11,8 @@
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
+import { checkPermission, type Action } from '@/lib/api/permissions';
+import { createDevProject, deleteDevProject, getDevProject, listDevProjects, setDevProject, shouldUseDevProjectStore, updateDevProject } from '@/lib/api/projects-store';
 import { db } from '@/lib/firestore-admin';
 
 const COLLECTION = 'projects';
@@ -19,6 +21,29 @@ const COLLECTION = 'projects';
 
 function projectDoc(id: string) {
   return db.collection(COLLECTION).doc(id);
+}
+
+async function requireProjectAdmin(action: Action = 'write') {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const allowed = await checkPermission({
+    uid: session.user.id,
+    email: session.user.email,
+    action,
+    resource: 'projects',
+  });
+
+  if (!allowed) {
+    return NextResponse.json(
+      { error: { code: 'PERMISSION_DENIED', message: 'Root admin access is required to manage projects.' } },
+      { status: 403 },
+    );
+  }
+
+  return null;
 }
 
 // ─── Route Handlers ───────────────────────────────────────────────────────────
@@ -32,6 +57,11 @@ export async function GET(req: NextRequest) {
   const url = req.nextUrl;
   const id = url.searchParams.get('id');
   try {
+    if (shouldUseDevProjectStore()) {
+      if (id) return NextResponse.json({ data: await getDevProject(id) });
+      return NextResponse.json({ data: await listDevProjects() });
+    }
+
     if (id) {
       const snap = await projectDoc(id).get();
       if (!snap.exists) return NextResponse.json({ data: null });
@@ -46,15 +76,19 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const denied = await requireProjectAdmin('write');
+  if (denied) return denied;
 
   const body = await req.json();
-  const { id: _id, ...data } = body;
-  const docRef = db.collection(COLLECTION).doc();
+  const data = { ...body };
+  delete data.id;
   try {
+    if (shouldUseDevProjectStore()) {
+      const project = await createDevProject(body);
+      return NextResponse.json({ data: project, id: project.id }, { status: 201 });
+    }
+
+    const docRef = db.collection(COLLECTION).doc();
     await docRef.set({ ...data, createdAt: new Date(), updatedAt: new Date() });
     const snap = await docRef.get();
     return NextResponse.json({ data: { id: snap.id, ...snap.data() } }, { status: 201 });
@@ -64,10 +98,8 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PUT(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const denied = await requireProjectAdmin('write');
+  if (denied) return denied;
 
   const url = req.nextUrl;
   const segments = url.pathname.replace('/api/projects/', '').split('/').filter(Boolean);
@@ -78,6 +110,11 @@ export async function PUT(req: NextRequest) {
 
   const body = await req.json();
   try {
+    if (shouldUseDevProjectStore()) {
+      const project = await setDevProject(id, body);
+      return NextResponse.json({ data: project });
+    }
+
     await projectDoc(id).set({ ...body, updatedAt: new Date() });
     const snap = await projectDoc(id).get();
     return NextResponse.json({ data: { id: snap.id, ...snap.data() } });
@@ -87,10 +124,8 @@ export async function PUT(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const denied = await requireProjectAdmin('write');
+  if (denied) return denied;
 
   const url = req.nextUrl;
   const segments = url.pathname.replace('/api/projects/', '').split('/').filter(Boolean);
@@ -101,6 +136,11 @@ export async function PATCH(req: NextRequest) {
 
   const body = await req.json();
   try {
+    if (shouldUseDevProjectStore()) {
+      const project = await updateDevProject(id, body);
+      return NextResponse.json({ data: project });
+    }
+
     await projectDoc(id).update({ ...body, updatedAt: new Date() });
     const snap = await projectDoc(id).get();
     return NextResponse.json({ data: { id: snap.id, ...snap.data() } });
@@ -110,10 +150,8 @@ export async function PATCH(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const denied = await requireProjectAdmin('delete');
+  if (denied) return denied;
 
   const url = req.nextUrl;
   const segments = url.pathname.replace('/api/projects/', '').split('/').filter(Boolean);
@@ -123,6 +161,11 @@ export async function DELETE(req: NextRequest) {
   }
 
   try {
+    if (shouldUseDevProjectStore()) {
+      await deleteDevProject(id);
+      return NextResponse.json({ data: { id } });
+    }
+
     await projectDoc(id).delete();
     return NextResponse.json({ data: { id } });
   } catch {

@@ -5,7 +5,7 @@ export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   // Public routes — allow
-  if (pathname.startsWith('/login') || pathname.startsWith('/api/auth') || pathname.startsWith('/_next') || pathname.startsWith('/favicon') || pathname.startsWith('/auth')) {
+  if (pathname.startsWith('/login') || pathname.startsWith('/api/auth') || pathname === '/api/users/register' || pathname.startsWith('/_next') || pathname.startsWith('/favicon') || pathname.startsWith('/auth')) {
     return NextResponse.next();
   }
 

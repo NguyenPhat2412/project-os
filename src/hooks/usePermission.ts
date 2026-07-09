@@ -11,6 +11,7 @@
  */
 import { useAuth } from '@/contexts/auth-context';
 import { useAuthStore, ROOT_ADMIN_ROLE, ADMIN_EMAILS } from '@/store/auth-store';
+import { isAdminEmail } from '@/lib/admin-emails';
 
 // ─── Hook ────────────────────────────────────────────────────────────────────
 
@@ -47,7 +48,7 @@ export function usePermission() {
    */
   const isRootAdmin = (): boolean => {
     if (!hydrated) return false;
-    return rootRoles.includes(ROOT_ADMIN_ROLE) || (user?.email != null && ADMIN_EMAILS.includes(user.email));
+    return rootRoles.includes(ROOT_ADMIN_ROLE) || isAdminEmail(user?.email, ADMIN_EMAILS);
   };
 
   /**

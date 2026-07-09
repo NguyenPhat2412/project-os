@@ -366,7 +366,7 @@ Sidebar chia thành 4 sections:
 NAV_MAIN:     Dashboard, Timeline, Backlog, Sprints, Tasks, Bugs
 NAV_MANAGE:   Team, Budget, Risks, Docs
 NAV_COMM:     Meetings, Reports, Activity
-NAV_ADMIN:    Projects (admin), Seed Data
+NAV_ADMIN:    Root roles, Projects, Members, Tasks config, Bugs config, AI config
 ```
 
 ### Nav Icon Color Convention

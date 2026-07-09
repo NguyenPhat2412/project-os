@@ -1,17 +1,14 @@
 'use client';
 import { useMemo } from 'react';
+import type { ComponentProps } from 'react';
 import Link from 'next/link';
-import { useQuery } from '@tanstack/react-query';
 import { ListChecks, BugIcon, ShieldAlert, Users, ArrowRight } from 'lucide-react';
-import type { DashboardConfig, SprintConfig } from '@/lib/project-config';
 import { apiClient } from '@/lib/api/client';
 import { useProject } from '@/store/project-store';
 import { useBatchFetch } from '@/lib/firestore-rq/hooks/useBatchFetch';
 import { PageLoader } from '@/components/ui/page-loader';
 import { StatCard } from '@/components/ui/shared/stat-card';
 import { ProgressBar } from '@/components/ui/progress-bar';
-import { MiniStatRow } from '@/components/ui/shared/mini-stat-row';
-import { EnvRow } from '@/components/ui/shared/env-row';
 import { TaskRow } from '@/components/ui/shared/task-row';
 import { DashboardSection } from '@/components/ui/shared/dashboard-section';
 import { MeetingRow } from '@/modules/meetings/components/MeetingRow';
@@ -20,7 +17,7 @@ import { BugStatsPanel } from '@/modules/bugs/components/BugStatsPanel';
 import { RiskStatsPanel } from '@/modules/risk/components/RiskStatsPanel';
 import { TeamStatsPanel } from '@/modules/team/components/TeamStatsPanel';
 import { DashboardPageHeader } from '@/modules/dashboard/components/DashboardPageHeader';
-import { DEFAULT_TASK_COLUMNS, resolveTaskColumns } from '@/modules/tasks/utils/taskColumns';
+import { DEFAULT_TASK_COLUMNS, isTaskDoneStatus, resolveTaskColumns } from '@/modules/tasks/utils/taskColumns';
 import type { Task, TaskColumn } from '@/modules/tasks/types/task';
 import type { Bug } from '@/modules/bugs/types/bug';
 import type { Risk } from '@/modules/risk/types/risk';
@@ -38,16 +35,6 @@ function SectionLink({ href }: { href: string }) {
 
 export default function DashboardPage() {
   const { projectId } = useProject();
-  const { data: dashboardConfigData, isLoading: dashLoading } = useQuery<DashboardConfig | null>({
-    queryKey: ['config', projectId, 'dashboard', '__default__'],
-    queryFn: () => apiClient.getOne<DashboardConfig>(`/config/${projectId}/dashboard`),
-    staleTime: 60_000,
-  });
-  const { data: sprintConfigData, isLoading: sprintLoading } = useQuery<SprintConfig | null>({
-    queryKey: ['config', projectId, 'sprint', '__default__'],
-    queryFn: () => apiClient.getOne<SprintConfig>(`/config/${projectId}/sprint`),
-    staleTime: 60_000,
-  });
 
   const batchItems = useMemo(() => [
     { key: 'meetings', fetcher: () => apiClient.get(`projects/${projectId}/meetings`) },
@@ -60,9 +47,9 @@ export default function DashboardPage() {
 
   const { data, isLoading } = useBatchFetch(batchItems, `dashboard-${projectId}`);
 
-  const loading = isLoading || dashLoading || sprintLoading;
+  const loading = isLoading;
 
-  const tasks = (data.tasks ?? []) as Task[];
+  const tasks = (data.tasks ?? []) as (Task & { id: string })[];
   const bugs = (data.bugs ?? []) as Bug[];
   const risks = (data.risks ?? []) as Risk[];
   const team = (data.team ?? []) as TeamMember[];
@@ -76,26 +63,28 @@ export default function DashboardPage() {
     return <PageLoader />;
   }
 
-  const dashboardConfig_ = dashboardConfigData ?? {};
-  const sprintConfig_ = sprintConfigData ?? {};
   const meetings = data.meetings ?? [];
 
-  void sprintConfig_;
-
-  const dashboardStats = (dashboardConfig_.stats ?? []) as { label: string; value: string; icon?: string; trend?: string }[];
-  const sprintProgress = (dashboardConfig_.sprintProgress ?? { current: 0, label: '' }) as { current: number; label: string };
-  const priorityTasks = (dashboardConfig_.priorityTasks ?? []) as { id: string; label: string; done: boolean; priority: string }[];
-  const baStats = (dashboardConfig_.baStats ?? []) as { value: number; label: string }[];
-  const baProgress = (dashboardConfig_.baProgress ?? []) as { label: string; value: number }[];
-  const qaStats = (dashboardConfig_.qaStats ?? []) as { value: string; label: string; color?: string }[];
-  const deployEnvs = (dashboardConfig_.deployEnvs ?? []) as { status: 'ok' | 'warn' | 'error'; name: string; badge: { label: string; variant: 'red' | 'green' | 'yellow' | 'accent' | 'purple' | 'muted' }; meta: string }[];
+  const doneTasks = tasks.filter((task) => isTaskDoneStatus(task.status, resolvedTaskColumns)).length;
+  const taskDoneRate = tasks.length > 0 ? Math.round((doneTasks / tasks.length) * 100) : 0;
+  const openBugs = bugs.filter((bug) => bug.status !== 'fixed' && bug.status !== 'wont-fix').length;
+  const openRisks = risks.filter((risk) => !/đã giảm thiểu|da giam thieu|closed|resolved|mitigated/i.test(risk.status ?? '')).length;
+  const priorityTasks = tasks
+    .filter((task) => task.priority === 'High' && !isTaskDoneStatus(task.status, resolvedTaskColumns))
+    .slice(0, 5);
+  const dashboardStats = [
+    { label: 'Tasks', value: tasks.length, delta: `${doneTasks} done · ${taskDoneRate}%`, deltaType: tasks.length > 0 ? 'positive' : 'neutral', color: 'accent' },
+    { label: 'Open bugs', value: openBugs, delta: `${bugs.length} total`, deltaType: openBugs > 0 ? 'negative' : 'neutral', color: 'red' },
+    { label: 'Open risks', value: openRisks, delta: `${risks.length} total`, deltaType: openRisks > 0 ? 'negative' : 'neutral', color: 'yellow' },
+    { label: 'Team members', value: team.length, delta: 'Project members', deltaType: 'neutral', color: 'purple' },
+  ] satisfies ComponentProps<typeof StatCard>[];
   const upcomingMeetings = (meetings as unknown[]).slice(0, 2) as { id: string; day: string; month: string; title: string; time: string; location?: string; attendees: { initials: string; color: string }[]; important?: boolean }[];
 
   return (
     <div>
       <DashboardPageHeader />
       {/* ── Top stat cards ── */}
-      <div className='grid grid-cols-3 max-lg:grid-cols-2 max-sm:grid-cols-1 gap-4.5 mb-8'>
+      <div className='grid grid-cols-4 max-xl:grid-cols-2 max-sm:grid-cols-1 gap-4.5 mb-8'>
         {dashboardStats.map((s, i) => (
           <StatCard key={i} {...s} />
         ))}
@@ -124,45 +113,32 @@ export default function DashboardPage() {
       {/* ── Sprint & priority tasks ── */}
       <div className='grid grid-cols-2 max-lg:grid-cols-1 gap-4.5 mb-4.5'>
         <div className='bg-card border border-border panel p-5'>
-          <div className='font-sans text-[16px] font-bold mb-3.5'>Sprint 08 Progress</div>
-          <ProgressBar label='Tiến độ sprint' value={sprintProgress.current} />
-          <div className='text-[12px] text-muted-foreground mt-2'>{sprintProgress.label}</div>
+          <div className='font-sans text-[16px] font-bold mb-3.5'>Project task progress</div>
+          <ProgressBar label='Completion rate' value={taskDoneRate} />
+          <div className='text-[12px] text-muted-foreground mt-2'>{doneTasks}/{tasks.length} tasks done</div>
         </div>
         <div className='bg-card border border-border panel p-5'>
-          <div className='font-sans text-[16px] font-bold mb-3.5'>Task ưu tiên cao</div>
-          {priorityTasks.map((t) => (
-            <TaskRow key={t.id} label={t.label} done={t.done} priority={t.priority as 'High' | 'Normal' | 'Low'} />
-          ))}
-        </div>
-      </div>
-
-      {/* ── BA / QA / CI·CD ── */}
-      <div className='grid grid-cols-3 max-lg:grid-cols-1 gap-4.5 mb-4.5'>
-        <div className='bg-card border border-border panel p-5'>
-          <div className='font-sans text-[16px] font-bold mb-3'>BA / Phân tích nghiệp vụ</div>
-          <MiniStatRow stats={baStats.map((s) => ({ ...s, value: String(s.value) }))} />
-          {baProgress.map((p, i) => (
-            <ProgressBar key={i} label={p.label} value={p.value} color='var(--primary)' />
-          ))}
-        </div>
-        <div className='bg-card border border-border panel p-5'>
-          <div className='font-sans text-[16px] font-bold mb-3'>QA / Kiểm thử</div>
-          <MiniStatRow stats={qaStats} />
-        </div>
-        <div className='bg-card border border-border panel p-5'>
-          <div className='font-sans text-[16px] font-bold mb-3'>Triển khai / CI·CD</div>
-          {deployEnvs.map((env, i) => (
-            <EnvRow key={i} {...env} />
-          ))}
+          <div className='font-sans text-[16px] font-bold mb-3.5'>High priority tasks</div>
+          {priorityTasks.length > 0 ? (
+            priorityTasks.map((task) => (
+              <TaskRow key={task.id} label={task.title} done={false} priority={task.priority} />
+            ))
+          ) : (
+            <div className='text-[13px] text-muted-foreground'>No high priority open tasks.</div>
+          )}
         </div>
       </div>
 
       {/* ── Upcoming meetings ── */}
       <div className='bg-card border border-border panel p-5'>
-        <div className='font-sans text-[16px] font-bold mb-3'>Cuộc họp sắp tới</div>
-        {upcomingMeetings.map((m) => (
-          <MeetingRow key={m.id} day={m.day} month={m.month} title={m.title} time={`${m.time} · ${m.location ?? ''}`} attendees={m.attendees} badge={m.important ? { label: 'Quan trọng', variant: 'accent' } : undefined} />
-        ))}
+        <div className='font-sans text-[16px] font-bold mb-3'>Upcoming meetings</div>
+        {upcomingMeetings.length > 0 ? (
+          upcomingMeetings.map((m) => (
+            <MeetingRow key={m.id} day={m.day} month={m.month} title={m.title} time={`${m.time} · ${m.location ?? ''}`} attendees={m.attendees} badge={m.important ? { label: 'Quan trọng', variant: 'accent' } : undefined} />
+          ))
+        ) : (
+          <div className='text-[13px] text-muted-foreground'>No meetings scheduled.</div>
+        )}
       </div>
     </div>
   );

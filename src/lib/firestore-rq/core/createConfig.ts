@@ -15,7 +15,6 @@ export function createConfig<T extends object>(config: ConfigDocumentConfig) {
     return useQuery<T | null>({
       queryKey: ['config', projectId, name, docId ?? '__default__'],
       queryFn: () => apiClient.getOne<T>(`/config/${projectId}/${name}${docParam}`),
-      staleTime: 60_000,
     });
   }
 

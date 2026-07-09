@@ -96,7 +96,7 @@ export async function deleteTask(id: string): Promise<void> { ... }
 ```typescript
 // ProjectDataContext mount sequence:
 // 1. Gọi fetchAll() — parallel getDocs cho tất cả collections
-// 2. Nếu Firestore trống → chạy seedFirestore() (auto-seed)
+// 2. Nếu Firestore trống → set [] và hiển thị empty state / số 0
 // 3. Set state → các components re-render
 
 interface ProjectData {
@@ -125,7 +125,7 @@ interface ProjectData {
 **Lưu ý quan trọng:**
 
 - Context dùng `getDocs` (one-time fetch) + `refresh()` manual, **không phải** `onSnapshot`
-- Auto-seed khi Firestore rỗng (lần đầu chạy)
+- Firestore trống thì UI hiển thị empty state và số liệu bằng 0, không tự tạo dữ liệu
 - Reload toàn bộ data mỗi khi `refresh()` được gọi
 
 ### Layer 4: Module Hooks (`src/modules/{module}/hooks/`)
@@ -270,21 +270,18 @@ projects/{PROJECT_ID}/bugs/             → BugEntry[]
 
 ---
 
-## Seeding Strategy
+## Empty Data Strategy
 
-App có cơ chế **auto-seed** khi Firestore rỗng:
+App không tự tạo dữ liệu khi Firestore rỗng:
 
 ``` markdown
 ProjectDataContext.mount()
   → fetchAll() → data rỗng?
-  → Yes → seedFirestore() (writeBatch từ lib/mock/*.ts)
-  → No  → render bình thường
+  → Yes → render empty state và số liệu 0
+  → No  → render dữ liệu thật
 ```
 
-File seed: `src/lib/firestore/seed.ts`
-Mock data: `src/lib/mock/{module}.ts`
-
-Admin page `/seed` cho phép re-seed thủ công.
+Các dashboard card, badge và report phải tính từ records đã fetch. Nếu collection rỗng, hiển thị `0`, `0%`, hoặc empty state có hướng dẫn hành động tiếp theo.
 
 ---
 

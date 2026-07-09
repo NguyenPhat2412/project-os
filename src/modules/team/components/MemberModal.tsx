@@ -7,7 +7,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { AlertTriangleIcon, PencilIcon, PlusIcon } from 'lucide-react';
 import { ModalShell } from '@/components/ui/shared/modal-shell';
 import { FormField } from '@/components/ui/form-field';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
 import type { TeamMember, WorkloadStatus } from '@/modules/team/types/team';
@@ -104,7 +103,6 @@ export function MemberModal({ mode, member, onClose, onSave }: MemberModalProps)
 
   const name = watch('name');
   const role = watch('role');
-  const taskCount = Number(watch('taskCount') ?? 0);
   const workload = Number(watch('workload') ?? 0);
   const gradient = watch('gradient');
 
@@ -171,7 +169,7 @@ export function MemberModal({ mode, member, onClose, onSave }: MemberModalProps)
         {/* Name + Email */}
         <div className='grid grid-cols-2 gap-3'>
           <FormField label='Họ và tên' required className={getFieldErrorLabelClass(!!errors.name)}>
-            <Input className={`${iCls} ${getFieldErrorInputClass(!!errors.name)}`} placeholder='Nguyễn Văn A' autoFocus aria-invalid={!!errors.name} {...register('name')} />
+            <Input className={`${iCls} ${getFieldErrorInputClass(!!errors.name)}`} placeholder='Nhập tên thành viên' autoFocus aria-invalid={!!errors.name} {...register('name')} />
             {errors.name?.message && <span className={getInlineErrorTextClass()}>{errors.name.message}</span>}
           </FormField>
           <FormField label='Email' required className={getFieldErrorLabelClass(!!errors.email)}>

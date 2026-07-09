@@ -48,6 +48,8 @@ export default function ProjectsPage() {
                 <PlusIcon size={15} /> New Project
               </Link>
             </Button>
+          ) : hydrated ? (
+            <span className='text-[12px] text-muted-foreground'>Admin only</span>
           ) : null
         }
       />

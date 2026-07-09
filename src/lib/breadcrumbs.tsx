@@ -30,7 +30,6 @@ export const BREADCRUMBS = {
   adminBugs: [{ label: 'Dashboard', href: '/dashboard' }, { label: 'Admin', href: '/admin' }, { label: 'Bugs' }] as BreadcrumbSegment[],
   adminSettings: [{ label: 'Dashboard', href: '/dashboard' }, { label: 'Admin', href: '/admin' }, { label: 'Settings' }] as BreadcrumbSegment[],
   adminMembers: [{ label: 'Dashboard', href: '/dashboard' }, { label: 'Admin', href: '/admin' }, { label: 'Members' }] as BreadcrumbSegment[],
-  adminSeed: [{ label: 'Dashboard', href: '/dashboard' }, { label: 'Admin', href: '/admin' }, { label: 'Seed Data' }] as BreadcrumbSegment[],
   adminRoles: [{ label: 'Dashboard', href: '/dashboard' }, { label: 'Admin', href: '/admin' }, { label: 'Vai trò (Roles)' }] as BreadcrumbSegment[],
   adminProjectDetail: (name: string) =>
     [{ label: 'Dashboard', href: '/dashboard' }, { label: 'Admin', href: '/admin' }, { label: 'Projects', href: '/admin/projects' }, { label: name }] as BreadcrumbSegment[],

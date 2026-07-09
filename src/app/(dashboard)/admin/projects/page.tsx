@@ -137,6 +137,7 @@ function ProjectFormModal({
   form,
   techStackInput,
   isPending,
+  error,
   onClose,
   onSubmit,
   onChange,
@@ -147,6 +148,7 @@ function ProjectFormModal({
   form: Omit<Project, 'id'>;
   techStackInput: string;
   isPending: boolean;
+  error: string;
   onClose: () => void;
   onSubmit: () => void;
   onChange: (patch: Partial<Omit<Project, 'id'>>) => void;
@@ -170,6 +172,8 @@ function ProjectFormModal({
       }
     >
       <DialogBody className='flex flex-col gap-4'>
+        {error && <div className='rounded-sm border border-red-500/30 bg-red-500/10 px-3 py-2 text-[12px] text-red-400'>{error}</div>}
+
         {/* Icon + Color */}
         <div className='flex gap-5'>
           <div className='flex-1'>
@@ -316,25 +320,34 @@ export default function AdminProjectsPage() {
         .filter(Boolean),
     };
 
-    if (editId) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await updateProject.mutateAsync({ id: editId, data: data as any });
-    } else {
-      const newId = form.name
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/(^-|-$)/g, '');
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await createProject.mutateAsync({ id: newId, data: data as any });
+    try {
+      if (editId) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await updateProject.mutateAsync({ id: editId, data: data as any });
+      } else {
+        const newId = form.name
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/(^-|-$)/g, '');
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await createProject.mutateAsync({ id: newId, data: data as any });
+      }
+      setShowForm(false);
+    } catch (error) {
+      setFormError(error instanceof Error ? error.message : 'Could not save project. Check admin access and try again.');
     }
-    setShowForm(false);
   };
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
-    await deleteProject.mutateAsync(deleteTarget.id);
-    if (projectId === deleteTarget.id) switchProject('ecommerce');
-    setDeleteTarget(null);
+    setFormError('');
+    try {
+      await deleteProject.mutateAsync(deleteTarget.id);
+      if (projectId === deleteTarget.id) switchProject('ecommerce');
+      setDeleteTarget(null);
+    } catch (error) {
+      setFormError(error instanceof Error ? error.message : 'Could not delete project. Check admin access and try again.');
+    }
   };
 
   const isPending = createProject.isPending || updateProject.isPending;
@@ -382,6 +395,7 @@ export default function AdminProjectsPage() {
         form={form}
         techStackInput={techStackInput}
         isPending={isPending}
+        error={formError}
         onClose={() => setShowForm(false)}
         onSubmit={handleSubmit}
         onChange={(patch) => setForm((f) => ({ ...f, ...patch }))}

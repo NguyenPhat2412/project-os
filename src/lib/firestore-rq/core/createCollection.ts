@@ -12,7 +12,6 @@ export function createCollection<T extends object>(config: CollectionConfig<T>) 
       queryKey: firestoreKeys.detail(path, id ?? ''),
       queryFn: () => apiClient.getOne<WithId<T>>(`${path}/${id}`),
       enabled: !!id,
-      staleTime: 60_000,
       ...queryOptions,
     });
   }
@@ -46,7 +45,6 @@ export function createCollection<T extends object>(config: CollectionConfig<T>) 
         return apiClient.get<WithId<T>>(`${path}`, params);
       },
       enabled: isEnabled,
-      staleTime: 60_000,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       ...(restQueryOptions as any),
     });

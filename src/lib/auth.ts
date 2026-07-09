@@ -7,7 +7,12 @@ import Credentials from 'next-auth/providers/credentials';
 import Google from 'next-auth/providers/google';
 import { createUser, getUserByEmail, verifyPassword } from '@/lib/users';
 
+// ponytail: dev-only fallback so Auth.js boots locally; set AUTH_SECRET for shared/prod envs.
+const devAuthSecret = process.env.NODE_ENV === 'production' ? undefined : 'project-os-dev-auth-secret';
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET ?? devAuthSecret,
+
   providers: [
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID ?? '',

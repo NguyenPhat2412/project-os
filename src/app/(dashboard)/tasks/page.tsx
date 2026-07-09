@@ -50,8 +50,6 @@ export default function TasksPage() {
     createCollectionListItem('rootMembers', membersCollection),
     createCollectionListItem('sprints', sprintsCollection),
   ]);
-
-  console.log('teamMembers:', data.teamMembers);
   const loading = isLoading;
 
   // Optimistic task updates — merged with batch data, no refetch needed
@@ -71,7 +69,6 @@ export default function TasksPage() {
     return projectMemberEntries
       .map((pm) => {
         const root = map.get(pm.id);
-        console.log('Mapping member:', pm.id, 'to', root);
         if (!root) return null;
         return { ...root, roles: pm.roles } as TeamMemberWithRole;
       })

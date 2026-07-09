@@ -9,7 +9,6 @@ import {
   CalendarDaysIcon,
   CheckSquareIcon,
   ClipboardListIcon,
-  DatabaseIcon,
   FileTextIcon,
   FolderKanbanIcon,
   FolderOpenIcon,
@@ -35,8 +34,8 @@ const NAV_MAIN: NavItem[] = [
   { title: 'Tổng hợp (Dashboard)', url: '/dashboard', icon: LayoutDashboardIcon, iconClassName: 'text-sky-600' },
   { title: 'Dự án (Projects)', url: '/projects', icon: FolderKanbanIcon, iconClassName: 'text-violet-600' },
   { title: 'Tiến độ (Timeline)', url: '/timeline', icon: CalendarDaysIcon, iconClassName: 'text-cyan-600' },
-  { title: 'Yêu cầu (Backlog)', url: '/backlog', icon: ClipboardListIcon, iconClassName: 'text-amber-600', badge: '24', badgeClass: 'bg-yellow-500 text-white' },
-  { title: 'Giai đoạn (Sprints)', url: '/sprint', icon: ZapIcon, iconClassName: 'text-emerald-600', badge: '7', badgeClass: 'bg-green-500 text-white' },
+  { title: 'Yêu cầu (Backlog)', url: '/backlog', icon: ClipboardListIcon, iconClassName: 'text-amber-600' },
+  { title: 'Giai đoạn (Sprints)', url: '/sprint', icon: ZapIcon, iconClassName: 'text-emerald-600' },
   { title: 'Công việc (Tasks)', url: '/tasks', icon: CheckSquareIcon, iconClassName: 'text-green-600' },
   { title: 'Quản lý lỗi (Bugs)', url: '/bugs', icon: BugIcon, iconClassName: 'text-rose-600' },
 ];
@@ -44,14 +43,14 @@ const NAV_MAIN: NavItem[] = [
 const NAV_MANAGE: NavItem[] = [
   { title: 'Nhân sự (Team)', url: '/team', icon: UsersIcon, iconClassName: 'text-fuchsia-600' },
   { title: 'Ngân sách (Budget)', url: '/budget', icon: WalletIcon, iconClassName: 'text-emerald-700' },
-  { title: 'Rủi ro (Risks)', url: '/risk', icon: ShieldAlertIcon, iconClassName: 'text-orange-600', badge: '3', badgeClass: 'bg-orange-500 text-white' },
+  { title: 'Rủi ro (Risks)', url: '/risk', icon: ShieldAlertIcon, iconClassName: 'text-orange-600' },
   { title: 'Tài liệu (Documents)', url: '/docs', icon: FolderOpenIcon, iconClassName: 'text-amber-700' },
   { title: 'Wiki', url: '/wiki', icon: FileTextIcon, iconClassName: 'text-blue-600' },
 ];
 
 const NAV_COMM: NavItem[] = [
   { title: 'Cuộc họp (Meetings)', url: '/meetings', icon: VideoIcon, iconClassName: 'text-indigo-600' },
-  { title: 'Hoạt động (Activity)', url: '/activity', icon: BellIcon, iconClassName: 'text-rose-500', badge: '5', badgeClass: 'bg-rose-500 text-white' },
+  { title: 'Hoạt động (Activity)', url: '/activity', icon: BellIcon, iconClassName: 'text-rose-500' },
   {
     title: 'Báo cáo (Reports)',
     url: '/reports',
@@ -72,7 +71,6 @@ const NAV_ADMIN: NavItem[] = [
   { title: 'Cấu hình Tasks', url: '/admin/tasks', icon: LayoutListIcon, iconClassName: 'text-blue-600' },
   { title: 'Cấu hình Bugs', url: '/admin/bugs', icon: BugIcon, iconClassName: 'text-rose-600' },
   { title: 'Cấu hình AI', url: '/admin/settings', icon: BotIcon, iconClassName: 'text-teal-600' },
-  { title: 'Khởi tạo dữ liệu', url: '/admin/seed', icon: DatabaseIcon, iconClassName: 'text-slate-600' },
 ];
 
 /* ── Component ────────────────────────────────────────────────────────────── */

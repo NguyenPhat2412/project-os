@@ -19,7 +19,7 @@ export interface RoleDefinition {
   updatedAt?: Date;
 }
 
-/** Default role definitions seeded for new projects */
+/** Default role definitions available for new projects */
 export const DEFAULT_ROLE_DEFINITIONS: Omit<RoleDefinition, 'createdAt' | 'updatedAt'>[] = [
   { id: 'dev', name: 'Developer', description: 'Lập trình viên', color: 'default' },
   { id: 'qc', name: 'Quality Control', description: 'Chuyên viên kiểm thử', color: 'default' },

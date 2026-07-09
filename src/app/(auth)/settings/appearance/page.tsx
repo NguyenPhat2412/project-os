@@ -1,12 +1,14 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useTheme } from '@/store/theme-store';
 
 const appearanceFormSchema = z.object({
   theme: z.enum(['light', 'dark']),
@@ -18,21 +20,49 @@ const appearanceFormSchema = z.object({
 
 type AppearanceFormValues = z.infer<typeof appearanceFormSchema>;
 
+const STORAGE_KEY = 'projectos-appearance-preferences';
+const DEFAULT_VALUES: AppearanceFormValues = {
+  theme: 'dark',
+  fontFamily: '',
+  fontSize: '',
+  sidebarWidth: '',
+  contentWidth: '',
+};
+
+function readPreferences(): AppearanceFormValues {
+  if (typeof window === 'undefined') return DEFAULT_VALUES;
+  try {
+    return { ...DEFAULT_VALUES, ...JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? '{}') };
+  } catch {
+    return DEFAULT_VALUES;
+  }
+}
+
 export default function AppearanceSettings() {
+  const { setTheme } = useTheme();
+  const [savedPreferences, setSavedPreferences] = useState<AppearanceFormValues>(() => readPreferences());
+  const [status, setStatus] = useState('');
   const form = useForm<AppearanceFormValues>({
     resolver: zodResolver(appearanceFormSchema),
-    defaultValues: {
-      theme: 'dark',
-      fontFamily: '',
-      fontSize: '',
-      sidebarWidth: '',
-      contentWidth: '',
-    },
+    defaultValues: savedPreferences,
   });
 
+  useEffect(() => {
+    form.reset(savedPreferences);
+    setTheme(savedPreferences.theme);
+  }, [form, savedPreferences, setTheme]);
+
   function onSubmit(data: AppearanceFormValues) {
-    console.log('Form submitted:', data);
-    // Here you would typically save the data
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    setTheme(data.theme);
+    setSavedPreferences(data);
+    setStatus('Preferences saved.');
+  }
+
+  function handleCancel() {
+    form.reset(savedPreferences);
+    setTheme(savedPreferences.theme);
+    setStatus('Changes reset.');
   }
 
   return (
@@ -52,7 +82,7 @@ export default function AppearanceSettings() {
             render={({ field }) => (
               <FormItem className='space-y-3'>
                 <FormControl>
-                  <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className='flex gap-4'>
+                  <RadioGroup onValueChange={field.onChange} value={field.value} className='flex gap-4'>
                     <FormItem>
                       <FormLabel className='[&:has([data-state=checked])>div]:border-primary cursor-pointer'>
                         <FormControl>
@@ -118,7 +148,7 @@ export default function AppearanceSettings() {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Font Family</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger className='cursor-pointer'>
                       <SelectValue placeholder='Select a font' />
@@ -140,7 +170,7 @@ export default function AppearanceSettings() {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Font Size</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger className='cursor-pointer'>
                       <SelectValue placeholder='Select font size' />
@@ -164,7 +194,7 @@ export default function AppearanceSettings() {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Sidebar Width</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger className='cursor-pointer'>
                       <SelectValue placeholder='Select sidebar width' />
@@ -186,7 +216,7 @@ export default function AppearanceSettings() {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Content Width</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger className='cursor-pointer'>
                       <SelectValue placeholder='Select content width' />
@@ -203,11 +233,13 @@ export default function AppearanceSettings() {
             )}
           />
 
+          {status && <p className='text-[13px] text-muted-foreground'>{status}</p>}
+
           <div className='flex space-x-2 mt-12'>
             <Button type='submit' className='cursor-pointer'>
               Save Preferences
             </Button>
-            <Button variant='outline' type='button' className='cursor-pointer'>
+            <Button variant='outline' type='button' className='cursor-pointer' onClick={handleCancel}>
               Cancel
             </Button>
           </div>

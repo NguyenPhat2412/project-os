@@ -16,10 +16,10 @@ interface RoleFilterBarProps {
   rolesCount?: number;
   filteredRolesCount?: number;
   onCreate?: () => void;
-  onSeed?: () => void;
+  onCreateDefaults?: () => void;
 }
 
-export function RoleFilterBar({ search, onSearchChange, filterColor, onColorChange, rolesCount, filteredRolesCount, onCreate, onSeed }: RoleFilterBarProps) {
+export function RoleFilterBar({ search, onSearchChange, filterColor, onColorChange, rolesCount, filteredRolesCount, onCreate, onCreateDefaults }: RoleFilterBarProps) {
   const isFiltered = search || filterColor !== ALL;
 
   return (
@@ -58,11 +58,11 @@ export function RoleFilterBar({ search, onSearchChange, filterColor, onColorChan
         )}
       </div>
 
-      {/* Right: seed + add buttons */}
+      {/* Right: default + add buttons */}
       <div className='flex items-center gap-2'>
-        {onSeed && rolesCount === 0 && (
-          <Button size='sm' variant='outline' onClick={onSeed} className='gap-1.5'>
-            <PlusIcon size={11} /> Seed mặc định
+        {onCreateDefaults && rolesCount === 0 && (
+          <Button size='sm' variant='outline' onClick={onCreateDefaults} className='gap-1.5'>
+            <PlusIcon size={11} /> Tạo mặc định
           </Button>
         )}
         {onCreate && (

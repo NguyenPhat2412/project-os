@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Layout, Palette, RotateCcw, Settings, X, Settings2, GlobeIcon, Settings2Icon } from 'lucide-react';
+import { Layout, Palette, RotateCcw, Settings, X, Settings2Icon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -12,9 +12,7 @@ import { tweakcnThemes } from '@/config/theme-data';
 import { ThemeTab } from './theme-tab';
 import { LayoutTab } from './layout-tab';
 import { ImportModal } from './import-modal';
-import { cn } from '@/lib/utils';
 import type { ImportedTheme } from '@/types/theme-customizer';
-import Link from 'next/link';
 
 interface ThemeCustomizerProps {
   open: boolean;
@@ -146,10 +144,8 @@ export function ThemeCustomizer({ open, onOpenChange }: ThemeCustomizerProps) {
 // Floating trigger button - positioned dynamically based on sidebar side
 export function ThemeCustomizerTrigger({ onClick }: { onClick: () => void }) {
   return (
-    <Button onClick={onClick} asChild variant='outline' size='icon' className='bg-secondary border-border text-muted-foreground hover:border-foreground/20 hover:text-foreground hover:bg-secondary' title='Language'>
-      <Link href='#'>
-        <Settings2Icon size={15} />
-      </Link>
+    <Button type='button' onClick={onClick} variant='outline' size='icon' className='bg-secondary border-border text-muted-foreground hover:border-foreground/20 hover:text-foreground hover:bg-secondary' title='Customize theme'>
+      <Settings2Icon size={15} />
     </Button>
   );
 }

@@ -5,12 +5,13 @@
  * Roles sống qua reload trang.
  *
  * Admin access:
- * - Email: ngothanhtung.it@gmail.com, admin@claudecode.ai → luôn có full admin access
+ * - Emails from ADMIN_EMAILS/NEXT_PUBLIC_ADMIN_EMAILS → full admin access
  * - Role "Administrators" (root) → full admin access (immutable)
  */
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 import type { UserProfile } from '@/lib/project-config';
+import { getClientAdminEmails, isAdminEmail, ROOT_ADMIN_ROLE } from '@/lib/admin-emails';
 
 // ─── Auth User Type (replaces Firebase User) ────────────────────────────────
 
@@ -24,8 +25,8 @@ export interface AuthUser {
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
-export const ADMIN_EMAILS = ['ngothanhtung.it@gmail.com', 'admin@claudecode.ai'];
-export const ROOT_ADMIN_ROLE = 'Administrators';
+export const ADMIN_EMAILS = getClientAdminEmails();
+export { ROOT_ADMIN_ROLE };
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -113,7 +114,7 @@ export const useAuthStore = create<AuthState & AuthActions>()(
 
         isRootAdmin: () => {
           const { user, rootRoles } = get();
-          return rootRoles.includes(ROOT_ADMIN_ROLE) || (user?.email != null && ADMIN_EMAILS.includes(user.email));
+          return rootRoles.includes(ROOT_ADMIN_ROLE) || isAdminEmail(user?.email, ADMIN_EMAILS);
         },
 
         isAdmin: () => {
