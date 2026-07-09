@@ -1,10 +1,14 @@
 'use client';
-import { FolderKanbanIcon, CheckCircleIcon, ArchiveIcon } from 'lucide-react';
+import Link from 'next/link';
+import { FolderKanbanIcon, CheckCircleIcon, ArchiveIcon, PlusIcon } from 'lucide-react';
+
+import { Button } from '@/components/ui/button';
 import { useProjects } from '@/modules/projects/hooks/useProjects';
 import { ProjectStatsCards } from '@/modules/projects/components/ProjectStatsCards';
 import { SimplePageHeader } from '@/components/layout/SimplePageHeader';
 import { BREADCRUMBS } from '@/lib/breadcrumbs';
 import { PageLoader } from '@/components/ui/page-loader';
+import { usePermission } from '@/hooks/usePermission';
 
 function StatItem({ icon: Icon, label, value, color }: { icon: React.ElementType; label: string; value: number; color: string }) {
   return (
@@ -22,6 +26,8 @@ function StatItem({ icon: Icon, label, value, color }: { icon: React.ElementType
 
 export default function ProjectsPage() {
   const { projects, isLoading } = useProjects();
+  const { hydrated, isRootAdmin } = usePermission();
+  const canManageProjects = hydrated && isRootAdmin();
 
   if (isLoading) return <PageLoader />;
 
@@ -31,7 +37,20 @@ export default function ProjectsPage() {
 
   return (
     <div>
-      <SimplePageHeader title='Projects' summary={`${projects.length} project${projects.length !== 1 ? 's' : ''} overview`} segments={BREADCRUMBS.projects} />
+      <SimplePageHeader
+        title='Projects'
+        summary={`${projects.length} project${projects.length !== 1 ? 's' : ''} overview`}
+        segments={BREADCRUMBS.projects}
+        actions={
+          canManageProjects ? (
+            <Button asChild className='gap-2 h-9'>
+              <Link href='/admin/projects'>
+                <PlusIcon size={15} /> New Project
+              </Link>
+            </Button>
+          ) : null
+        }
+      />
 
       {/* Stats */}
       <div className='grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6'>
