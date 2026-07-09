@@ -3,6 +3,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { useState, type ReactNode } from 'react';
+import { ApiError } from '@/lib/api/client';
 
 interface Props {
   children: ReactNode;
@@ -20,6 +21,10 @@ export function ReactQueryProvider({ children }: Props) {
           queries: {
             staleTime: 1000 * 60, // 1 minute
             refetchOnWindowFocus: false,
+            retry: (failureCount, error) => {
+              if (error instanceof ApiError) return false;
+              return failureCount < 1;
+            },
           },
         },
       })

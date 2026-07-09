@@ -1,0 +1,100 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - generic [ref=e3]:
+      - generic [ref=e14]:
+        - img [ref=e16]
+        - generic [ref=e23]: Project OS
+      - generic [ref=e24]:
+        - generic [ref=e25]:
+          - generic [ref=e26]:
+            - img [ref=e27]
+            - generic [ref=e29]: Nền tảng quản lý dự án
+          - heading "Quản lý dự ánthế hệ mới" [level=1] [ref=e30]
+          - paragraph [ref=e31]: Tập trung, minh bạch, hiệu quả. Nền tảng toàn diện cho đội nhóm kỹ thuật hiện đại.
+        - generic [ref=e32]:
+          - generic [ref=e34]:
+            - img [ref=e35]
+            - generic [ref=e38]: Quản lý Tasks & Sprints
+          - generic [ref=e40]:
+            - img [ref=e41]
+            - generic [ref=e42]: Timeline & Gantt Chart
+          - generic [ref=e44]:
+            - img [ref=e45]
+            - generic [ref=e50]: Cộng tác Team
+          - generic [ref=e52]:
+            - img [ref=e53]
+            - generic [ref=e62]: Theo dõi Bugs
+          - generic [ref=e64]:
+            - img [ref=e65]
+            - generic [ref=e68]: Quản lý Budget
+          - generic [ref=e70]:
+            - img [ref=e71]
+            - generic [ref=e72]: Reports & Analytics
+          - generic [ref=e74]:
+            - img [ref=e75]
+            - generic [ref=e77]: Comments & Meetings
+          - generic [ref=e79]:
+            - img [ref=e80]
+            - generic [ref=e83]: Risk Management
+        - generic [ref=e84]:
+          - generic [ref=e85]:
+            - generic [ref=e86]: A
+            - generic [ref=e87]: B
+            - generic [ref=e88]: C
+            - generic [ref=e89]: D
+          - generic [ref=e90]:
+            - generic [ref=e91]:
+              - img [ref=e92]
+              - img [ref=e94]
+              - img [ref=e96]
+              - img [ref=e98]
+              - img [ref=e100]
+            - text: Được tin tưởng bởi 200+ teams
+      - generic [ref=e103]:
+        - blockquote [ref=e104]: “ProjectOS giúp team chúng tôi theo dõi tiến độ rõ ràng hơn bao giờ hết.”
+        - generic [ref=e107]: Nguyễn Văn A — Engineering Lead
+    - generic [ref=e109]:
+      - generic [ref=e110]:
+        - generic [ref=e111]:
+          - generic [ref=e112]: Chào mừng trở lại
+          - generic [ref=e113]: Đăng nhập để truy cập workspace của bạn.
+        - generic [ref=e114]:
+          - button "Tiếp tục với Google" [ref=e116]:
+            - img
+            - text: Tiếp tục với Google
+          - generic [ref=e119]: hoặc
+          - generic [ref=e121]:
+            - generic [ref=e122]:
+              - generic [ref=e123]: Email
+              - generic [ref=e124]:
+                - img
+                - textbox "Email" [ref=e125]:
+                  - /placeholder: you@company.com
+                  - text: admin@claudecode.ai
+            - generic [ref=e126]:
+              - generic [ref=e127]:
+                - generic [ref=e128]: Mật khẩu
+                - button "Quên mật khẩu?" [ref=e129]
+              - generic [ref=e130]:
+                - img
+                - textbox "Mật khẩu" [ref=e131]:
+                  - /placeholder: ••••••••
+                  - text: "123456789"
+                - button [ref=e132]:
+                  - img
+            - alert [ref=e237]:
+              - generic [ref=e238]: Email hoặc mật khẩu không chính xác.
+            - button "Đăng nhập" [ref=e133]
+          - paragraph [ref=e134]:
+            - text: Chưa có tài khoản?
+            - button "Đăng ký ngay" [ref=e135]
+      - paragraph [ref=e136]:
+        - text: Bằng việc tiếp tục, bạn đồng ý với
+        - text: Điều khoản sử dụng & Chính sách bảo mật
+  - generic [ref=e137]:
+    - img [ref=e139]
+    - button "Open Tanstack query devtools" [ref=e187] [cursor=pointer]:
+      - img [ref=e188]
+  - button "Open Next.js Dev Tools" [ref=e9] [cursor=pointer]:
+    - img [ref=e10]
+  - alert [ref=e236]

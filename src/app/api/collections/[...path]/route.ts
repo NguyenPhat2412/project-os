@@ -113,11 +113,12 @@ export async function GET(req: NextRequest) {
   if (!resource) {
     return NextResponse.json({ error: `Unknown collection: ${collectionName}` }, { status: 400 });
   }
-  const allowed = await checkPermission({ uid, email: session.user.email, projectId, action: 'read', resource });
-  if (!allowed) return permissionDenied();
 
-  const { searchParams } = req.nextUrl;
   try {
+    const allowed = await checkPermission({ uid, email: session.user.email, projectId, action: 'read', resource });
+    if (!allowed) return permissionDenied();
+
+    const { searchParams } = req.nextUrl;
     if (docId) {
       const snap = await db.collection('projects').doc(projectId).collection(collectionName).doc(docId).get();
       if (!snap.exists) return NextResponse.json({ data: null });

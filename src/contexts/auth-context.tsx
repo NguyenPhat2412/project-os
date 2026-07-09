@@ -15,36 +15,49 @@ const logout = async (clearAuth: () => void) => {
 // ─── Auth Provider Component ──────────────────────────────────────────────────
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const setUser = useAuthStore((s) => s.setUser);
   const setRootRoles = useAuthStore((s) => s.setRootRoles);
   const setProfile = useAuthStore((s) => s.setProfile);
+  const setLoading = useAuthStore((s) => s.setLoading);
   const clearAuth = useAuthStore((s) => s.clearAuth);
 
   const { data: session } = useSession();
+  const sessionUserId = session?.user?.id;
+  const sessionUserEmail = session?.user?.email ?? null;
+  const sessionUserName = session?.user?.name ?? null;
+  const sessionUserImage = session?.user?.image ?? null;
 
   useEffect(() => {
-    if (!session?.user?.id) {
+    if (!sessionUserId) {
       clearAuth();
       return;
     }
 
-    const uid = session.user.id;
+    setUser({
+      uid: sessionUserId,
+      email: sessionUserEmail,
+      displayName: sessionUserName,
+      photoURL: sessionUserImage,
+    });
 
     const loadData = async () => {
       try {
         const [member, profile] = await Promise.all([
-          rootMembersCollection.helpers.fetch(uid),
-          profileConfig.helpers.fetch(uid),
+          rootMembersCollection.helpers.fetch(sessionUserId),
+          profileConfig.helpers.fetch(sessionUserId),
         ]);
         setRootRoles(member?.roles ?? []);
         setProfile(profile ?? null);
       } catch {
         setRootRoles([]);
         setProfile(null);
+      } finally {
+        setLoading(false);
       }
     };
 
     loadData();
-  }, [session?.user?.id, setRootRoles, setProfile, clearAuth]);
+  }, [sessionUserId, sessionUserEmail, sessionUserName, sessionUserImage, setUser, setRootRoles, setProfile, setLoading, clearAuth]);
 
   return <>{children}</>;
 }
@@ -52,12 +65,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 // ─── useAuth Hook ─────────────────────────────────────────────────────────────
 
 export function useAuth() {
-  const user = useAuthStore((s) => s.user);
   const profile = useAuthStore((s) => s.profile);
   const loading = useAuthStore((s) => s.loading);
   const clearAuth = useAuthStore((s) => s.clearAuth);
   const setProfile = useAuthStore((s) => s.setProfile);
-  const setRootRoles = useAuthStore((s) => s.setRootRoles);
 
   const { data: session, status } = useSession();
 

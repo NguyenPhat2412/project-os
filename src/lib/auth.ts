@@ -22,21 +22,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
 
-        try {
-          const user = await getUserByEmail(credentials.email as string);
-          if (!user) return null;
+        const user = await getUserByEmail(credentials.email as string);
+        if (!user) return null;
 
-          const valid = await verifyPassword(user, credentials.password as string);
-          if (!valid) return null;
+        const valid = await verifyPassword(user, credentials.password as string);
+        if (!valid) return null;
 
-          return {
-            id: user.id,
-            email: user.email,
-            name: user.name,
-          };
-        } catch {
-          return null;
-        }
+        return {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+        };
       },
     }),
   ],

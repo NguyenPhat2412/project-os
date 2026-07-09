@@ -26,10 +26,11 @@ export function useBatchFetch(items: BatchItem[], queryKeyName?: string): BatchR
   const query = useQuery({
     queryKey,
     queryFn: async () => {
-      const results = await Promise.all(items.map((item) => item.fetcher()));
+      const results = await Promise.allSettled(items.map((item) => item.fetcher()));
       const acc: Record<string, unknown> = {};
       for (let i = 0; i < items.length; i++) {
-        acc[items[i].key] = results[i];
+        const result = results[i];
+        acc[items[i].key] = result.status === 'fulfilled' ? result.value : null;
       }
       return acc;
     },

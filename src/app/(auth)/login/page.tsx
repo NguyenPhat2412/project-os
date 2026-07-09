@@ -84,7 +84,7 @@ export default function LoginPage() {
         });
 
         if (result?.error) {
-          setError('Email hoặc mật khẩu không chính xác.');
+          setError(result.error === 'CredentialsSignin' ? 'Email hoặc mật khẩu không chính xác.' : 'Không thể kết nối hệ thống đăng nhập. Vui lòng kiểm tra cấu hình Firebase Admin.');
           return;
         }
 
@@ -306,7 +306,7 @@ export default function LoginPage() {
                   </Label>
                   <div className='relative'>
                     <MailIcon className='absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none' strokeWidth={1.8} />
-                    <Input id='email' type='email' placeholder='you@company.com' className={cn('pl-10', errors.email && 'border-destructive')} aria-invalid={!!errors.email} {...register('email')} />
+                    <Input id='email' type='email' autoComplete='email' placeholder='you@company.com' className={cn('pl-10', errors.email && 'border-destructive')} aria-invalid={!!errors.email} {...register('email')} />
                   </div>
                   {errors.email?.message && <span className={getInlineErrorTextClass()}>{errors.email.message}</span>}
                 </div>
@@ -325,7 +325,7 @@ export default function LoginPage() {
                   </div>
                   <div className='relative'>
                     <LockIcon className='absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none' strokeWidth={1.8} />
-                    <Input id='password' type={showPassword ? 'text' : 'password'} placeholder='••••••••' className={cn('pl-10 pr-10', errors.password && 'border-destructive')} aria-invalid={!!errors.password} {...register('password')} />
+                    <Input id='password' type={showPassword ? 'text' : 'password'} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} placeholder='••••••••' className={cn('pl-10 pr-10', errors.password && 'border-destructive')} aria-invalid={!!errors.password} {...register('password')} />
                     <Button type='button' variant='ghost' size='icon' className='absolute right-0 top-1/2 -translate-y-1/2 h-full px-3 hover:bg-transparent text-muted-foreground' onClick={() => setShowPassword(!showPassword)}>
                       {showPassword ? <EyeOffIcon /> : <EyeIcon />}
                     </Button>
