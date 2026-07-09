@@ -124,7 +124,10 @@ export default function LoginPage() {
     setError('');
     setSubmitting(true);
     try {
-      const result = await signIn('google', { redirect: false });
+      const result = await signIn('google', {
+        redirect: false,
+        redirectTo: getSafeCallbackUrl(),
+      });
       if (result?.error) {
         setError('Đăng nhập Google thất bại. Vui lòng thử lại.');
         setSubmitting(false);

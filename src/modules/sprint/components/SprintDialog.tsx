@@ -88,11 +88,11 @@ export function SprintDialog({ open, sprint, nextOrder, onClose, onSuccess }: Pr
       goal: sprint?.goal ?? '',
       status: sprint?.status ?? 'planned',
     });
-    setApiError('');
   }, [sprint, nextOrder, reset]);
 
   const handleClose = () => {
     if (saving) return;
+    setApiError('');
     onClose();
   };
 

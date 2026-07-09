@@ -231,6 +231,7 @@
 
 /* Smooth scrolling for the entire page */
 html {
+  position: relative;
   scroll-behavior: smooth;
   color-scheme: light;
 }

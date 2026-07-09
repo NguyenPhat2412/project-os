@@ -92,11 +92,11 @@ export function RiskDialog({ open, risk, nextId, teamMembers, onClose, onSuccess
       status: (risk?.status as RiskFormValues['status']) ?? 'Đang theo dõi',
       dueDate: risk?.dueDate ?? '',
     });
-    setApiError('');
   }, [risk, reset]);
 
   const handleClose = () => {
     if (saving) return;
+    setApiError('');
     onClose();
   };
 

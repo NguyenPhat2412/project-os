@@ -85,12 +85,11 @@ export function TaskColumnDialog({ open, existingColumns, column, onClose, onSuc
       // Edit: keep existing doc ID so we update in place.
       // Create: generate a clean ID from the title.
       const docId = isEdit && column ? column.id : createUniqueTaskColumnId(trimmedTitle, existingColumns);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await taskColumnsCollection.helpers.set(docId, {
         title: trimmedTitle,
         color,
         order: parsedOrder,
-      } as any);
+      });
 
       onSuccess();
       onClose();

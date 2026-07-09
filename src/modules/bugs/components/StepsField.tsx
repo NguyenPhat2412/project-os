@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect, KeyboardEvent } from 'react';
+import { useState, useRef, KeyboardEvent } from 'react';
 import { PlusIcon, XIcon } from 'lucide-react';
 import { ConfirmDialog } from '@/components/ui/shared/confirm-dialog';
 
@@ -24,24 +24,23 @@ function serializeSteps(steps: string[]): string {
 }
 
 export function StepsField({ value, onChange, disabled }: StepsFieldProps) {
-  const [steps, setSteps] = useState<string[]>(() => parseSteps(value));
+  const [stepState, setStepState] = useState(() => ({
+    value,
+    steps: parseSteps(value),
+  }));
   const [confirmIndex, setConfirmIndex] = useState<number | null>(null);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
-  const isInternalChange = useRef(false);
 
-  // Sync from parent only when value changes externally (e.g. AI improve)
-  useEffect(() => {
-    if (isInternalChange.current) {
-      isInternalChange.current = false;
-      return;
-    }
-    setSteps(parseSteps(value));
-  }, [value]);
+  let steps = stepState.steps;
+  if (value !== stepState.value) {
+    steps = parseSteps(value);
+    setStepState({ value, steps });
+  }
 
   const commit = (nextSteps: string[]) => {
-    isInternalChange.current = true;
-    setSteps(nextSteps);
-    onChange(serializeSteps(nextSteps));
+    const nextValue = serializeSteps(nextSteps);
+    setStepState({ value: nextValue, steps: nextSteps });
+    onChange(nextValue);
   };
 
   const handleChange = (index: number, text: string) => {
@@ -54,9 +53,7 @@ export function StepsField({ value, onChange, disabled }: StepsFieldProps) {
     const insertAt = afterIndex !== undefined ? afterIndex + 1 : steps.length;
     const next = [...steps];
     next.splice(insertAt, 0, '');
-    isInternalChange.current = true;
-    setSteps(next);
-    onChange(serializeSteps(next));
+    commit(next);
     setTimeout(() => inputRefs.current[insertAt]?.focus(), 0);
   };
 

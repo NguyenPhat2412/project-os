@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { BotIcon, SparklesIcon, CheckCircle2Icon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PageLoader } from '@/components/ui/page-loader';
@@ -23,22 +23,19 @@ const PROVIDERS: { value: AIProvider; label: string; description: string }[] = [
 
 const DOC_ID = 'ai_settings';
 
+function normalizeProvider(provider: unknown): AIProvider {
+  return provider === 'CLAUDE' || provider === 'GEMINI' ? provider : 'CLAUDE';
+}
+
 export default function AdminSettingsPage() {
   const { data, isLoading } = aiSettingsConfig.useDocument();
   const saveSettings = aiSettingsConfig.useSet();
 
-  const [provider, setProvider] = useState<AIProvider>('CLAUDE');
+  const savedProvider = normalizeProvider(data?.provider);
+  const [draftProvider, setDraftProvider] = useState<AIProvider | null>(null);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
-
-  useEffect(() => {
-    const current = data?.provider;
-    if (current === 'CLAUDE' || current === 'GEMINI') {
-      setProvider(current);
-    } else {
-      setProvider('CLAUDE');
-    }
-  }, [data]);
+  const provider = draftProvider ?? savedProvider;
 
   const handleSave = async () => {
     setSaved(false);
@@ -86,7 +83,7 @@ export default function AdminSettingsPage() {
               <button
                 key={item.value}
                 type='button'
-                onClick={() => setProvider(item.value)}
+                onClick={() => setDraftProvider(item.value)}
                 className={`text-left p-4 rounded-sm border transition-colors ${active ? 'border-primary bg-primary/10' : 'border-foreground/20 bg-secondary hover:bg-muted'}`}
               >
                 <div className='flex items-center justify-between mb-1.5'>

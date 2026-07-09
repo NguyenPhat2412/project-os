@@ -1,6 +1,7 @@
 // Shared static breadcrumb definitions — imported by page components and PageHeader
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import Link from 'next/link';
+import { Fragment } from 'react';
 
 export type BreadcrumbSegment = { label: string; href?: string };
 
@@ -43,8 +44,8 @@ export function buildBreadcrumb(segments: BreadcrumbSegment[]) {
     <Breadcrumb>
       <BreadcrumbList>
         {segments.map((seg, i) => (
-          <>
-            <BreadcrumbItem key={i}>
+          <Fragment key={`${seg.href ?? seg.label}-${i}`}>
+            <BreadcrumbItem>
               {seg.href ? (
                 <BreadcrumbLink asChild>
                   <Link href={seg.href}>{seg.label}</Link>
@@ -54,7 +55,7 @@ export function buildBreadcrumb(segments: BreadcrumbSegment[]) {
               )}
             </BreadcrumbItem>
             {i < segments.length - 1 && <BreadcrumbSeparator />}
-          </>
+          </Fragment>
         ))}
       </BreadcrumbList>
     </Breadcrumb>

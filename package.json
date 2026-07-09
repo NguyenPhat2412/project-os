@@ -40,12 +40,12 @@
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "dayjs": "^1.11.20",
-    "firebase": "^12.10.0",
-    "firebase-admin": "^13.10.0",
+    "firebase": "^12.15.0",
+    "firebase-admin": "^14.1.0",
     "framer-motion": "^12.38.0",
     "lucide-react": "^0.577.0",
-    "mermaid": "^11.13.0",
-    "next": "16.1.6",
+    "mermaid": "^11.16.0",
+    "next": "^16.2.10",
     "next-auth": "^5.0.0-beta.31",
     "prism-react-renderer": "^2.4.1",
     "prismjs": "^1.30.0",
@@ -72,9 +72,20 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "16.1.6",
+    "eslint-config-next": "^16.2.10",
     "shadcn": "^4.2.0",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+  "overrides": {
+    "gaxios": {
+      "uuid": "11.1.1"
+    },
+    "next": {
+      "postcss": "8.5.16"
+    },
+    "teeny-request": {
+      "uuid": "11.1.1"
+    }
   }
 }

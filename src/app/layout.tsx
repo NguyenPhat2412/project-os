@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang='vi' suppressHydrationWarning>
+    <html lang='vi' data-scroll-behavior='smooth' suppressHydrationWarning>
       <body className='antialiased'>
         <ReactQueryProvider>
           <NextAuthSessionProvider>

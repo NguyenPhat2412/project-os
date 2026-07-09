@@ -9,7 +9,7 @@
  * - File chính vẫn hiển thị nhưng không còn replace nữa — users dùng attachments field
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -94,7 +94,12 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 // ── component ─────────────────────────────────────────────────────────────────
-export function EditDocDialog({ open, doc: initialDoc, folders, onClose, onSuccess, onRefetch }: Props) {
+export function EditDocDialog(props: Props) {
+  if (!props.open) return null;
+  return <EditDocDialogContent key={props.doc.id} {...props} />;
+}
+
+function EditDocDialogContent({ open, doc: initialDoc, folders, onClose, onSuccess, onRefetch }: Props) {
   const updateDocument = documentsCollection.useUpdate();
   const queryClient = useQueryClient();
 
@@ -107,21 +112,12 @@ export function EditDocDialog({ open, doc: initialDoc, folders, onClose, onSucce
   const {
     register,
     handleSubmit,
-    reset: resetForm,
     formState: { errors, isValid, isDirty: formIsDirty },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
     mode: 'onChange',
     defaultValues: { docName: initialDoc.name },
   });
-
-  // Sync state when doc prop changes (user clicks different doc)
-  useEffect(() => {
-    resetForm({ docName: initialDoc.name });
-    setBadge(BADGE_OPTIONS.find((b) => b.label === initialDoc.badge.label) ?? BADGE_OPTIONS[0]);
-    setAttachments(initialDoc.attachments ?? []);
-    setSelectedFolderId(initialDoc.folderId);
-  }, [initialDoc, resetForm]);
 
   const handleClose = () => onClose();
 

@@ -9,7 +9,7 @@
  * - Delete from Firestore
  */
 
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -81,7 +81,12 @@ interface Props {
 }
 
 // ── component ─────────────────────────────────────────────────────────────────
-export function WikiEditorDialog({ open, wiki, nextWikiIndex, onClose, onSuccess }: Props) {
+export function WikiEditorDialog(props: Props) {
+  if (!props.open) return null;
+  return <WikiEditorDialogContent key={props.wiki?.id ?? `new-${props.nextWikiIndex}`} {...props} />;
+}
+
+function WikiEditorDialogContent({ open, wiki, nextWikiIndex, onClose, onSuccess }: Props) {
   const isNew = wiki === null;
 
   const [icon, setIcon] = useState(wiki?.icon ?? '📝');
@@ -101,16 +106,6 @@ export function WikiEditorDialog({ open, wiki, nextWikiIndex, onClose, onSuccess
     mode: 'onChange',
     defaultValues: { title: wiki?.title ?? '', summary: wiki?.summary ?? '' },
   });
-
-  useEffect(() => {
-    if (!open) return;
-    resetForm({ title: wiki?.title ?? '', summary: wiki?.summary ?? '' });
-    setContent(wiki?.content ?? '');
-    setIcon(wiki?.icon ?? '📝');
-    setAttachments(wiki?.attachments ?? []);
-    setStatus('idle');
-    setErrorMsg('');
-  }, [open, wiki, resetForm]);
 
   const handleClose = () => {
     if (isBusy) return;
@@ -214,7 +209,9 @@ export function WikiEditorDialog({ open, wiki, nextWikiIndex, onClose, onSuccess
       onCancel={handleClose}
       cancelDisabled={isBusy}
       cancelLabel='Huỷ'
-      onSubmit={handleSubmit(onSubmit)}
+      onSubmit={() => {
+        void handleSubmit(onSubmit)();
+      }}
       submitDisabled={!isValid || !isDirty || isBusy}
       submitLoading={status === 'saving'}
       submitLoadingLabel='Đang lưu...'

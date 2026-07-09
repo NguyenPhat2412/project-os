@@ -71,11 +71,11 @@ export function MilestoneDialog({ open, milestone, nextId, teamMembers, onClose,
       status: (milestone?.status as (typeof STATUS_OPTIONS)[number]) ?? 'Chưa bắt đầu',
       ownerId: milestone?.ownerId ?? '',
     });
-    setApiError('');
   }, [milestone, reset]);
 
   const handleClose = () => {
     if (saving) return;
+    setApiError('');
     onClose();
   };
 

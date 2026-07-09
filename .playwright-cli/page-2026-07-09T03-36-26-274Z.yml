@@ -1,0 +1,92 @@
+- generic [active] [ref=e2]:
+  - alert [ref=e1]
+  - generic [ref=e3]:
+    - generic [ref=e4]:
+      - generic [ref=e6]:
+        - img [ref=e8]
+        - generic [ref=e15]: Project OS
+      - generic [ref=e16]:
+        - generic [ref=e17]:
+          - generic [ref=e18]:
+            - img [ref=e19]
+            - generic [ref=e21]: Nền tảng quản lý dự án
+          - heading "Quản lý dự ánthế hệ mới" [level=1] [ref=e22]
+          - paragraph [ref=e23]: Tập trung, minh bạch, hiệu quả. Nền tảng toàn diện cho đội nhóm kỹ thuật hiện đại.
+        - generic [ref=e24]:
+          - generic [ref=e26]:
+            - img [ref=e27]
+            - generic [ref=e30]: Quản lý Tasks & Sprints
+          - generic [ref=e32]:
+            - img [ref=e33]
+            - generic [ref=e34]: Timeline & Gantt Chart
+          - generic [ref=e36]:
+            - img [ref=e37]
+            - generic [ref=e42]: Cộng tác Team
+          - generic [ref=e44]:
+            - img [ref=e45]
+            - generic [ref=e54]: Theo dõi Bugs
+          - generic [ref=e56]:
+            - img [ref=e57]
+            - generic [ref=e60]: Quản lý Budget
+          - generic [ref=e62]:
+            - img [ref=e63]
+            - generic [ref=e64]: Reports & Analytics
+          - generic [ref=e66]:
+            - img [ref=e67]
+            - generic [ref=e69]: Comments & Meetings
+          - generic [ref=e71]:
+            - img [ref=e72]
+            - generic [ref=e75]: Risk Management
+        - generic [ref=e76]:
+          - generic [ref=e77]:
+            - generic [ref=e78]: A
+            - generic [ref=e79]: B
+            - generic [ref=e80]: C
+            - generic [ref=e81]: D
+          - generic [ref=e82]:
+            - generic [ref=e83]:
+              - img [ref=e84]
+              - img [ref=e86]
+              - img [ref=e88]
+              - img [ref=e90]
+              - img [ref=e92]
+            - text: Được tin tưởng bởi 200+ teams
+      - generic [ref=e95]:
+        - blockquote [ref=e96]: “ProjectOS giúp team chúng tôi theo dõi tiến độ rõ ràng hơn bao giờ hết.”
+        - generic [ref=e99]: Nguyễn Văn A — Engineering Lead
+    - generic [ref=e101]:
+      - generic [ref=e102]:
+        - generic [ref=e103]:
+          - generic [ref=e104]: Tạo tài khoản
+          - generic [ref=e105]: Điền thông tin để bắt đầu với ProjectOS.
+        - generic [ref=e106]:
+          - button "Tiếp tục với Google" [ref=e108]:
+            - img
+            - text: Tiếp tục với Google
+          - generic [ref=e111]: hoặc
+          - generic [ref=e113]:
+            - generic [ref=e114]:
+              - generic [ref=e115]: Email
+              - generic [ref=e116]:
+                - img
+                - textbox "Email" [ref=e117]:
+                  - /placeholder: you@company.com
+                  - text: codex-flow-check-20260709103604@example.com
+            - generic [ref=e118]:
+              - generic [ref=e120]: Mật khẩu
+              - generic [ref=e122]:
+                - img
+                - textbox "Mật khẩu" [ref=e123]:
+                  - /placeholder: ••••••••
+                  - text: CodexTest123!
+                - button [ref=e124]:
+                  - img
+            - alert [ref=e131]:
+              - generic [ref=e132]: Failed to create account
+            - button "Tạo tài khoản" [ref=e129]
+          - paragraph [ref=e126]:
+            - text: Đã có tài khoản?
+            - button "Đăng nhập" [ref=e130]
+      - paragraph [ref=e128]:
+        - text: Bằng việc tiếp tục, bạn đồng ý với
+        - text: Điều khoản sử dụng & Chính sách bảo mật
