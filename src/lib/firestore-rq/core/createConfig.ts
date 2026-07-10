@@ -9,12 +9,28 @@ interface ConfigDocumentConfig {
 
 export function createConfig<T extends object>(config: ConfigDocumentConfig) {
   const { projectId, name } = config;
+  const identityPath = name === 'profile'
+    ? '/v1/users/me/profile'
+    : name === 'theme'
+      ? '/v1/users/me/preferences/appearance'
+      : null;
+
+  const fetchDocument = (docId?: string) => {
+    if (identityPath) return apiClient.getOne<T>(identityPath);
+    const docParam = docId ? `?docId=${encodeURIComponent(docId)}` : '';
+    return apiClient.getOne<T>(`/config/${projectId}/${name}${docParam}`);
+  };
+
+  const saveDocument = (docId: string, data: Partial<T>) => {
+    if (name === 'profile') return apiClient.patch<T>(identityPath!, data);
+    if (name === 'theme') return apiClient.put<T>(identityPath!, data);
+    return apiClient.put<T>(`/config/${projectId}/${name}?docId=${encodeURIComponent(docId)}`, data);
+  };
 
   function useDocument(docId?: string | null) {
-    const docParam = docId ? `?docId=${encodeURIComponent(docId)}` : '';
     return useQuery<T | null>({
       queryKey: ['config', projectId, name, docId ?? '__default__'],
-      queryFn: () => apiClient.getOne<T>(`/config/${projectId}/${name}${docParam}`),
+      queryFn: () => fetchDocument(docId ?? undefined),
     });
   }
 
@@ -22,7 +38,7 @@ export function createConfig<T extends object>(config: ConfigDocumentConfig) {
     const queryClient = useQueryClient();
     return useMutation({
       mutationFn: ({ id, data }: { id: string; data: Partial<T> }) =>
-        apiClient.put<T>(`/config/${projectId}/${name}?docId=${encodeURIComponent(id)}`, data),
+        saveDocument(id, data),
       onSuccess: (_, { id }) => {
         queryClient.invalidateQueries({ queryKey: ['config', projectId, name, id] });
         queryClient.invalidateQueries({ queryKey: ['config', projectId, name, '__default__'] });
@@ -31,12 +47,8 @@ export function createConfig<T extends object>(config: ConfigDocumentConfig) {
   }
 
   const helpers = {
-    fetch: (docId?: string) => {
-      const docParam = docId ? `?docId=${encodeURIComponent(docId)}` : '';
-      return apiClient.getOne<T>(`/config/${projectId}/${name}${docParam}`);
-    },
-    set: (id: string, data: Partial<T>) =>
-      apiClient.put<T>(`/config/${projectId}/${name}?docId=${encodeURIComponent(id)}`, data),
+    fetch: fetchDocument,
+    set: saveDocument,
   };
 
   return { useDocument, useSet, helpers };

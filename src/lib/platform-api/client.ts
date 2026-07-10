@@ -92,8 +92,11 @@ export const platformApi = {
       body: data === undefined ? undefined : JSON.stringify(data),
     })).data;
   },
-  postVoid(path: string): Promise<void> {
-    return request<void>(path, { method: 'POST' });
+  postVoid(path: string, data?: unknown): Promise<void> {
+    return request<void>(path, {
+      method: 'POST',
+      body: data === undefined ? undefined : JSON.stringify(data),
+    });
   },
   async patchData<T>(path: string, data: unknown): Promise<T> {
     return (await request<DataEnvelope<T>>(path, {
@@ -101,8 +104,17 @@ export const platformApi = {
       body: JSON.stringify(data),
     })).data;
   },
-  delete(path: string): Promise<void> {
-    return request<void>(path, { method: 'DELETE' });
+  async putData<T>(path: string, data: unknown): Promise<T> {
+    return (await request<DataEnvelope<T>>(path, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    })).data;
+  },
+  delete(path: string, data?: unknown): Promise<void> {
+    return request<void>(path, {
+      method: 'DELETE',
+      body: data === undefined ? undefined : JSON.stringify(data),
+    });
   },
 };
 

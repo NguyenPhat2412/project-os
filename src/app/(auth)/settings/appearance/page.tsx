@@ -9,6 +9,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useTheme } from '@/store/theme-store';
+import { platformApi } from '@/lib/platform-api/client';
 
 const appearanceFormSchema = z.object({
   theme: z.enum(['light', 'dark']),
@@ -42,21 +43,47 @@ export default function AppearanceSettings() {
   const { setTheme } = useTheme();
   const [savedPreferences, setSavedPreferences] = useState<AppearanceFormValues>(() => readPreferences());
   const [status, setStatus] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
   const form = useForm<AppearanceFormValues>({
     resolver: zodResolver(appearanceFormSchema),
     defaultValues: savedPreferences,
   });
 
   useEffect(() => {
+    let active = true;
+    platformApi.getData<Partial<AppearanceFormValues>>('/users/me/preferences/appearance')
+      .then((preferences) => {
+        if (active && Object.keys(preferences).length > 0) {
+          const next = { ...DEFAULT_VALUES, ...preferences };
+          window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+          setSavedPreferences(next);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
     form.reset(savedPreferences);
     setTheme(savedPreferences.theme);
   }, [form, savedPreferences, setTheme]);
 
-  function onSubmit(data: AppearanceFormValues) {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    setTheme(data.theme);
-    setSavedPreferences(data);
-    setStatus('Preferences saved.');
+  async function onSubmit(data: AppearanceFormValues) {
+    setIsSaving(true);
+    setStatus('');
+    try {
+      await platformApi.putData('/users/me/preferences/appearance', data);
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      setTheme(data.theme);
+      setSavedPreferences(data);
+      setStatus('Preferences saved.');
+    } catch {
+      setStatus('Could not save preferences. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   function handleCancel() {
@@ -236,8 +263,8 @@ export default function AppearanceSettings() {
           {status && <p className='text-[13px] text-muted-foreground'>{status}</p>}
 
           <div className='flex space-x-2 mt-12'>
-            <Button type='submit' className='cursor-pointer'>
-              Save Preferences
+            <Button type='submit' className='cursor-pointer' disabled={isSaving}>
+              {isSaving ? 'Saving...' : 'Save Preferences'}
             </Button>
             <Button variant='outline' type='button' className='cursor-pointer' onClick={handleCancel}>
               Cancel

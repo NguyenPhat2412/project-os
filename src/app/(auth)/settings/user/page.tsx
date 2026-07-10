@@ -16,6 +16,7 @@ import { Separator } from '@/components/ui/separator';
 import { Logo } from '@/components/logo';
 import { useAuth } from '@/contexts/auth-context';
 import type { UserProfile } from '@/lib/project-config';
+import { platformApi } from '@/lib/platform-api/client';
 
 const userFormSchema = z.object({
   firstName: z.string().min(1, 'First name is required'),
@@ -139,16 +140,7 @@ export default function UserSettingsPage() {
         updatedAt: new Date().toISOString(),
       };
 
-      const response = await fetch('/api/users/profile', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        const body = await response.json().catch(() => ({}));
-        throw new Error(body.error?.message ?? body.error ?? 'Could not save profile.');
-      }
+      await platformApi.patchData('/users/me/profile', payload);
 
       window.localStorage.setItem(settingsKey(user.uid), JSON.stringify({ values: data, profileImage }));
       await refreshProfile().catch(() => undefined);

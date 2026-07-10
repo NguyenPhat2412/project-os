@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -16,6 +15,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useAuth } from '@/contexts/auth-context';
 import { profileConfig } from '@/lib/project-config';
 import type { UserProfile } from '@/lib/project-config';
+import { platformApi } from '@/lib/platform-api/client';
 
 const accountFormSchema = z
   .object({
@@ -46,7 +46,6 @@ const accountFormSchema = z
 type AccountFormValues = z.infer<typeof accountFormSchema>;
 
 export default function AccountSettings() {
-  const router = useRouter();
   const { user } = useAuth();
   const session = user ? { user: { id: user.uid, name: user.displayName, email: user.email } } : null;
   const [isLoading, setIsLoading] = useState(true);
@@ -113,18 +112,10 @@ export default function AccountSettings() {
     try {
       if (hasProfileChanged) {
         await toast.promise(
-          (async () => {
-            const res = await fetch('/api/users/profile', {
-              method: 'PATCH',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                displayName: values.displayName,
-                address: values.address ?? '',
-                email: values.email,
-              }),
-            });
-            if (!res.ok) throw new Error('Failed to save profile');
-          })(),
+          platformApi.patchData('/users/me/profile', {
+            displayName: values.displayName,
+            address: values.address ?? '',
+          }),
           {
             loading: 'Đang lưu thông tin...',
             success: 'Lưu thông tin thành công.',
@@ -145,17 +136,10 @@ export default function AccountSettings() {
 
       if (hasPasswordChange) {
         await toast.promise(
-          (async () => {
-            const res = await fetch('/api/users/change-password', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ currentPassword: values.currentPassword, newPassword: values.newPassword }),
-            });
-            if (!res.ok) {
-              const data = await res.json();
-              throw new Error(data.error ?? 'Failed to change password');
-            }
-          })(),
+          platformApi.postVoid('/users/me/password', {
+            currentPassword: values.currentPassword,
+            newPassword: values.newPassword,
+          }),
           {
             loading: 'Đang đổi mật khẩu...',
             success: 'Đổi mật khẩu thành công.',
@@ -180,24 +164,14 @@ export default function AccountSettings() {
     setIsDeleting(true);
     try {
       await toast.promise(
-        (async () => {
-          const res = await fetch('/api/users/delete-account', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ password: deletePassword }),
-          });
-          if (!res.ok) {
-            const data = await res.json();
-            throw new Error(data.error ?? 'Failed to delete account');
-          }
-        })(),
+        platformApi.delete('/users/me', { password: deletePassword }),
         {
           loading: 'Đang xóa tài khoản...',
           success: 'Tài khoản đã được xóa thành công.',
           error: 'Xóa tài khoản thất bại.',
         },
       );
-      router.push('/login');
+      window.location.assign('/login');
     } catch {
       // error handled by toast.promise
     } finally {

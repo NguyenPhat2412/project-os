@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Bell, Loader2, Mail, MessageSquare } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
+import { platformApi } from '@/lib/platform-api/client';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -116,17 +117,13 @@ export default function NotificationSettings() {
   useEffect(() => {
     if (!session?.user?.id) return;
 
-    const uid = session.user.id;
     setIsLoading(true);
 
     const loadNotifications = async () => {
       try {
-        const res = await fetch(`/api/users/notifications?uid=${uid}`);
-        if (res.ok) {
-          const data = await res.json();
-          if (data && Object.keys(data).length > 0) {
-            form.reset(data);
-          }
+        const data = await platformApi.getData<Partial<UserNotifications>>('/users/me/preferences/notifications');
+        if (data && Object.keys(data).length > 0) {
+          form.reset({ ...defaultNotifications, ...data });
         }
       } catch {
         // keep defaults
@@ -142,12 +139,7 @@ export default function NotificationSettings() {
     if (!session?.user?.id) return;
     setIsSubmitting(true);
     try {
-      const res = await fetch(`/api/users/notifications?uid=${session.user.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-      if (!res.ok) throw new Error('Failed to save notifications');
+      await platformApi.putData('/users/me/preferences/notifications', data);
       toast.success(
         <div className='flex items-center gap-2'>
           <Bell className='h-4 w-4 text-green-500' />
