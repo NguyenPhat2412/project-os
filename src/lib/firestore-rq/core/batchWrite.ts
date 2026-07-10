@@ -1,5 +1,5 @@
 import { apiClient } from '@/lib/api/client';
-import type { BatchRequest, BatchResponse, BatchOperation } from '@/lib/api/types';
+import type { BatchOperation } from '@/lib/api/types';
 
 export interface BatchWrite {
   set(path: string, id: string, data: Record<string, unknown>): BatchWrite;
@@ -26,12 +26,13 @@ export function batchWrite(): BatchWrite {
       return self;
     },
     async commit() {
-      const body: BatchRequest = { operations };
-      const result = await apiClient.post<BatchResponse>('/batch', body) as unknown as BatchResponse;
-      const failed = result.results.filter((r: { id: string; success: boolean; error?: string }) => !r.success);
-      if (failed.length > 0) {
-        throw new Error(`Batch failed: ${failed.map((f: { id: string; error?: string }) => `${f.id}: ${f.error}`).join(', ')}`);
-      }
+      await Promise.all(
+        operations.map((operation) => {
+          if (operation.method === 'set') return apiClient.put(`${operation.path}/${operation.id}`, operation.data);
+          if (operation.method === 'update') return apiClient.patch(`${operation.path}/${operation.id}`, operation.data);
+          return apiClient.delete(`${operation.path}/${operation.id}`);
+        }),
+      );
     },
     rollback() {
       operations.length = 0;

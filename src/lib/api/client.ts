@@ -21,6 +21,25 @@ export interface MutationResponse<T> {
   id: string;
 }
 
+const PROJECT_RESOURCE_ALIASES: Record<string, string> = {
+  task_columns: 'task-columns',
+  bug_columns: 'bug-columns',
+  budget_items: 'budget-items',
+  gantt_phases: 'timeline-phases',
+  action_items: 'action-items',
+  activity_feed: 'activities',
+  activity_comments: 'comments',
+  doc_activity: 'doc-activities',
+  wiki_links: 'wiki-links',
+  project_roles: 'role-assignments',
+};
+
+function csrfToken() {
+  if (typeof document === 'undefined') return null;
+  const item = document.cookie.split('; ').find((value) => value.startsWith('XSRF-TOKEN='));
+  return item ? decodeURIComponent(item.slice('XSRF-TOKEN='.length)) : null;
+}
+
 class ApiClient {
   private baseUrl: string;
 
@@ -42,12 +61,11 @@ class ApiClient {
 
     if (segments[0] === 'projects') {
       if (segments.length >= 3) {
-        // project-scoped: /projects/{projectId}/{collection} → /api/collections/projects/{projectId}/{collection}
-        return this.withQuery(`collections/${pathname}`, query);
+        const resource = PROJECT_RESOURCE_ALIASES[segments[2]] ?? segments[2];
+        return this.withQuery(['v1', 'projects', segments[1], resource, ...segments.slice(3)].join('/'), query);
       }
-      // root-level: /projects, /projects/{id} → /api/projects, /api/projects/{id}
       const rootProjectPath = segments.slice(1).join('/');
-      return this.withQuery(rootProjectPath ? `projects/${rootProjectPath}` : 'projects', query);
+      return this.withQuery(rootProjectPath ? `v1/projects/${rootProjectPath}` : 'v1/projects', query);
     }
 
     if (segments[0] === 'members') {
@@ -64,15 +82,32 @@ class ApiClient {
     return search ? `${pathname}?${search}` : pathname;
   }
 
-  private async request<T>(path: string, options?: RequestInit): Promise<T> {
+  private async request<T>(path: string, options?: RequestInit, retry = true): Promise<T> {
     const url = this.buildUrl(path);
+    const headers = new Headers(options?.headers);
+    headers.set('Content-Type', 'application/json');
+    const method = (options?.method ?? 'GET').toUpperCase();
+    if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) {
+      const csrf = csrfToken();
+      if (csrf) headers.set('X-XSRF-TOKEN', csrf);
+    }
     const res = await fetch(url, {
       ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        ...options?.headers,
-      },
+      headers,
+      credentials: 'include',
     });
+
+    if (res.status === 401 && retry && !url.endsWith('/api/v1/auth/refresh')) {
+      const refreshHeaders = new Headers();
+      const csrf = csrfToken();
+      if (csrf) refreshHeaders.set('X-XSRF-TOKEN', csrf);
+      const refresh = await fetch('/api/v1/auth/refresh', {
+        method: 'POST',
+        headers: refreshHeaders,
+        credentials: 'include',
+      });
+      if (refresh.ok) return this.request<T>(path, options, false);
+    }
 
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
@@ -128,17 +163,19 @@ class ApiClient {
   }
 
   async put<T>(path: string, data: unknown): Promise<T> {
-    return this.request<T>(path, {
+    const response = await this.request<T | { data: T }>(path, {
       method: 'PUT',
       body: JSON.stringify(data),
     });
+    return response && typeof response === 'object' && 'data' in response ? response.data : response;
   }
 
   async patch<T>(path: string, data: unknown): Promise<T> {
-    return this.request<T>(path, {
+    const response = await this.request<T | { data: T }>(path, {
       method: 'PATCH',
       body: JSON.stringify(data),
     });
+    return response && typeof response === 'object' && 'data' in response ? response.data : response;
   }
 
   async delete(path: string): Promise<void> {

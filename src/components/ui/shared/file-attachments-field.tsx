@@ -1,12 +1,48 @@
 'use client';
 
 import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
-import { ref as storageRef, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
-import { storage } from '@/lib/firebase/storage';
 import { CheckIcon, ClockIcon, FileArchiveIcon, FileTextIcon, FileVideoIcon, ImageIcon, Loader2Icon, PaperclipIcon, PencilIcon, XIcon } from 'lucide-react';
 import type { Attachment } from '@/lib/types/attachment';
 import { formatFileSize } from '@/lib/numberjs';
 import { useAttachmentViewer } from './use-attachment-viewer';
+
+function csrfToken() {
+  const item = document.cookie.split('; ').find((value) => value.startsWith('XSRF-TOKEN='));
+  return item ? decodeURIComponent(item.slice('XSRF-TOKEN='.length)) : null;
+}
+
+async function uploadAttachment(file: File, storagePath: string): Promise<Attachment> {
+  const form = new FormData();
+  form.set('file', file);
+  form.set('storagePath', storagePath);
+  const headers = new Headers();
+  const csrf = csrfToken();
+  if (csrf) headers.set('X-XSRF-TOKEN', csrf);
+  const response = await fetch('/api/v1/storage/attachments', {
+    method: 'POST',
+    headers,
+    credentials: 'include',
+    body: form,
+  });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(body.error?.message ?? 'Upload failed');
+  return body.data as Attachment;
+}
+
+async function deleteAttachment(storagePath: string) {
+  const headers = new Headers();
+  const csrf = csrfToken();
+  if (csrf) headers.set('X-XSRF-TOKEN', csrf);
+  const response = await fetch(`/api/v1/storage/attachments?storagePath=${encodeURIComponent(storagePath)}`, {
+    method: 'DELETE',
+    headers,
+    credentials: 'include',
+  });
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({}));
+    throw new Error(body.error?.message ?? 'Delete failed');
+  }
+}
 
 function fileIcon(contentType: string) {
   if (contentType.startsWith('image/')) return <ImageIcon size={13} />;
@@ -55,29 +91,12 @@ export const FileAttachmentsField = forwardRef<FileAttachmentsFieldHandle, Props
       uploadPending: async () => {
         const results: Attachment[] = [];
         for (const file of pendingFiles) {
-          const safeName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
-          const fRef = storageRef(storage, `${storagePath}/${safeName}`);
           setUploading((p) => [...p, { name: file.name, progress: 0 }]);
-          await new Promise<void>((resolve, reject) => {
-            const task = uploadBytesResumable(fRef, file, { contentType: file.type });
-            task.on(
-              'state_changed',
-              (snap) => {
-                const pct = Math.round((snap.bytesTransferred / snap.totalBytes) * 100);
-                setUploading((p) => p.map((u) => (u.name === file.name ? { ...u, progress: pct } : u)));
-              },
-              (err) => {
-                setUploading((p) => p.filter((u) => u.name !== file.name));
-                reject(err);
-              },
-              async () => {
-                const url = await getDownloadURL(fRef);
-                results.push({ name: file.name, url, storagePath: fRef.fullPath, size: file.size, contentType: file.type || 'application/octet-stream', uploadedAt: new Date().toISOString().slice(0, 10) });
-                setUploading((p) => p.filter((u) => u.name !== file.name));
-                resolve();
-              },
-            );
-          });
+          try {
+            results.push(await uploadAttachment(file, storagePath));
+          } finally {
+            setUploading((p) => p.filter((u) => u.name !== file.name));
+          }
         }
         setPendingFiles([]);
         return results;
@@ -92,33 +111,17 @@ export const FileAttachmentsField = forwardRef<FileAttachmentsFieldHandle, Props
       setError(`"${file.name}" vượt quá 20 MB.`);
       return;
     }
-    const safeName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
-    const fRef = storageRef(storage, `${storagePath}/${safeName}`);
     setUploading((p) => [...p, { name: file.name, progress: 0 }]);
-    await new Promise<void>((resolve, reject) => {
-      const task = uploadBytesResumable(fRef, file, { contentType: file.type });
-      task.on(
-        'state_changed',
-        (snap) => {
-          const pct = Math.round((snap.bytesTransferred / snap.totalBytes) * 100);
-          setUploading((p) => p.map((u) => (u.name === file.name ? { ...u, progress: pct } : u)));
-        },
-        (err) => {
-          setError(`Upload thất bại: ${err.message}`);
-          setUploading((p) => p.filter((u) => u.name !== file.name));
-          reject(err);
-        },
-        async () => {
-          const url = await getDownloadURL(fRef);
-          const att: Attachment = { name: file.name, url, storagePath: fRef.fullPath, size: file.size, contentType: file.type || 'application/octet-stream', uploadedAt: new Date().toISOString().slice(0, 10) };
-          const newList = [...attachments, att];
-          onChange(newList);
-          setUploading((p) => p.filter((u) => u.name !== file.name));
-          if (onAutoSave) await onAutoSave(newList).catch(() => {});
-          resolve();
-        },
-      );
-    });
+    try {
+      const attachment = await uploadAttachment(file, storagePath);
+      const newList = [...attachments, attachment];
+      onChange(newList);
+      if (onAutoSave) await onAutoSave(newList).catch(() => {});
+    } catch (uploadError) {
+      setError(`Upload thất bại: ${uploadError instanceof Error ? uploadError.message : 'Unknown error'}`);
+    } finally {
+      setUploading((p) => p.filter((u) => u.name !== file.name));
+    }
   };
 
   // ── handle file selection ──────────────────────────────────────────────
@@ -143,8 +146,11 @@ export const FileAttachmentsField = forwardRef<FileAttachmentsFieldHandle, Props
   // ── remove saved attachment ────────────────────────────────────────────
   const handleRemoveSaved = async (att: Attachment, index: number) => {
     try {
-      await deleteObject(storageRef(storage, att.storagePath)).catch(() => {});
-    } catch {}
+      await deleteAttachment(att.storagePath);
+    } catch (deleteError) {
+      setError(`Xóa file thất bại: ${deleteError instanceof Error ? deleteError.message : 'Unknown error'}`);
+      return;
+    }
     const newList = attachments.filter((_, i) => i !== index);
     onChange(newList);
     if (mode === 'edit' && onAutoSave) await onAutoSave(newList).catch(() => {});
