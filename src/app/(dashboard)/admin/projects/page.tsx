@@ -7,8 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { DatePicker } from '@/components/ui/date-picker';
 import { ModalShell, ModalHeaderBar, DialogBody, SubmitButton, CancelButton } from '@/components/ui/shared/modal-shell';
 import { ConfirmDialog } from '@/components/ui/shared/confirm-dialog';
-import { useProjects } from '@/modules/projects/hooks/useProjects';
-import { projectsCollection } from '@/modules/projects/collections/projects';
+import { useProjectMutations, useProjects } from '@/modules/projects/hooks/useProjects';
 import { useProject } from '@/store/project-store';
 import { cn } from '@/lib/utils';
 import { SimplePageHeader } from '@/components/layout/SimplePageHeader';
@@ -115,11 +114,11 @@ function ProjectCard({ project, isCurrent, onEdit, onDelete, onSwitch }: { proje
           </button>
         )}
         <div className='flex items-center gap-1 ml-auto'>
-          <Button variant='ghost' size='icon-sm' onClick={() => onEdit(project)} className='text-muted-foreground hover:text-white'>
+          <Button aria-label={`Edit ${project.name}`} variant='ghost' size='icon-sm' onClick={() => onEdit(project)} className='text-muted-foreground hover:text-white'>
             <PencilIcon size={13} />
           </Button>
           {project.id !== 'ecommerce' && (
-            <Button variant='ghost' size='icon-sm' onClick={() => onDelete(project)} className='text-muted-foreground hover:text-red-500'>
+            <Button aria-label={`Delete ${project.name}`} variant='ghost' size='icon-sm' onClick={() => onDelete(project)} className='text-muted-foreground hover:text-red-500'>
               ✕
             </Button>
           )}
@@ -276,9 +275,7 @@ function ProjectFormModal({
 export default function AdminProjectsPage() {
   const { projects, isLoading } = useProjects();
   const { projectId, switchProject } = useProject();
-  const createProject = projectsCollection.useSet();
-  const updateProject = projectsCollection.useUpdate();
-  const deleteProject = projectsCollection.useDelete();
+  const { create: createProject, update: updateProject, remove: deleteProject } = useProjectMutations();
 
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
@@ -322,15 +319,9 @@ export default function AdminProjectsPage() {
 
     try {
       if (editId) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await updateProject.mutateAsync({ id: editId, data: data as any });
+        await updateProject.mutateAsync({ id: editId, data });
       } else {
-        const newId = form.name
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, '-')
-          .replace(/(^-|-$)/g, '');
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await createProject.mutateAsync({ id: newId, data: data as any });
+        await createProject.mutateAsync(data);
       }
       setShowForm(false);
     } catch (error) {
@@ -407,7 +398,7 @@ export default function AdminProjectsPage() {
         <ConfirmDialog
           danger
           title='Delete Project'
-          message={`Delete "${deleteTarget.name}"? The project document will be removed. Subcollection data (tasks, bugs, etc.) remains in Firestore.`}
+          message={`Delete "${deleteTarget.name}"? The project will be removed from PostgreSQL. Domain data remains isolated in its owning service.`}
           confirmLabel='Delete'
           onConfirm={handleDelete}
           onCancel={() => setDeleteTarget(null)}

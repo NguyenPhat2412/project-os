@@ -2,6 +2,7 @@ export type ProjectStatus = 'active' | 'archived' | 'completed';
 
 export interface Project {
   id: string;
+  legacyId?: string;
   name: string;
   description?: string;
   status: ProjectStatus;
@@ -14,4 +15,6 @@ export interface Project {
   techStack?: string[];
   teamSize?: number;
   createdAt?: string;
+  updatedAt?: string;
+  ownerId?: string;
 }

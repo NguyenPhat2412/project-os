@@ -1,115 +1,96 @@
 'use client';
+
 import { useEffect } from 'react';
-import { signOut as nextAuthSignOut, useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { useAuthStore } from '@/store/auth-store';
-import { rootMembersCollection } from '@/modules/root/collections/root-members';
+import { platformAuth } from '@/lib/platform-api/client';
 import { profileConfig } from '@/lib/project-config';
+import { useAuthStore } from '@/store/auth-store';
 
-const logout = async (clearAuth: () => void) => {
-  await nextAuthSignOut({ redirect: false });
-  clearAuth();
-  window.location.assign('/login');
-};
-
-// ─── Auth Provider Component ──────────────────────────────────────────────────
+const toAuthUser = (user: Awaited<ReturnType<typeof platformAuth.me>>) => ({
+  uid: user.id,
+  email: user.email,
+  displayName: user.displayName,
+  photoURL: user.avatarUrl,
+  role: user.role,
+});
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const setUser = useAuthStore((s) => s.setUser);
-  const setRootRoles = useAuthStore((s) => s.setRootRoles);
-  const setProfile = useAuthStore((s) => s.setProfile);
-  const setLoading = useAuthStore((s) => s.setLoading);
-  const clearAuth = useAuthStore((s) => s.clearAuth);
-
-  const { data: session } = useSession();
-  const sessionUserId = session?.user?.id;
-  const sessionUserEmail = session?.user?.email ?? null;
-  const sessionUserName = session?.user?.name ?? null;
-  const sessionUserImage = session?.user?.image ?? null;
+  const setUser = useAuthStore((state) => state.setUser);
+  const setRootRoles = useAuthStore((state) => state.setRootRoles);
+  const setProfile = useAuthStore((state) => state.setProfile);
+  const setLoading = useAuthStore((state) => state.setLoading);
+  const clearAuth = useAuthStore((state) => state.clearAuth);
 
   useEffect(() => {
-    if (!sessionUserId) {
-      clearAuth();
-      return;
-    }
+    let active = true;
 
-    setUser({
-      uid: sessionUserId,
-      email: sessionUserEmail,
-      displayName: sessionUserName,
-      photoURL: sessionUserImage,
-    });
-
-    const loadData = async () => {
+    const load = async () => {
+      setLoading(true);
       try {
-        const [member, profile] = await Promise.all([
-          rootMembersCollection.helpers.fetch(sessionUserId),
-          profileConfig.helpers.fetch(sessionUserId),
-        ]);
-        setRootRoles(member?.roles ?? []);
-        setProfile(profile ?? null);
+        const user = await platformAuth.me();
+        if (!active) return;
+        setUser(toAuthUser(user));
+        setRootRoles([user.role]);
+
+        try {
+          const profile = await profileConfig.helpers.fetch(user.id);
+          if (active) setProfile(profile ?? null);
+        } catch {
+          if (active) setProfile(null);
+        }
       } catch {
-        setRootRoles([]);
-        setProfile(null);
+        if (active) clearAuth();
       } finally {
-        setLoading(false);
+        if (active) setLoading(false);
       }
     };
 
-    loadData();
-  }, [sessionUserId, sessionUserEmail, sessionUserName, sessionUserImage, setUser, setRootRoles, setProfile, setLoading, clearAuth]);
+    void load();
+    return () => {
+      active = false;
+    };
+  }, [clearAuth, setLoading, setProfile, setRootRoles, setUser]);
 
   return <>{children}</>;
 }
 
-// ─── useAuth Hook ─────────────────────────────────────────────────────────────
-
 export function useAuth() {
-  const profile = useAuthStore((s) => s.profile);
-  const loading = useAuthStore((s) => s.loading);
-  const clearAuth = useAuthStore((s) => s.clearAuth);
-  const setProfile = useAuthStore((s) => s.setProfile);
-
-  const { data: session, status } = useSession();
-
-  const isLoading = status === 'loading' || loading;
-
-  const authUser = session?.user
-    ? {
-        uid: session.user.id,
-        email: session.user.email ?? null,
-        displayName: session.user.name ?? null,
-        photoURL: session.user.image ?? null,
-      }
-    : null;
+  const user = useAuthStore((state) => state.user);
+  const profile = useAuthStore((state) => state.profile);
+  const loading = useAuthStore((state) => state.loading);
+  const clearAuth = useAuthStore((state) => state.clearAuth);
+  const setProfile = useAuthStore((state) => state.setProfile);
 
   return {
-    user: authUser,
+    user,
     profile,
-    loading: isLoading,
-    logout: () => logout(clearAuth),
-    refreshProfile: async () => {
-      if (session?.user?.id) {
-        const profile = await profileConfig.helpers.fetch(session.user.id);
-        setProfile(profile ?? null);
+    loading,
+    logout: async () => {
+      try {
+        await platformAuth.logout();
+      } finally {
+        clearAuth();
+        window.location.assign('/login');
       }
+    },
+    refreshProfile: async () => {
+      if (!user) return;
+      const nextProfile = await profileConfig.helpers.fetch(user.uid);
+      setProfile(nextProfile ?? null);
     },
   };
 }
 
-// ─── Auth Guard ──────────────────────────────────────────────────────────────
-
 export function AuthGuard({ children }: { children: React.ReactNode }) {
-  const { status } = useSession();
+  const user = useAuthStore((state) => state.user);
+  const loading = useAuthStore((state) => state.loading);
   const router = useRouter();
 
   useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.replace('/login');
-    }
-  }, [status, router]);
+    if (!loading && !user) router.replace('/login');
+  }, [loading, router, user]);
 
-  if (status === 'loading') {
+  if (loading) {
     return (
       <div className='flex h-screen items-center justify-center bg-background'>
         <div className='flex flex-col items-center gap-3'>
@@ -120,7 +101,6 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (status === 'unauthenticated') return null;
-
+  if (!user) return null;
   return <>{children}</>;
 }

@@ -16,10 +16,11 @@ import { isAdminEmail } from '@/lib/admin-emails';
 // ─── Hook ────────────────────────────────────────────────────────────────────
 
 export function usePermission() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const rootRoles = useAuthStore((s) => s.rootRoles);
   const projectRoles = useAuthStore((s) => s.projectRoles);
   const hydrated = useAuthStore((s) => s.hydrated);
+  const ready = hydrated && !loading;
 
   /**
    * Check if user has a specific role.
@@ -27,8 +28,8 @@ export function usePermission() {
    * @param projectId - Optional project scope
    */
   const hasRole = (role: string, projectId?: string): boolean => {
-    if (!hydrated) return false;
-    if (rootRoles.includes(ROOT_ADMIN_ROLE)) return true;
+    if (!ready) return false;
+    if (rootRoles.includes(ROOT_ADMIN_ROLE) || rootRoles.includes('ROOT_ADMIN') || user?.role === 'ROOT_ADMIN') return true;
     if (rootRoles.includes(role)) return true;
     if (projectId && projectRoles[projectId]?.includes(role)) return true;
     return false;
@@ -47,8 +48,8 @@ export function usePermission() {
    * Check if user is root admin (Administrators role OR admin email).
    */
   const isRootAdmin = (): boolean => {
-    if (!hydrated) return false;
-    return rootRoles.includes(ROOT_ADMIN_ROLE) || isAdminEmail(user?.email, ADMIN_EMAILS);
+    if (!ready) return false;
+    return rootRoles.includes(ROOT_ADMIN_ROLE) || rootRoles.includes('ROOT_ADMIN') || user?.role === 'ROOT_ADMIN' || isAdminEmail(user?.email, ADMIN_EMAILS);
   };
 
   /**
@@ -62,9 +63,9 @@ export function usePermission() {
    * Check if user is admin for a specific project.
    */
   const isProjectAdmin = (projectId: string): boolean => {
-    if (!hydrated) return false;
+    if (!ready) return false;
     if (isRootAdmin()) return true;
-    return projectRoles[projectId]?.includes('Project Admin') ?? false;
+    return projectRoles[projectId]?.some((role) => role === 'Project Admin' || role === 'PROJECT_ADMIN') ?? false;
   };
 
   /**
@@ -87,7 +88,7 @@ export function usePermission() {
     user,
     rootRoles,
     projectRoles,
-    hydrated,
+    hydrated: ready,
     // Checks
     hasRole,
     hasAnyRole,

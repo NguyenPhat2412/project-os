@@ -4,7 +4,6 @@ import './globals.css';
 
 import { LayoutShell } from '@/components/layout/LayoutShell';
 import { AuthProvider } from '@/contexts/auth-context';
-import { NextAuthSessionProvider } from '@/components/providers/nextauth-session-provider';
 import { ReactQueryProvider } from '@/lib/firestore-rq/ReactQueryProvider';
 
 export const metadata: Metadata = {
@@ -17,11 +16,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang='vi' data-scroll-behavior='smooth' suppressHydrationWarning>
       <body className='antialiased'>
         <ReactQueryProvider>
-          <NextAuthSessionProvider>
-            <AuthProvider>
-              <LayoutShell>{children}</LayoutShell>
-            </AuthProvider>
-          </NextAuthSessionProvider>
+          <AuthProvider>
+            <LayoutShell>{children}</LayoutShell>
+          </AuthProvider>
         </ReactQueryProvider>
       </body>
     </html>

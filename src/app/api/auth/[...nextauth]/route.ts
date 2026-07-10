@@ -1,3 +1,13 @@
-import { handlers } from '@/lib/auth';
+import { NextResponse } from 'next/server';
+import { auth } from '@/lib/auth';
 
-export const { GET, POST } = handlers;
+export async function GET() {
+  return NextResponse.json(await auth());
+}
+
+export async function POST() {
+  return NextResponse.json(
+    { error: { code: 'AUTH_MOVED', message: 'Authentication is served by /api/v1/auth.' } },
+    { status: 410 },
+  );
+}

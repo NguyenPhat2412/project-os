@@ -5,17 +5,11 @@ export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   // Public routes — allow
-  if (pathname.startsWith('/login') || pathname.startsWith('/api/auth') || pathname === '/api/users/register' || pathname.startsWith('/_next') || pathname.startsWith('/favicon') || pathname.startsWith('/auth')) {
+  if (pathname.startsWith('/login') || pathname.startsWith('/api/auth') || pathname.startsWith('/api/v1') || pathname === '/api/users/register' || pathname.startsWith('/_next') || pathname.startsWith('/favicon') || pathname.startsWith('/auth')) {
     return NextResponse.next();
   }
 
-  // Check session cookie. Auth.js/NextAuth v5 uses authjs.* names; keep the
-  // next-auth.* fallbacks for older local cookies during migration.
-  const sessionToken =
-    req.cookies.get('__Secure-authjs.session-token')?.value ||
-    req.cookies.get('authjs.session-token')?.value ||
-    req.cookies.get('__Secure-next-auth.session-token')?.value ||
-    req.cookies.get('next-auth.session-token')?.value;
+  const sessionToken = req.cookies.get('PROJECT_OS_ACCESS')?.value || req.cookies.get('PROJECT_OS_REFRESH')?.value;
 
   // No session → redirect to login
   if (!sessionToken) {

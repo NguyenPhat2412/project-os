@@ -1,9 +1,6 @@
-import { getSession } from 'next-auth/react';
 import { LANGUAGE_PROMPT_SUFFIX, type AILanguage } from '@/lib/ai/language';
 
 async function callClaude(prompt: string, language?: AILanguage): Promise<string> {
-  const session = await getSession();
-  if (!session) throw new Error('Chưa đăng nhập');
   const suffix = language ? LANGUAGE_PROMPT_SUFFIX[language] : '';
   const fullPrompt = suffix ? `${prompt}\n\n${suffix}` : prompt;
   const response = await fetch('/api/ai/claude', {

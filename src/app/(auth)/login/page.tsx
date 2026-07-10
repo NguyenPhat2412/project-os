@@ -1,6 +1,5 @@
 'use client';
 import { BarChart2Icon, BugIcon, CheckSquareIcon, GanttChartIcon, LockIcon, MailIcon, MessageSquareIcon, ShieldCheckIcon, UsersIcon, WalletIcon, ZapIcon } from 'lucide-react';
-import { signIn, useSession } from 'next-auth/react';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -12,13 +11,15 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { getInlineErrorTextClass, getPlainLabelErrorClass } from '@/lib/form-validation';
 import { cn } from '@/lib/utils';
+import { platformAuth } from '@/lib/platform-api/client';
+import { useAuthStore } from '@/store/auth-store';
 import { zodResolver } from '@hookform/resolvers/zod';
 
 export const dynamic = 'force-dynamic';
 
 const loginSchema = z.object({
   email: z.string().trim().min(1, 'Vui lòng nhập email.').email('Địa chỉ email không hợp lệ.'),
-  password: z.string().min(6, 'Mật khẩu tối thiểu 6 ký tự.'),
+  password: z.string().min(8, 'Mật khẩu tối thiểu 8 ký tự.'),
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
@@ -46,14 +47,15 @@ function getSafeCallbackUrl() {
 }
 
 export default function LoginPage() {
-  const { status } = useSession();
+  const user = useAuthStore((state) => state.user);
+  const loading = useAuthStore((state) => state.loading);
 
   // Redirect to dashboard when authenticated (only after hydration, no SSR conflict)
   useEffect(() => {
-    if (status === 'authenticated') {
+    if (user) {
       window.location.href = getSafeCallbackUrl();
     }
-  }, [status]);
+  }, [user]);
 
   const {
     register,
@@ -77,44 +79,14 @@ export default function LoginPage() {
     setSubmitting(true);
     try {
       if (mode === 'login') {
-        const result = await signIn('credentials', {
-          email: values.email,
-          password: values.password,
-          redirect: false,
-        });
-
-        if (result?.error) {
-          setError(result.error === 'CredentialsSignin' ? 'Email hoặc mật khẩu không chính xác.' : 'Không thể kết nối hệ thống đăng nhập. Vui lòng kiểm tra cấu hình Firebase Admin.');
-          return;
-        }
-
+        await platformAuth.login(values.email, values.password);
         window.location.assign(getSafeCallbackUrl());
       } else {
-        // Register — call API to create user
-        const res = await fetch('/api/users/register', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: values.email, password: values.password, name: values.email.split('@')[0] }),
-        });
-        if (!res.ok) {
-          const data = await res.json();
-          setError(data.error ?? 'Đăng ký thất bại.');
-          return;
-        }
-        // Auto-login after registration
-        const loginResult = await signIn('credentials', {
-          email: values.email,
-          password: values.password,
-          redirect: false,
-        });
-        if (loginResult?.error) {
-          setError('Đăng ký thành công nhưng không thể đăng nhập tự động. Vui lòng đăng nhập.');
-          return;
-        }
+        await platformAuth.register(values.email, values.password, values.email.split('@')[0]);
         window.location.assign(getSafeCallbackUrl());
       }
-    } catch {
-      setError('Đăng nhập thất bại. Vui lòng thử lại.');
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : 'Đăng nhập thất bại. Vui lòng thử lại.');
     } finally {
       setSubmitting(false);
     }
@@ -124,10 +96,8 @@ export default function LoginPage() {
     setError('');
     setSubmitting(true);
     try {
-      const result = await signIn('google', {
-        redirect: false,
-        redirectTo: getSafeCallbackUrl(),
-      });
+      const callback = encodeURIComponent(getSafeCallbackUrl());
+      const result = { error: null, url: `/api/v1/oauth2/authorization/google?callbackUrl=${callback}` };
       if (result?.error) {
         setError('Đăng nhập Google thất bại. Vui lòng thử lại.');
         setSubmitting(false);
@@ -146,7 +116,7 @@ export default function LoginPage() {
   };
 
   // Wait for NextAuth to initialize
-  if (status === 'loading') {
+  if (loading) {
     return (
       <div className='flex h-screen items-center justify-center' style={{ background: 'var(--background)' }}>
         <div className='w-8 h-8 border-2 rounded-full animate-spin' style={{ borderColor: 'var(--primary)', borderTopColor: 'transparent' }} />
@@ -231,7 +201,7 @@ export default function LoginPage() {
 
           <div className='mt-8 rounded-sm border border-border/60 bg-muted/20 px-4 py-3'>
             <span className='text-[12px] text-muted-foreground'>
-              Workspace mới bắt đầu trống và lưu dữ liệu thật vào Firestore.
+              Workspace mới bắt đầu trống và lưu dữ liệu thật vào PostgreSQL.
             </span>
           </div>
         </div>

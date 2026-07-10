@@ -21,6 +21,7 @@ export interface AuthUser {
   email: string | null;
   displayName: string | null;
   photoURL: string | null;
+  role: string;
 }
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -114,7 +115,7 @@ export const useAuthStore = create<AuthState & AuthActions>()(
 
         isRootAdmin: () => {
           const { user, rootRoles } = get();
-          return rootRoles.includes(ROOT_ADMIN_ROLE) || isAdminEmail(user?.email, ADMIN_EMAILS);
+          return rootRoles.includes(ROOT_ADMIN_ROLE) || rootRoles.includes('ROOT_ADMIN') || user?.role === 'ROOT_ADMIN' || isAdminEmail(user?.email, ADMIN_EMAILS);
         },
 
         isAdmin: () => {
@@ -124,7 +125,7 @@ export const useAuthStore = create<AuthState & AuthActions>()(
         isProjectAdmin: (projectId) => {
           const { isRootAdmin, projectRoles } = get();
           if (isRootAdmin()) return true;
-          return projectRoles[projectId]?.includes('Project Admin') ?? false;
+          return projectRoles[projectId]?.some((role) => role === 'Project Admin' || role === 'PROJECT_ADMIN') ?? false;
         },
 
         setLoading: (loading) => set({ loading }),

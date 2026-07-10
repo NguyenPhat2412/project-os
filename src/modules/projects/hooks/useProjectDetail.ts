@@ -1,13 +1,18 @@
-import { projectsCollection } from '../collections/projects';
-import type { WithId } from '@/lib/firestore-rq';
-import type { Project } from '../types/project';
+'use client';
+
+import { useQuery } from '@tanstack/react-query';
+import { getProject } from '@/modules/projects/api/projects-api';
+import { projectKeys } from '@/modules/projects/hooks/useProjects';
 
 export function useProjectDetail(projectId: string) {
-  const query = projectsCollection.useDocument(projectId);
-  const project = query.data as WithId<Project> | undefined;
+  const query = useQuery({
+    queryKey: projectKeys.detail(projectId),
+    queryFn: () => getProject(projectId),
+    enabled: Boolean(projectId),
+  });
 
   return {
-    project,
+    project: query.data,
     isLoading: query.isLoading,
     error: query.error,
   };

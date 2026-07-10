@@ -1,98 +1,47 @@
+import { cookies } from 'next/headers';
+
+interface SpringUser {
+  id: string;
+  email: string;
+  displayName: string;
+  avatarUrl: string | null;
+  role: string;
+}
+
+export interface AppSession {
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    image: string | null;
+    role: string;
+  };
+}
+
 /**
- * NextAuth v5 configuration với Credentials + Google OAuth provider.
- * User credentials đọc từ Firestore `users` collection.
+ * Compatibility bridge for legacy Next route handlers during the rollout.
+ * Spring Identity remains the only authentication authority.
  */
-import NextAuth from 'next-auth';
-import Credentials from 'next-auth/providers/credentials';
-import Google from 'next-auth/providers/google';
-import { createUser, getUserByEmail, verifyPassword } from '@/lib/users';
+export async function auth(): Promise<AppSession | null> {
+  const cookieStore = await cookies();
+  const cookieHeader = cookieStore.getAll().map(({ name, value }) => `${name}=${value}`).join('; ');
+  if (!cookieHeader.includes('PROJECT_OS_ACCESS=')) return null;
 
-// ponytail: dev-only fallback so Auth.js boots locally; set AUTH_SECRET for shared/prod envs.
-const devAuthSecret = process.env.NODE_ENV === 'production' ? undefined : 'project-os-dev-auth-secret';
+  const origin = (process.env.PROJECT_OS_API_INTERNAL_URL ?? 'http://127.0.0.1:18080').replace(/\/$/, '');
+  const response = await fetch(`${origin}/api/v1/auth/me`, {
+    headers: { Cookie: cookieHeader },
+    cache: 'no-store',
+  });
+  if (!response.ok) return null;
 
-export const { handlers, auth, signIn, signOut } = NextAuth({
-  secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET ?? devAuthSecret,
-
-  providers: [
-    Google({
-      clientId: process.env.GOOGLE_CLIENT_ID ?? '',
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? '',
-    }),
-    Credentials({
-      name: 'Credentials',
-      credentials: {
-        email: { label: 'Email', type: 'email' },
-        password: { label: 'Password', type: 'password' },
-      },
-      async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null;
-
-        const user = await getUserByEmail(credentials.email as string);
-        if (!user) return null;
-
-        const valid = await verifyPassword(user, credentials.password as string);
-        if (!valid) return null;
-
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-        };
-      },
-    }),
-  ],
-
-  session: {
-    strategy: 'jwt',
-    maxAge: 14 * 24 * 60 * 60, // 14 days
-  },
-
-  pages: {
-    signIn: '/login',
-    error: '/login',
-  },
-
-  callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
-        token.uid = user.id;
-      }
-      return token;
-    },
-    async session({ session, token }) {
-      if (token.uid && session.user) {
-        session.user.id = token.uid as string;
-      }
-      return session;
-    },
-  },
-
-  events: {
-    async signIn({ user }) {
-      // Google OAuth: auto-create user in Firestore if not exists
-      if (user.email) {
-        const existing = await getUserByEmail(user.email);
-        if (!existing) {
-          await createUser({
-            email: user.email,
-            name: user.name ?? user.email.split('@')[0],
-            password: '', // no password for OAuth users
-          });
-        }
-      }
-    },
-  },
-
-  trustHost: true,
-});
-
-declare module 'next-auth' {
-  interface Session {
+  const body = (await response.json()) as { data: SpringUser };
+  return {
     user: {
-      id: string;
-      name?: string | null;
-      email?: string | null;
-      image?: string | null;
-    };
-  }
+      id: body.data.id,
+      name: body.data.displayName,
+      email: body.data.email,
+      image: body.data.avatarUrl,
+      role: body.data.role,
+    },
+  };
 }

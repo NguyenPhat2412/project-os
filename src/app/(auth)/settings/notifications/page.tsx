@@ -9,7 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Bell, Loader2, Mail, MessageSquare } from 'lucide-react';
-import { useSession } from 'next-auth/react';
+import { useAuth } from '@/contexts/auth-context';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -110,7 +110,8 @@ export default function NotificationSettings() {
     defaultValues: defaultNotifications,
   });
 
-  const { data: session } = useSession();
+  const { user } = useAuth();
+  const session = user ? { user: { id: user.uid } } : null;
 
   useEffect(() => {
     if (!session?.user?.id) return;

@@ -13,7 +13,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { useSession } from 'next-auth/react';
+import { useAuth } from '@/contexts/auth-context';
 import { profileConfig } from '@/lib/project-config';
 import type { UserProfile } from '@/lib/project-config';
 
@@ -47,7 +47,8 @@ type AccountFormValues = z.infer<typeof accountFormSchema>;
 
 export default function AccountSettings() {
   const router = useRouter();
-  const { data: session } = useSession();
+  const { user } = useAuth();
+  const session = user ? { user: { id: user.uid, name: user.displayName, email: user.email } } : null;
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [initialProfile, setInitialProfile] = useState<UserProfile | null>(null);
