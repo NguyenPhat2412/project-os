@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 import { BarChart2Icon, BugIcon, CheckSquareIcon, GanttChartIcon, LockIcon, MailIcon, MessageSquareIcon, ShieldCheckIcon, UsersIcon, WalletIcon, ZapIcon } from 'lucide-react';
 import { signIn, useSession } from 'next-auth/react';
 import { useEffect, useState } from 'react';
@@ -17,18 +17,18 @@ import { zodResolver } from '@hookform/resolvers/zod';
 export const dynamic = 'force-dynamic';
 
 const loginSchema = z.object({
-  email: z.string().trim().min(1, 'Vui lÃ²ng nháº­p email.').email('Äá»‹a chá»‰ email khÃ´ng há»£p lá»‡.'),
-  password: z.string().min(6, 'Máº­t kháº©u tá»‘i thiá»ƒu 6 kÃ½ tá»±.'),
+  email: z.string().trim().min(1, 'Vui lòng nhập email.').email('Địa chỉ email không hợp lệ.'),
+  password: z.string().min(6, 'Mật khẩu tối thiểu 6 ký tự.'),
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 const features = [
-  { icon: CheckSquareIcon, text: 'Quáº£n lÃ½ Tasks & Sprints' },
+  { icon: CheckSquareIcon, text: 'Quản lý Tasks & Sprints' },
   { icon: GanttChartIcon, text: 'Timeline & Gantt Chart' },
-  { icon: UsersIcon, text: 'Cá»™ng tÃ¡c Team' },
-  { icon: BugIcon, text: 'Theo dÃµi Bugs' },
-  { icon: WalletIcon, text: 'Quáº£n lÃ½ Budget' },
+  { icon: UsersIcon, text: 'Cộng tác Team' },
+  { icon: BugIcon, text: 'Theo dõi Bugs' },
+  { icon: WalletIcon, text: 'Quản lý Budget' },
   { icon: BarChart2Icon, text: 'Reports & Analytics' },
   { icon: MessageSquareIcon, text: 'Comments & Meetings' },
   { icon: ShieldCheckIcon, text: 'Risk Management' },
@@ -84,13 +84,13 @@ export default function LoginPage() {
         });
 
         if (result?.error) {
-          setError(result.error === 'CredentialsSignin' ? 'Email hoáº·c máº­t kháº©u khÃ´ng chÃ­nh xÃ¡c.' : 'KhÃ´ng thá»ƒ káº¿t ná»‘i há»‡ thá»‘ng Ä‘Äƒng nháº­p. Vui lÃ²ng kiá»ƒm tra cáº¥u hÃ¬nh Firebase Admin.');
+          setError(result.error === 'CredentialsSignin' ? 'Email hoặc mật khẩu không chính xác.' : 'Không thể kết nối hệ thống đăng nhập. Vui lòng kiểm tra cấu hình Firebase Admin.');
           return;
         }
 
         window.location.assign(getSafeCallbackUrl());
       } else {
-        // Register â€” call API to create user
+        // Register — call API to create user
         const res = await fetch('/api/users/register', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -98,7 +98,7 @@ export default function LoginPage() {
         });
         if (!res.ok) {
           const data = await res.json();
-          setError(data.error ?? 'ÄÄƒng kÃ½ tháº¥t báº¡i.');
+          setError(data.error ?? 'Đăng ký thất bại.');
           return;
         }
         // Auto-login after registration
@@ -108,13 +108,13 @@ export default function LoginPage() {
           redirect: false,
         });
         if (loginResult?.error) {
-          setError('ÄÄƒng kÃ½ thÃ nh cÃ´ng nhÆ°ng khÃ´ng thá»ƒ Ä‘Äƒng nháº­p tá»± Ä‘á»™ng. Vui lÃ²ng Ä‘Äƒng nháº­p.');
+          setError('Đăng ký thành công nhưng không thể đăng nhập tự động. Vui lòng đăng nhập.');
           return;
         }
         window.location.assign(getSafeCallbackUrl());
       }
     } catch {
-      setError('ÄÄƒng nháº­p tháº¥t báº¡i. Vui lÃ²ng thá»­ láº¡i.');
+      setError('Đăng nhập thất bại. Vui lòng thử lại.');
     } finally {
       setSubmitting(false);
     }
@@ -129,7 +129,7 @@ export default function LoginPage() {
         redirectTo: getSafeCallbackUrl(),
       });
       if (result?.error) {
-        setError('ÄÄƒng nháº­p Google tháº¥t báº¡i. Vui lÃ²ng thá»­ láº¡i.');
+        setError('Đăng nhập Google thất bại. Vui lòng thử lại.');
         setSubmitting(false);
         return;
       }
@@ -140,7 +140,7 @@ export default function LoginPage() {
         window.location.assign(getSafeCallbackUrl());
       }
     } catch {
-      setError('ÄÄƒng nháº­p Google tháº¥t báº¡i. Vui lÃ²ng thá»­ láº¡i.');
+      setError('Đăng nhập Google thất bại. Vui lòng thử lại.');
       setSubmitting(false);
     }
   };
@@ -156,7 +156,7 @@ export default function LoginPage() {
 
   return (
     <div className='flex min-h-screen' style={{ background: 'var(--background)' }}>
-      {/* â”€â”€ LEFT PANEL â€“ INTRO â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* ── LEFT PANEL – INTRO ──────────────────────────────────────── */}
       <div className='hidden lg:flex flex-col justify-between relative w-1/2 min-h-screen overflow-hidden'>
         {/* Ambient background blobs */}
         <div className='absolute inset-0 pointer-events-none'>
@@ -201,19 +201,19 @@ export default function LoginPage() {
             <div className='inline-flex items-center gap-2 px-4 py-2 rounded-full border border-primary/30 bg-primary/10 mb-6'>
               <ZapIcon className='size-3.5' style={{ color: 'var(--primary)' }} strokeWidth={2} />
               <span className='text-[12px] font-semibold tracking-wide uppercase' style={{ color: 'var(--primary)' }}>
-                Ná»n táº£ng quáº£n lÃ½ dá»± Ã¡n
+                Nền tảng quản lý dự án
               </span>
             </div>
 
             <h1 className='font-sans text-[36px] xl:text-[42px] font-bold leading-[1.2] mb-5' style={{ color: 'var(--foreground)' }}>
-              Quáº£n lÃ½ dá»± Ã¡n
+              Quản lý dự án
               <span className='mx-2' style={{ color: 'var(--primary)' }}>
-                tháº¿ há»‡ má»›i
+                thế hệ mới
               </span>
             </h1>
 
             <p className='text-lg leading-relaxed' style={{ color: 'var(--muted-foreground)' }}>
-              Táº­p trung, minh báº¡ch, hiá»‡u quáº£. Ná»n táº£ng toÃ n diá»‡n cho Ä‘á»™i nhÃ³m ká»¹ thuáº­t hiá»‡n Ä‘áº¡i.
+              Tập trung, minh bạch, hiệu quả. Nền tảng toàn diện cho đội nhóm kỹ thuật hiện đại.
             </p>
           </div>
 
@@ -231,7 +231,7 @@ export default function LoginPage() {
 
           <div className='mt-8 rounded-sm border border-border/60 bg-muted/20 px-4 py-3'>
             <span className='text-[12px] text-muted-foreground'>
-              Workspace má»›i báº¯t Ä‘áº§u trá»‘ng vÃ  lÆ°u dá»¯ liá»‡u tháº­t vÃ o Firestore.
+              Workspace mới bắt đầu trống và lưu dữ liệu thật vào Firestore.
             </span>
           </div>
         </div>
@@ -240,13 +240,13 @@ export default function LoginPage() {
         <div className='relative z-10 px-10 pb-10'>
           <div className='border-t pt-6' style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
             <p className='text-[13px] leading-relaxed' style={{ color: 'var(--muted)' }}>
-              KhÃ´ng náº¡p dá»¯ liá»‡u máº«u. NgÆ°á»i dÃ¹ng tá»± táº¡o project, task, team vÃ  bÃ¡o cÃ¡o tá»« dá»¯ liá»‡u tháº­t.
+              Không nạp dữ liệu mẫu. Người dùng tự tạo project, task, team và báo cáo từ dữ liệu thật.
             </p>
           </div>
         </div>
       </div>
 
-      {/* â”€â”€ RIGHT PANEL â€“ FORM â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* ── RIGHT PANEL – FORM ─────────────────────────────────────── */}
       <div className='flex flex-1 items-center justify-center p-6 lg:p-14'>
         <div className='w-full max-w-100'>
           {/* Mobile logo */}
@@ -254,22 +254,22 @@ export default function LoginPage() {
           {/* Card */}
           <Card className='w-full shadow-xl'>
             <CardHeader className='space-y-1 pb-2'>
-              <CardTitle className='text-[24px] font-bold'>{mode === 'login' ? 'ChÃ o má»«ng trá»Ÿ láº¡i' : 'Táº¡o tÃ i khoáº£n'}</CardTitle>
-              <CardDescription>{mode === 'login' ? 'ÄÄƒng nháº­p Ä‘á»ƒ truy cáº­p workspace cá»§a báº¡n.' : 'Äiá»n thÃ´ng tin Ä‘á»ƒ báº¯t Ä‘áº§u vá»›i ProjectOS.'}</CardDescription>
+              <CardTitle className='text-[24px] font-bold'>{mode === 'login' ? 'Chào mừng trở lại' : 'Tạo tài khoản'}</CardTitle>
+              <CardDescription>{mode === 'login' ? 'Đăng nhập để truy cập workspace của bạn.' : 'Điền thông tin để bắt đầu với ProjectOS.'}</CardDescription>
             </CardHeader>
             <CardContent className='space-y-4'>
               {/* OAuth buttons */}
               <div className='flex flex-col gap-3'>
                 <Button variant='outline' size='lg' className='w-full gap-3' onClick={handleGoogle} disabled={submitting}>
                   <GoogleIcon />
-                  Tiáº¿p tá»¥c vá»›i Google
+                  Tiếp tục với Google
                 </Button>
               </div>
 
               <div className='flex items-center gap-3 my-6'>
                 <div className='flex-1 h-px' style={{ background: 'var(--border)' }} />
                 <span className='text-[12px] shrink-0' style={{ color: 'var(--foreground)' }}>
-                  hoáº·c
+                  hoặc
                 </span>
                 <div className='flex-1 h-px' style={{ background: 'var(--border)' }} />
               </div>
@@ -292,17 +292,17 @@ export default function LoginPage() {
                 <div className='space-y-1.5'>
                   <div className='flex items-center justify-between'>
                     <Label htmlFor='password' className={getPlainLabelErrorClass(!!errors.password)}>
-                      Máº­t kháº©u
+                      Mật khẩu
                     </Label>
                     {mode === 'login' && (
                       <Button variant='link' size='sm' className='h-auto p-0 text-[12px] text-primary'>
-                        QuÃªn máº­t kháº©u?
+                        Quên mật khẩu?
                       </Button>
                     )}
                   </div>
                   <div className='relative'>
                     <LockIcon className='absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none' strokeWidth={1.8} />
-                    <Input id='password' type={showPassword ? 'text' : 'password'} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} placeholder='â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢' className={cn('pl-10 pr-10', errors.password && 'border-destructive')} aria-invalid={!!errors.password} {...register('password')} />
+                    <Input id='password' type={showPassword ? 'text' : 'password'} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} placeholder='••••••••' className={cn('pl-10 pr-10', errors.password && 'border-destructive')} aria-invalid={!!errors.password} {...register('password')} />
                     <Button type='button' variant='ghost' size='icon' className='absolute right-0 top-1/2 -translate-y-1/2 h-full px-3 hover:bg-transparent text-muted-foreground' onClick={() => setShowPassword(!showPassword)}>
                       {showPassword ? <EyeOffIcon /> : <EyeIcon />}
                     </Button>
@@ -322,19 +322,19 @@ export default function LoginPage() {
                   {submitting ? (
                     <>
                       <span className='w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin' />
-                      {mode === 'login' ? 'Äang Ä‘Äƒng nháº­p...' : 'Äang táº¡o tÃ i khoáº£n...'}
+                      {mode === 'login' ? 'Đang đăng nhập...' : 'Đang tạo tài khoản...'}
                     </>
                   ) : mode === 'login' ? (
-                    'ÄÄƒng nháº­p'
+                    'Đăng nhập'
                   ) : (
-                    'Táº¡o tÃ i khoáº£n'
+                    'Tạo tài khoản'
                   )}
                 </Button>
               </form>
 
               {/* Toggle mode */}
               <p className='text-center text-[12px] text-muted-foreground'>
-                {mode === 'login' ? 'ChÆ°a cÃ³ tÃ i khoáº£n?' : 'ÄÃ£ cÃ³ tÃ i khoáº£n?'}{' '}
+                {mode === 'login' ? 'Chưa có tài khoản?' : 'Đã có tài khoản?'}{' '}
                 <Button
                   variant='link'
                   size='sm'
@@ -344,7 +344,7 @@ export default function LoginPage() {
                     setError('');
                   }}
                 >
-                  {mode === 'login' ? 'ÄÄƒng kÃ½ ngay' : 'ÄÄƒng nháº­p'}
+                  {mode === 'login' ? 'Đăng ký ngay' : 'Đăng nhập'}
                 </Button>
               </p>
             </CardContent>
@@ -352,8 +352,8 @@ export default function LoginPage() {
 
           {/* Footer note */}
           <p className='text-center text-[12px] mt-6' style={{ color: 'rgba(255,255,255,0.3)' }}>
-            Báº±ng viá»‡c tiáº¿p tá»¥c, báº¡n Ä‘á»“ng Ã½ vá»›i <br />
-            <span style={{ color: 'rgba(255,255,255,0.4)' }}>Äiá»u khoáº£n sá»­ dá»¥ng</span> & <span style={{ color: 'rgba(255,255,255,0.4)' }}>ChÃ­nh sÃ¡ch báº£o máº­t</span>
+            Bằng việc tiếp tục, bạn đồng ý với <br />
+            <span style={{ color: 'rgba(255,255,255,0.4)' }}>Điều khoản sử dụng</span> & <span style={{ color: 'rgba(255,255,255,0.4)' }}>Chính sách bảo mật</span>
           </p>
         </div>
       </div>
@@ -361,7 +361,7 @@ export default function LoginPage() {
   );
 }
 
-// â”€â”€ SVG ICONS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── SVG ICONS ───────────────────────────────────────────────────────────────
 
 function GoogleIcon() {
   return (
