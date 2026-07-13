@@ -3,11 +3,11 @@
  * Stored in `projects/{projectId}/role_definitions/{slugifiedId}`.
  *
  * Document ID (id) = slugify(name), tách rời khỏi name field để:
- *  - An toàn cho Firestore document ID
+ *  - An toàn cho API document ID
  *  - Name có thể thay đổi mà không ảnh hưởng document ID
  */
 export interface RoleDefinition {
-  /** Firestore document ID — slugify(name) */
+  /** API document ID — slugify(name) */
   id: string;
   /** Human-readable role name */
   name: string;

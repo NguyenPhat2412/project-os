@@ -54,11 +54,11 @@ export default function ReportsRisksPage() {
   const [sorting, setSorting] = useState<SortingState>([]);
 
   const { data, isLoading } = useReportReadModel<WithId<Risk>>('risks');
-  const risks = data?.items ?? [];
-  const team = data?.members ?? [];
-  const memberMap = Object.fromEntries(team.map((m) => [m.id, m.name]));
+  const risks = useMemo(() => data?.items ?? [], [data?.items]);
+  const team = useMemo(() => data?.members ?? [], [data?.members]);
+  const memberMap = useMemo(() => Object.fromEntries(team.map((m) => [m.id, m.name])), [team]);
 
-  const tableData = useMemo(() => risks.map((r) => ({ ...r, ownerName: memberMap[r.ownerId] ?? '—' })), [risks, team]);
+  const tableData = useMemo(() => risks.map((r) => ({ ...r, ownerName: memberMap[r.ownerId] ?? '—' })), [risks, memberMap]);
 
   const levelData = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -139,7 +139,7 @@ export default function ReportsRisksPage() {
       {/* Chart */}
       <div className='bg-card border border-border panel p-5 mb-4.5'>
         <div className='font-sans text-[16px] font-bold mb-4'>Phân bổ theo mức độ</div>
-        <ResponsiveContainer width='100%' height={140}>
+        <ResponsiveContainer width='100%' height={140} initialDimension={{ width: 1, height: 1 }}>
           <BarChart data={levelData} margin={{ top: 0, right: 0, left: -16, bottom: 0 }} barCategoryGap='40%'>
             <CartesianGrid strokeDasharray='3 3' stroke='var(--border)' vertical={false} />
             <XAxis dataKey='name' tick={{ fill: 'var(--muted)', fontSize: 10 }} axisLine={false} tickLine={false} />

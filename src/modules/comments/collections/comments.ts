@@ -1,7 +1,7 @@
-import { createSubcollection } from '@/lib/firestore-rq';
-import type { WithId } from '@/lib/firestore-rq';
+import { createSubcollection } from '@/lib/api-rq';
+import type { WithId } from '@/lib/api-rq';
 import type { Comment, CommentEntityType } from '@/modules/comments/types/comment';
-import { ACTIVE_PROJECT_ID } from '@/lib/project';
+import { ACTIVE_PROJECT_SCOPE } from '@/lib/project';
 
 const entitySegment: Record<CommentEntityType, string> = {
   task: 'tasks',
@@ -18,13 +18,13 @@ const transform = (raw: Comment & { id: string }): WithId<Comment> =>
 
 /**
  * Factory — returns a comments collection scoped to a specific task or bug.
- * Path: projects/{ACTIVE_PROJECT_ID}/tasks/{entityId}/comments
- *    or projects/{ACTIVE_PROJECT_ID}/bugs/{entityId}/comments
+ * Path: projects/{ACTIVE_PROJECT_SCOPE}/tasks/{entityId}/comments
+ *    or projects/{ACTIVE_PROJECT_SCOPE}/bugs/{entityId}/comments
  */
 export function createCommentsCollection(entityType: CommentEntityType, entityId: string) {
   return createSubcollection<Comment>({
     path: (projectId: string, id: string) =>
       `projects/${projectId}/${entitySegment[entityType]}/${id}/comments`,
     transform,
-  })(ACTIVE_PROJECT_ID, entityId);
+  })(ACTIVE_PROJECT_SCOPE, entityId);
 }

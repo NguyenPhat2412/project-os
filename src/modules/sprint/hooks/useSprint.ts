@@ -5,7 +5,7 @@ import { tasksCollection } from '@/modules/tasks/collections/tasks';
 import { taskColumnsCollection } from '@/modules/tasks/collections/taskColumns';
 import type { Sprint } from '@/modules/sprint/types/sprint';
 import type { Task, TaskColumn } from '@/modules/tasks/types/task';
-import type { WithId } from '@/lib/firestore-rq';
+import type { WithId } from '@/lib/api-rq';
 
 /**
  * useSprint — JIRA-style sprint hook.
@@ -27,7 +27,7 @@ export function useSprint(selectedSprintId?: string) {
     [sprintsResult.data],
   );
 
-  const allTasks: WithId<Task>[] = tasksResult.data ?? [];
+  const allTasks: WithId<Task>[] = useMemo(() => tasksResult.data ?? [], [tasksResult.data]);
   const columns: WithId<TaskColumn>[] = columnsResult.data ?? [];
 
   const activeSprint = useMemo(() => allSprints.find((s) => s.status === 'active') ?? null, [allSprints]);

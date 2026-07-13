@@ -3,7 +3,7 @@ import { useState, useMemo } from 'react';
 import { meetingsCollection } from '@/modules/meetings/collections/meetings';
 import { PageLoader } from '@/components/ui/page-loader';
 import { ConfirmDialog } from '@/components/ui/shared/confirm-dialog';
-import { useBatchFetch, createCollectionListItem } from '@/lib/firestore-rq/hooks/useBatchFetch';
+import { useBatchFetch, createCollectionListItem } from '@/lib/api-rq/hooks/useBatchFetch';
 import { teamCollection } from '@/modules/team/collections/team';
 import { MeetingDialog } from '@/modules/meetings/components/MeetingDialog';
 import { MeetingViewSheet } from '@/modules/meetings/components/MeetingViewSheet';
@@ -105,7 +105,7 @@ export default function MeetingsPage() {
         filteredCount={filteredMeetings.length}
       />
 
-      <MeetingsContent meetings={filteredMeetings} teamMembers={teamMembers} view={view} onViewChange={setView} onView={setViewingMeeting} onEdit={openEdit} onDelete={setDeletingMeeting} />
+      <MeetingsContent meetings={filteredMeetings} teamMembers={teamMembers} view={view} onView={setViewingMeeting} onEdit={openEdit} onDelete={setDeletingMeeting} />
 
       <MeetingDialog open={dialogOpen} meeting={(freshEditingMeetingData as (Meeting & { id: string }) | null) ?? editingMeeting} nextId={nextId} teamMembers={teamMembers} onClose={() => setDialogOpen(false)} onSuccess={() => {}} />
 

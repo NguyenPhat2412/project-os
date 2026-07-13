@@ -1,13 +1,13 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Pagination } from '@/components/ui/pagination';
 import { bugsCollection } from '@/modules/bugs/collections/bugs';
 import { bugColumnsCollection } from '@/modules/bugs/collections/bugColumns';
 import { teamCollection } from '@/modules/team/collections/team';
 import { membersCollection } from '@/modules/team/collections/members';
 import { sprintsCollection } from '@/modules/sprint/collections/sprint';
-import { useBatchFetch, createCollectionListItem } from '@/lib/firestore-rq/hooks/useBatchFetch';
+import { useBatchFetch, createCollectionListItem } from '@/lib/api-rq/hooks/useBatchFetch';
 import { BugStatsPanel } from '@/modules/bugs/components/BugStatsPanel';
 import { BugTable } from '@/modules/bugs/components/BugTable';
 import { BugDialog } from '@/modules/bugs/components/BugDialog';
@@ -57,8 +57,11 @@ export default function BugsPage() {
     createCollectionListItem('bugColumns', bugColumnsCollection),
     createCollectionListItem('sprints', sprintsCollection),
   ]);
-  const projectMemberEntries = (batchData.teamMembers ?? []) as unknown as (ProjectTeamMember & { id: string })[];
-  const rootMembers = (batchData.rootMembers ?? []) as TeamMember[];
+  const projectMemberEntries = useMemo(
+    () => (batchData.teamMembers ?? []) as unknown as (ProjectTeamMember & { id: string })[],
+    [batchData.teamMembers],
+  );
+  const rootMembers = useMemo(() => (batchData.rootMembers ?? []) as TeamMember[], [batchData.rootMembers]);
   const teamMembers = useMemo((): TeamMemberWithRole[] => {
     const map = new Map(rootMembers.map((m) => [m.id, m]));
     return projectMemberEntries
@@ -69,8 +72,8 @@ export default function BugsPage() {
       })
       .filter((m): m is TeamMemberWithRole => m !== null);
   }, [projectMemberEntries, rootMembers]);
-  const bugColumnsFirestore = (batchData.bugColumns ?? []) as BugColumn[];
-  const bugColumns = bugColumnsFirestore.length > 0 ? bugColumnsFirestore : BUG_COLUMNS;
+  const bugColumnsAPI = (batchData.bugColumns ?? []) as BugColumn[];
+  const bugColumns = bugColumnsAPI.length > 0 ? bugColumnsAPI : BUG_COLUMNS;
   const sprints = ((batchData.sprints ?? []) as (Sprint & { id: string })[]).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
   const [view, setView] = useState<ViewMode>('list');
@@ -103,11 +106,6 @@ export default function BugsPage() {
     const next = nums.length > 0 ? Math.max(...nums) + 1 : 1;
     return `BUG-${String(next).padStart(2, '0')}`;
   })();
-
-  // Reset page when filters change
-  useEffect(() => {
-    setPage(1); // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filterSeverity, filterStatus, filterSprint, search]);
 
   const filteredBugs = useMemo(
     () =>
@@ -163,13 +161,13 @@ export default function BugsPage() {
       <div className='mb-4'>
         <BugFilterBar
           search={search}
-          onSearchChange={setSearch}
+          onSearchChange={(value) => { setSearch(value); setPage(1); }}
           filterSeverity={filterSeverity}
-          onSeverityChange={setFilterSeverity}
+          onSeverityChange={(value) => { setFilterSeverity(value); setPage(1); }}
           filterStatus={filterStatus}
-          onStatusChange={setFilterStatus}
+          onStatusChange={(value) => { setFilterStatus(value); setPage(1); }}
           filterSprint={filterSprint}
-          onSprintChange={setFilterSprint}
+          onSprintChange={(value) => { setFilterSprint(value); setPage(1); }}
           columns={bugColumns}
           sprints={sprints}
           groupBy={groupBy}

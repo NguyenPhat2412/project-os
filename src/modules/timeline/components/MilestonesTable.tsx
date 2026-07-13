@@ -4,7 +4,6 @@ import { useReactTable, getCoreRowModel, getSortedRowModel, flexRender, createCo
 import { ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react';
 import { PageBadge } from '@/components/ui/page-badge';
 import { Avatar } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { TableActionsMenu, editAction, deleteAction } from '@/components/ui/shared/table-actions-menu';
 import type { TeamMember } from '@/modules/team/types/team';

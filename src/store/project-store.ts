@@ -6,12 +6,12 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 
-const DEFAULT_PROJECT_ID = process.env.NEXT_PUBLIC_PROJECT_ID ?? 'ecommerce';
+const DEFAULT_PROJECT_ID = '';
 
 /**
  * SSR-safe projectId getter for use at module-initialization time.
  * Reads Zustand's own persist storage key (`activeProjectId`) so
- * collection factories can resolve PROJECT_ID before Zustand hydrates.
+ * request-scoped API paths can resolve the active UUID before Zustand hydrates.
  * After hydration, Zustand store holds the same value — both sources align.
  */
 function getPersistedProjectId(): string {

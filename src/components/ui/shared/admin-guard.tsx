@@ -2,7 +2,6 @@
 import { useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { usePermission } from '@/hooks/usePermission';
-import { PageLoader } from '@/components/ui/page-loader';
 
 interface AdminGuardProps {
   children: ReactNode;

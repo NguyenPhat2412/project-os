@@ -2,7 +2,7 @@
  * backlog.ts — Backlog module types
  * ──────────────────────────────────
  * Epic, UserStory, and related shared types.
- * Firestore collection lives in collections/epics.ts (avoids circular dep).
+ * API collection lives in collections/epics.ts (avoids circular dep).
  */
 
 export type EpicStatus = 'Planning' | 'In Progress' | 'Done' | 'On Hold';
@@ -36,7 +36,7 @@ export interface Epic {
   items: UserStoryItem[];
 }
 
-/** Epic with Firestore document id attached */
+/** Epic with API document id attached */
 export type EpicData = Epic & { id: string };
 
 /** A single UserStory row inside an Epic */

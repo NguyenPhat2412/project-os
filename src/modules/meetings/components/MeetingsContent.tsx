@@ -13,13 +13,12 @@ interface MeetingsContentProps {
   meetings: (Meeting & { id: string })[];
   teamMembers: TeamMember[];
   view: ViewMode;
-  onViewChange: (v: ViewMode) => void;
   onView: (m: Meeting & { id: string }) => void;
   onEdit: (m: Meeting & { id: string }) => void;
   onDelete: (m: Meeting & { id: string }) => void;
 }
 
-export function MeetingsContent({ meetings, teamMembers, view, onViewChange: _onViewChange, onView, onEdit, onDelete }: MeetingsContentProps) {
+export function MeetingsContent({ meetings, teamMembers, view, onView, onEdit, onDelete }: MeetingsContentProps) {
   const allNotes: MeetingNote[] = meetings.flatMap((m) => m.notes ?? []);
 
   // Card view: full-width, no sidebar
@@ -36,7 +35,7 @@ export function MeetingsContent({ meetings, teamMembers, view, onViewChange: _on
     <div className='space-y-4'>
       {/* Main 2-col layout (list / calendar + sidebar) */}
       <div className='grid grid-cols-[2fr_1fr] max-lg:grid-cols-1 gap-5'>
-        {view === 'list' ? <MeetingListView meetings={meetings} teamMembers={teamMembers} onView={onView} onEdit={onEdit} onDelete={onDelete} /> : <MeetingCalendarView meetings={meetings} onView={onView} onEdit={onEdit} />}
+        {view === 'list' ? <MeetingListView meetings={meetings} teamMembers={teamMembers} onView={onView} onEdit={onEdit} onDelete={onDelete} /> : <MeetingCalendarView meetings={meetings} onView={onView} />}
         <MeetingsSidebar meetings={meetings} teamMembers={teamMembers as { id: string; initials: string; gradient: string }[]} onView={onView} onEdit={onEdit} />
       </div>
 

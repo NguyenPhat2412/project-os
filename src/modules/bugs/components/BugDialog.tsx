@@ -5,7 +5,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ChevronDownIcon, SparklesIcon } from 'lucide-react';
-import { deleteField } from '@/lib/firestore-rq';
+import { deleteField } from '@/lib/api-rq';
 import { Button } from '@/components/ui/button';
 import { ColoredToggleGroup } from '@/components/ui/colored-toggle-group';
 import { ModalShell, ModalHeaderBar } from '@/components/ui/shared/modal-shell';
@@ -37,10 +37,6 @@ type BugWithId = Bug & { id: string };
 const SEVERITY_OPTIONS: { value: BugSeverity; color: string }[] = BUG_SEVERITY_VALUES.map((value) => ({ value, color: BUG_SEVERITY_META[value].activeColor }));
 
 const NONE = '__none__';
-
-const triggerCls = 'w-full h-9 bg-secondary border-border text-[13px] text-foreground';
-const contentCls = 'bg-card border border-border text-foreground';
-const itemCls = 'text-[13px] focus:bg-secondary focus:text-foreground';
 
 const bugSchema = z.object({
   title: z.string().trim().min(1, 'Tiêu đề không được để trống'),

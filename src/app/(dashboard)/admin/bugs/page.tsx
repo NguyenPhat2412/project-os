@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { bugColumnsCollection } from '@/modules/bugs/collections/bugColumns';
 import { bugsCollection } from '@/modules/bugs/collections/bugs';
 import { BUG_COLUMNS } from '@/modules/bugs/types/bug';
-import { useBatchFetch, createCollectionListItem } from '@/lib/firestore-rq/hooks/useBatchFetch';
+import { useBatchFetch, createCollectionListItem } from '@/lib/api-rq/hooks/useBatchFetch';
 import { PageLoader } from '@/components/ui/page-loader';
 import { ConfirmDialog } from '@/components/ui/shared/confirm-dialog';
 import { TableActionsMenu, editAction, deleteAction } from '@/components/ui/shared/table-actions-menu';
@@ -20,11 +20,11 @@ type BugWithId = Bug & { id: string };
 export default function AdminBugsPage() {
   const { data, isLoading, refetch } = useBatchFetch([createCollectionListItem('bugColumns', bugColumnsCollection), createCollectionListItem('bugs', bugsCollection)]);
 
-  const firestoreColumns = (data.bugColumns ?? []) as BugColumn[];
+  const apiColumns = (data.bugColumns ?? []) as BugColumn[];
   const bugs = (data.bugs ?? []) as BugWithId[];
 
-  // Fall back to BUG_COLUMNS if no Firestore data yet
-  const columns = firestoreColumns.length > 0 ? firestoreColumns : BUG_COLUMNS;
+  // Fall back to BUG_COLUMNS if no API data yet
+  const columns = apiColumns.length > 0 ? apiColumns : BUG_COLUMNS;
 
   const [editingColumn, setEditingColumn] = useState<BugColumn | null>(null);
   const [columnDialogOpen, setColumnDialogOpen] = useState(false);

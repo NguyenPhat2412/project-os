@@ -1,9 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
-import { apiClient } from '@/lib/api/client';
+import { apiClient, resolveApiPath } from '@/lib/api/client';
 import type { CollectionConfig, WithId } from '../types';
 
 interface BatchItem {
   key: string;
+  scope?: string;
   fetcher: () => Promise<unknown>;
 }
 
@@ -19,7 +20,7 @@ interface BatchResult {
  * Much faster than multiple useList() calls.
  */
 export function useBatchFetch(items: BatchItem[], queryKeyName?: string): BatchResult {
-  const keys = items.map((i) => i.key);
+  const keys = items.map((item) => `${item.key}:${item.scope ?? ''}`);
   const queryName = queryKeyName || keys.join('-');
   const queryKey = ['batch', queryName];
 
@@ -50,7 +51,11 @@ export function useBatchFetch(items: BatchItem[], queryKeyName?: string): BatchR
 export function createCollectionListItem<T extends object>(key: string, config: CollectionConfig<T>) {
   return {
     key,
-    fetcher: () => apiClient.get<WithId<T>[]>(config.path),
+    scope: resolveApiPath(config.path),
+    fetcher: async () => {
+      const items = await apiClient.get<WithId<T>>(config.path);
+      return config.transform ? items.map(config.transform) : items;
+    },
   };
 }
 
@@ -60,6 +65,10 @@ export function createCollectionListItem<T extends object>(key: string, config: 
 export function createDocumentItem<T extends object>(key: string, config: CollectionConfig<T>, id: string) {
   return {
     key,
-    fetcher: () => apiClient.getOne<WithId<T>>(`${config.path}/${id}`),
+    scope: `${resolveApiPath(config.path)}/${id}`,
+    fetcher: async () => {
+      const item = await apiClient.getOne<WithId<T>>(`${config.path}/${id}`);
+      return item && config.transform ? config.transform(item) : item;
+    },
   };
 }

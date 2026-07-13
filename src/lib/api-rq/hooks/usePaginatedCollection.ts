@@ -1,11 +1,11 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api/client';
-import { firestoreKeys } from '../core/queryKeys';
+import { apiKeys } from '../core/queryKeys';
 import type { WithId, QueryOptions, CollectionConfig } from '../types';
 
 /**
  * Cursor-based pagination hook for collections.
- * Uses a page cursor string instead of Firestore DocumentSnapshot.
+ * Uses a page cursor string instead of API DocumentSnapshot.
  */
 export function usePaginatedCollection<T extends object>(
   config: CollectionConfig<T>,
@@ -14,7 +14,7 @@ export function usePaginatedCollection<T extends object>(
   const { limit: pageSize, ...restOptions } = options;
 
   return useInfiniteQuery({
-    queryKey: [...firestoreKeys.list(config.path, options), 'infinite'],
+    queryKey: [...apiKeys.list(config.path, options), 'infinite'],
     queryFn: async ({ pageParam }: { pageParam: string | undefined }) => {
       const params: Record<string, unknown> = {};
 

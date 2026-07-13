@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient, type UseQueryOptions } from '@ta
 import type { QueryKey } from '@tanstack/query-core';
 import { apiClient, resolveApiPath } from '@/lib/api/client';
 import type { QueryOptions, CreateInput, CollectionConfig, WithId } from '../types';
-import { firestoreKeys } from './queryKeys';
+import { apiKeys } from './queryKeys';
 
 export function createCollection<T extends object>(config: CollectionConfig<T>) {
   const { path } = config;
@@ -11,7 +11,7 @@ export function createCollection<T extends object>(config: CollectionConfig<T>) 
 
   function useDocument(id: string | null | undefined, queryOptions?: Omit<UseQueryOptions, 'queryKey' | 'queryFn'>) {
     return useQuery({
-      queryKey: firestoreKeys.detail(queryPath(), id ?? ''),
+      queryKey: apiKeys.detail(queryPath(), id ?? ''),
     queryFn: async () => {
       const value = await apiClient.getOne<WithId<T>>(`${path}/${id}`);
       return value ? transform(value) : null;
@@ -30,7 +30,7 @@ export function createCollection<T extends object>(config: CollectionConfig<T>) 
     const isEnabled = enabledQuery ?? enabledOption;
 
     return useQuery<WithId<T>[], Error, WithId<T>[], QueryKey>({
-      queryKey: firestoreKeys.list(queryPath(), restOptions),
+      queryKey: apiKeys.list(queryPath(), restOptions),
       queryFn: () => {
         const params: Record<string, unknown> = {};
         if (restOptions.where) {
@@ -63,7 +63,7 @@ export function createCollection<T extends object>(config: CollectionConfig<T>) 
         return transform(res.data);
       },
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: firestoreKeys.lists(queryPath()) });
+        queryClient.invalidateQueries({ queryKey: apiKeys.lists(queryPath()) });
       },
     });
   }
@@ -74,8 +74,8 @@ export function createCollection<T extends object>(config: CollectionConfig<T>) 
       mutationFn: ({ id, data }: { id: string; data: Partial<T> }) =>
         apiClient.put<WithId<T>>(`${path}/${id}`, data).then(transform),
       onSuccess: (_, { id }) => {
-        queryClient.invalidateQueries({ queryKey: firestoreKeys.detail(queryPath(), id) });
-        queryClient.invalidateQueries({ queryKey: firestoreKeys.lists(queryPath()) });
+        queryClient.invalidateQueries({ queryKey: apiKeys.detail(queryPath(), id) });
+        queryClient.invalidateQueries({ queryKey: apiKeys.lists(queryPath()) });
       },
     });
   }
@@ -86,8 +86,8 @@ export function createCollection<T extends object>(config: CollectionConfig<T>) 
       mutationFn: ({ id, data }: { id: string; data: Partial<T> }) =>
         apiClient.patch<WithId<T>>(`${path}/${id}`, data).then(transform),
       onSuccess: (_, { id }) => {
-        queryClient.invalidateQueries({ queryKey: firestoreKeys.detail(queryPath(), id) });
-        queryClient.invalidateQueries({ queryKey: firestoreKeys.lists(queryPath()) });
+        queryClient.invalidateQueries({ queryKey: apiKeys.detail(queryPath(), id) });
+        queryClient.invalidateQueries({ queryKey: apiKeys.lists(queryPath()) });
       },
     });
   }
@@ -97,7 +97,7 @@ export function createCollection<T extends object>(config: CollectionConfig<T>) 
     return useMutation({
       mutationFn: (id: string) => apiClient.delete(`${path}/${id}`),
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: firestoreKeys.lists(queryPath()) });
+        queryClient.invalidateQueries({ queryKey: apiKeys.lists(queryPath()) });
       },
     });
   }
@@ -135,12 +135,13 @@ export function createCollection<T extends object>(config: CollectionConfig<T>) 
     useDelete,
     helpers,
     path,
+    transform: config.transform,
     keys: {
-      all: () => firestoreKeys.all(queryPath()),
-      lists: () => firestoreKeys.lists(queryPath()),
-      list: (options?: QueryOptions) => firestoreKeys.list(queryPath(), options),
-      details: () => firestoreKeys.details(queryPath()),
-      detail: (id: string) => firestoreKeys.detail(queryPath(), id),
+      all: () => apiKeys.all(queryPath()),
+      lists: () => apiKeys.lists(queryPath()),
+      list: (options?: QueryOptions) => apiKeys.list(queryPath(), options),
+      details: () => apiKeys.details(queryPath()),
+      detail: (id: string) => apiKeys.detail(queryPath(), id),
     },
   };
 }

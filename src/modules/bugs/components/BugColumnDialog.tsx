@@ -32,7 +32,7 @@ interface Props {
 
 const DEFAULT_COLOR = PRESET_COLORS[0].value;
 
-/** Sanitize a title into a Firestore-safe document ID */
+/** Sanitize a title into a API-safe document ID */
 function sanitizeId(title: string): string {
   return title
     .toLowerCase()

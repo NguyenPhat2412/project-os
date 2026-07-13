@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ConfirmDialog } from '@/components/ui/shared/confirm-dialog';
 import { PageLoader } from '@/components/ui/page-loader';
 import { Pagination } from '@/components/ui/pagination';
-import { createCollectionListItem, useBatchFetch } from '@/lib/firestore-rq/hooks/useBatchFetch';
+import { createCollectionListItem, useBatchFetch } from '@/lib/api-rq/hooks/useBatchFetch';
 import { risksCollection } from '@/modules/risk/collections/risks';
 import { RiskDialog } from '@/modules/risk/components/RiskDialog';
 import { RiskFilterBar } from '@/modules/risk/components/RiskFilterBar';

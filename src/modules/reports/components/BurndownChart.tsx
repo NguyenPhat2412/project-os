@@ -31,7 +31,7 @@ export function BurndownChart({ points, sprintLabel }: Props) {
     <div className='bg-card border border-border panel p-5'>
       <div className='font-sans text-[16px] font-bold mb-4'>Burndown Chart{sprintLabel ? ` — ${sprintLabel}` : ''}</div>
 
-      <ResponsiveContainer width='100%' height={180}>
+      <ResponsiveContainer width='100%' height={180} initialDimension={{ width: 1, height: 1 }}>
         <AreaChart data={points} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
           <defs>
             <linearGradient id='burndownGrad' x1='0' y1='0' x2='0' y2='1'>

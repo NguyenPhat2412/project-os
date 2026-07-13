@@ -1,90 +1,55 @@
+# Project OS Frontend
 
-# Getting Started
+Next.js frontend for Project OS. Authentication, business CRUD, RBAC, reporting,
+and file metadata are served through the Spring API Gateway at `/api/v1`.
+PostgreSQL is the source of truth and Knowledge service stores file objects in MinIO.
 
-## Setup Firebase Console
+## Local setup
 
-1. Go to [Firebase Console](https://console.firebase.google.com/).
-2. Create a new project (e.g., "Project OS").
-3. In the project dashboard, navigate to "Project Settings" > "General".
-4. Scroll down to "Your apps" and click on the web icon (</>) to register a new web app.
-5. Follow the prompts to register the app (e.g., "Project OS Web").
-6. After registration, you will see the Firebase SDK configuration object. Copy this configuration as you will need it in the next step.
+Prerequisites: Node.js 20+, npm, and a healthy Project OS backend Gateway on
+`http://127.0.0.1:18080`.
 
-## Configure Google OAuth
+```powershell
+Copy-Item .env.example .env.local
+npm ci
+npm run typecheck
+npm run build
+npm start
+```
 
-1. Go to [Google Cloud Console](https://console.cloud.google.com/) > APIs & Services > Credentials.
-2. Open the OAuth 2.0 Client ID used by `GOOGLE_CLIENT_ID`.
-3. Under **Authorized JavaScript origins**, add:
+Open `http://localhost:3000`. For local development only, use `npm run dev`.
+Production and performance checks must use `npm run build` followed by `npm start`.
+
+## Authentication and Google OAuth
+
+Email/password, rotating refresh cookies, CSRF, and Google OAuth are owned by
+Identity service. Google credentials belong in the backend secret environment,
+not in this repository. Configure these exact local Google redirect values:
 
 ```text
-http://localhost:3000
+Authorized origin:       http://localhost:3000
+Authorized redirect URI: http://localhost:3000/api/v1/login/oauth2/code/google
 ```
 
-4. Under **Authorized redirect URIs**, add:
+## API contracts
 
-```text
-http://localhost:3000/api/auth/callback/google
+With all backend services healthy, regenerate TypeScript OpenAPI contracts using:
+
+```powershell
+npm run api:types
 ```
 
-For production, also add the deployed app URL and callback, for example:
+The browser only calls `/api/v1`; `PROJECT_OS_API_INTERNAL_URL` is used by the
+Next.js proxy so backend ports remain bound to loopback. No Firebase, Firestore,
+NextAuth, or client-side database SDK is used at runtime.
 
-```text
-https://your-domain.com
-https://your-domain.com/api/auth/callback/google
+## Quality gates
+
+```powershell
+npm run typecheck
+npm run lint
+npm run build
 ```
 
-The callback URI must exactly match the app URL configured in `AUTH_URL` and `NEXTAUTH_URL`.
-
-## Configure Environment Variables
-
-1. In the root of the project, create a `.env.local` file.
-2. Add the following environment variables to the `.env.local` file, replacing the placeholders with the values from your Firebase SDK configuration, Google OAuth client, and Firebase Admin service account:
-
-```env
-NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_auth_domain
-NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_storage_bucket
-NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id   
-NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
-NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=your_measurement_id
-
-GOOGLE_CLIENT_ID=your_google_oauth_client_id
-GOOGLE_CLIENT_SECRET=your_google_oauth_client_secret
-
-NEXT_PUBLIC_PROJECT_ID=default
-
-FIREBASE_ADMIN_PROJECT_ID=your_project_id
-FIREBASE_ADMIN_CLIENT_EMAIL=your_service_account_email
-FIREBASE_ADMIN_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
-
-AUTH_URL=http://localhost:3000
-NEXTAUTH_URL=http://localhost:3000
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-AUTH_TRUST_HOST=true
-AUTH_SECRET=generate_a_strong_secret
-```
-
-## Run the Application
-
-1. Install dependencies:
-
-```bash
-npm install
-```
-
-1. Start the development server:
-
-```bash
-npm run dev
-```
-
-1. Open your browser and navigate to `http://localhost:3000` to see the application in action.
-
-## Deploying to Vercel
-
-1. Push your code to a GitHub repository.
-2. Go to [Vercel](https://vercel.com/) and sign up or log in.
-3. Click on "New Project" and import your GitHub repository.
-4. During the setup, add the same environment variables you defined in your `.env.local` file to the Vercel environment variables section.
-5. Complete the setup and deploy your application. After deployment, you will receive a live URL where your application is hosted.  
+Before production rollout, also run backend contract/integration tests, the
+all-phase runtime smoke suite, backup/restore verification, and browser E2E.

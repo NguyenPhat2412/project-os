@@ -31,7 +31,7 @@ interface Props {
   storagePath: string;
   attachments: Attachment[];
   onChange: (attachments: Attachment[]) => void;
-  /** EDIT mode: called after every upload/delete so parent can auto-save to Firestore immediately */
+  /** EDIT mode: called after every upload/delete so parent can auto-save to API immediately */
   onAutoSave?: (attachments: Attachment[]) => Promise<void>;
   disabled?: boolean;
 }

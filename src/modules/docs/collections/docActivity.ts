@@ -1,7 +1,7 @@
 // collections/docActivity.ts
-import { createSubcollection } from '@/lib/firestore-rq';
-import type { WithId } from '@/lib/firestore-rq';
-import { ACTIVE_PROJECT_ID } from '@/lib/project';
+import { createSubcollection } from '@/lib/api-rq';
+import type { WithId } from '@/lib/api-rq';
+import { ACTIVE_PROJECT_SCOPE } from '@/lib/project';
 
 export interface DocActivity {
   id: string;
@@ -12,9 +12,9 @@ export interface DocActivity {
 }
 
 /**
- * DocActivity subcollection: projects/{ACTIVE_PROJECT_ID}/doc_activity
+ * DocActivity subcollection: projects/{ACTIVE_PROJECT_SCOPE}/doc_activity
  */
 export const docActivityCollection = createSubcollection<DocActivity>({
   path: (projectId: string) => `projects/${projectId}/doc_activity`,
   transform: (raw): WithId<DocActivity> => raw as unknown as WithId<DocActivity>,
-})(ACTIVE_PROJECT_ID);
+})(ACTIVE_PROJECT_SCOPE);

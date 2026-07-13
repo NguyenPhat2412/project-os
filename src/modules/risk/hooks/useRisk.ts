@@ -1,15 +1,15 @@
 /**
  * useRisk
  * ──────────
- * Hook for Risk module using firestore-rq collection pattern.
+ * Hook for Risk module using api-rq collection pattern.
  */
 
 import { risksCollection } from '@/modules/risk/collections/risks';
 import type { Risk } from '@/modules/risk/types/risk';
-import type { WithId } from '@/lib/firestore-rq';
+import type { WithId } from '@/lib/api-rq';
 
 export function useRisk() {
-  // ── Firestore queries ─────────────────────────────────────────
+  // ── API queries ─────────────────────────────────────────
   const { data: risks = [], isLoading } = risksCollection.useList();
 
   // ── Type assertions ───────────────────────────────────────────

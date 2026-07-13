@@ -7,7 +7,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { AlertTriangleIcon, PencilIcon, PlusIcon } from 'lucide-react';
 import { DialogBody, ModalShell } from '@/components/ui/shared/modal-shell';
 import { FormField } from '@/components/ui/form-field';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import type { BudgetItem } from '@/modules/budget/types/budget';
 import { getFieldErrorInputClass, getFieldErrorLabelClass, getInlineErrorTextClass } from '@/lib/form-validation';

@@ -63,11 +63,11 @@ export default function ReportsTasksPage() {
   const [sorting, setSorting] = useState<SortingState>([]);
 
   const { data, isLoading } = useReportReadModel<WithId<Task>>('tasks');
-  const tasks = data?.items ?? [];
-  const team = data?.members ?? [];
-  const memberMap = Object.fromEntries(team.map((m) => [m.id, m.name]));
+  const tasks = useMemo(() => data?.items ?? [], [data?.items]);
+  const team = useMemo(() => data?.members ?? [], [data?.members]);
+  const memberMap = useMemo(() => Object.fromEntries(team.map((m) => [m.id, m.name])), [team]);
 
-  const tableData = useMemo(() => tasks.map((t) => ({ ...t, assigneeName: memberMap[t.assigneeId ?? ''] ?? '—' })), [tasks, team]);
+  const tableData = useMemo(() => tasks.map((t) => ({ ...t, assigneeName: memberMap[t.assigneeId ?? ''] ?? '—' })), [tasks, memberMap]);
 
   const statusCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -148,7 +148,7 @@ export default function ReportsTasksPage() {
       {/* Chart */}
       <div className='bg-card border border-border panel p-5 mb-4.5'>
         <div className='font-sans text-[16px] font-bold mb-4'>Phân bổ theo trạng thái</div>
-        <ResponsiveContainer width='100%' height={160}>
+        <ResponsiveContainer width='100%' height={160} initialDimension={{ width: 1, height: 1 }}>
           <BarChart data={statusCounts} margin={{ top: 0, right: 0, left: -16, bottom: 0 }} barCategoryGap='35%'>
             <CartesianGrid strokeDasharray='3 3' stroke='var(--border)' vertical={false} />
             <XAxis dataKey='name' tick={{ fill: 'var(--muted)', fontSize: 10 }} axisLine={false} tickLine={false} />

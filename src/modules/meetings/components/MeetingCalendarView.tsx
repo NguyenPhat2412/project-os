@@ -65,11 +65,10 @@ function MeetingChip({ meeting, onClick }: { meeting: Meeting & { id: string }; 
 interface Props {
   meetings: (Meeting & { id: string })[];
   onView: (meeting: Meeting & { id: string }) => void;
-  onEdit: (meeting: Meeting & { id: string }) => void;
 }
 
 // ── component ─────────────────────────────────────────────────────────────────
-export function MeetingCalendarView({ meetings, onView, onEdit }: Props) {
+export function MeetingCalendarView({ meetings, onView }: Props) {
   const today = new Date();
   const [viewYear, setViewYear] = useState(today.getFullYear());
   const [viewMonth, setViewMonth] = useState(today.getMonth());

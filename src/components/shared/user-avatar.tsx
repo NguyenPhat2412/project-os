@@ -12,7 +12,6 @@
  */
 
 import { Avatar, AvatarImage } from '@/components/ui/avatar';
-import { cn } from '@/lib/utils';
 
 export type UserAvatarSource = {
   name?: string;

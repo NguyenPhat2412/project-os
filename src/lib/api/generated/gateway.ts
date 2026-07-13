@@ -36,6 +36,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/projects/{projectId}/read-model/reports/{resource}/export.csv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["exportCsv"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/projects/{projectId}/read-model/dashboard": {
         parameters: {
             query?: never;
@@ -60,12 +76,20 @@ export interface components {
             data?: components["schemas"]["WorkloadReadModel"];
         };
         JsonNode: {
-            /** @enum {string} */
-            nodeType?: "ARRAY" | "BINARY" | "BOOLEAN" | "MISSING" | "NULL" | "NUMBER" | "OBJECT" | "POJO" | "STRING";
-            string?: boolean;
+            number?: boolean;
+            missingNode?: boolean;
+            integralNumber?: boolean;
+            floatingPointNumber?: boolean;
+            array?: boolean;
+            empty?: boolean;
+            null?: boolean;
+            float?: boolean;
             valueNode?: boolean;
             container?: boolean;
             object?: boolean;
+            /** @enum {string} */
+            nodeType?: "ARRAY" | "BINARY" | "BOOLEAN" | "MISSING" | "NULL" | "NUMBER" | "OBJECT" | "POJO" | "STRING";
+            string?: boolean;
             pojo?: boolean;
             short?: boolean;
             int?: boolean;
@@ -77,14 +101,6 @@ export interface components {
             textual?: boolean;
             boolean?: boolean;
             binary?: boolean;
-            floatingPointNumber?: boolean;
-            integralNumber?: boolean;
-            missingNode?: boolean;
-            number?: boolean;
-            array?: boolean;
-            empty?: boolean;
-            null?: boolean;
-            float?: boolean;
             embeddedValue?: boolean;
         };
         WorkloadReadModel: {
@@ -203,6 +219,29 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["ApiResponseReportReadModel"];
+                };
+            };
+        };
+    };
+    exportCsv: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                projectId: string;
+                resource: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": string;
                 };
             };
         };

@@ -3,7 +3,6 @@ import { Fragment, useMemo, useState } from 'react';
 import { useReactTable, getCoreRowModel, getSortedRowModel, flexRender, createColumnHelper, type SortingState, type Column } from '@tanstack/react-table';
 import { ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
 import { PageBadge } from '@/components/ui/page-badge';
 import { Avatar } from '@/components/ui/avatar';
 import { DateTimePicker } from '@/components/ui/date-time-picker';
@@ -14,7 +13,7 @@ import { TableActionsMenu, editAction, deleteAction, viewAction } from '@/compon
 import { groupItems } from '@/lib/utils/group-items';
 import { cn } from '@/lib/utils';
 import { formatDateVi } from '@/lib/dayjs';
-import { deleteField } from '@/lib/firestore-rq';
+import { deleteField } from '@/lib/api-rq';
 import type { Bug, BugSeverity, BugColumn } from '@/modules/bugs/types/bug';
 import type { TeamMember } from '@/modules/team/types/team';
 import type { Sprint } from '@/modules/sprint/types/sprint';

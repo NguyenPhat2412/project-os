@@ -1,7 +1,7 @@
 /**
  * useTasks
  * ────────
- * Hook for Tasks module using firestore-rq collection pattern.
+ * Hook for Tasks module using api-rq collection pattern.
  */
 
 import { useMemo } from 'react';
@@ -11,7 +11,7 @@ import { membersCollection } from '@/modules/team/collections/members';
 import { taskColumnsCollection } from '@/modules/tasks/collections/taskColumns';
 import type { Priority, Task } from '@/modules/tasks/types/task';
 import type { TeamMember, Member } from '@/modules/team/types/team';
-import type { WithId } from '@/lib/firestore-rq';
+import type { WithId } from '@/lib/api-rq';
 
 interface UseTasksOptions {
   search?: string;
@@ -20,7 +20,7 @@ interface UseTasksOptions {
 }
 
 export function useTasks({ search = '', priority = 'all', status = 'all' }: UseTasksOptions = {}) {
-  // ── Firestore queries ─────────────────────────────────────────
+  // ── API queries ─────────────────────────────────────────
   const { data: tasks = [], isLoading: tasksLoading } = tasksCollection.useList();
   const { data: projectMembers = [] } = teamCollection.useList();
   const { data: globalMembers = [] } = membersCollection.useList();

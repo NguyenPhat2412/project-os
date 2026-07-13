@@ -9,7 +9,7 @@
 import { useMemo, useState } from 'react';
 import { SearchIcon } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
-import { batchWrite } from '@/lib/firestore-rq';
+import { batchWrite } from '@/lib/api-rq';
 import { ModalShell } from '@/components/ui/shared/modal-shell';
 import { Input } from '@/components/ui/input';
 import { tasksCollection } from '@/modules/tasks/collections/tasks';

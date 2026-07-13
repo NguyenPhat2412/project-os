@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { ChevronRightIcon, FolderIcon, FolderOpenIcon, FileTextIcon, PlusIcon, Trash2Icon, MoreHorizontalIcon } from 'lucide-react';
+import { ChevronRightIcon, FolderIcon, FolderOpenIcon, FileTextIcon, PlusIcon, Trash2Icon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/shared/confirm-dialog';
 import type { FolderWithId } from '@/modules/docs/collections/folders';

@@ -13,7 +13,7 @@ import { cn } from '@/lib/utils';
 import { SimplePageHeader } from '@/components/layout/SimplePageHeader';
 import { BREADCRUMBS } from '@/lib/breadcrumbs';
 import type { Project, ProjectStatus } from '@/modules/projects/types/project';
-import type { WithId } from '@/lib/firestore-rq';
+import type { WithId } from '@/lib/api-rq';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 

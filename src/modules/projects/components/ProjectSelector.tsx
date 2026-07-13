@@ -7,7 +7,7 @@ import { useProject } from '@/store/project-store';
 import { cn } from '@/lib/utils';
 import { useProjects } from '@/modules/projects/hooks/useProjects';
 
-import type { WithId } from '@/lib/firestore-rq';
+import type { WithId } from '@/lib/api-rq';
 import type { Project } from '@/modules/projects/types/project';
 
 const STATUS_DOT: Record<string, string> = {

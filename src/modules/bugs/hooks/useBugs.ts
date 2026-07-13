@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { bugsCollection } from '@/modules/bugs/collections/bugs';
 import { BUG_COLUMNS } from '@/modules/bugs/types/bug';
 import type { Bug, BugSeverity, BugStatus } from '@/modules/bugs/types/bug';
-import type { WithId } from '@/lib/firestore-rq';
+import type { WithId } from '@/lib/api-rq';
 
 export function useBugs() {
   const { data: raw = [], isLoading } = bugsCollection.useList();

@@ -4,7 +4,9 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { platformAuth } from '@/lib/platform-api/client';
 import { profileConfig } from '@/lib/project-config';
+import { projectsCollection } from '@/modules/projects/collections/projects';
 import { useAuthStore } from '@/store/auth-store';
+import { useProjectStore } from '@/store/project-store';
 
 const toAuthUser = (user: Awaited<ReturnType<typeof platformAuth.me>>) => ({
   uid: user.id,
@@ -31,6 +33,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (!active) return;
         setUser(toAuthUser(user));
         setRootRoles([user.role]);
+
+        // Validate the persisted project before any project-scoped screen is
+        // rendered. A stale project UUID must never send requests to a project
+        // the user can no longer access.
+        try {
+          const projects = await projectsCollection.helpers.fetchList();
+          if (!active) return;
+          const currentProjectId = useProjectStore.getState().projectId;
+          const canAccessCurrentProject = projects.some((project) => project.id === currentProjectId);
+          if (!canAccessCurrentProject && projects[0]?.id) {
+            useProjectStore.getState().setProjectId(projects[0].id);
+          }
+        } catch {
+          // The project list owns its own error UI. Authentication remains valid.
+        }
 
         try {
           const profile = await profileConfig.helpers.fetch(user.id);

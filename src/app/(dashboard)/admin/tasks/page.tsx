@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { taskColumnsCollection } from '@/modules/tasks/collections/taskColumns';
 import { tasksCollection } from '@/modules/tasks/collections/tasks';
-import { useBatchFetch, createCollectionListItem } from '@/lib/firestore-rq/hooks/useBatchFetch';
+import { useBatchFetch, createCollectionListItem } from '@/lib/api-rq/hooks/useBatchFetch';
 import { PageLoader } from '@/components/ui/page-loader';
 import { ConfirmDialog } from '@/components/ui/shared/confirm-dialog';
 import { TableActionsMenu, editAction, deleteAction } from '@/components/ui/shared/table-actions-menu';

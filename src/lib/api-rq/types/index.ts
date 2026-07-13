@@ -1,4 +1,4 @@
-// src/lib/firestore-rq/types/index.ts
+// src/lib/api-rq/types/index.ts
 
 export type WithId<T> = T & { id: string };
 

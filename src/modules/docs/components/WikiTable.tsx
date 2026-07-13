@@ -3,7 +3,6 @@ import { useMemo, useState } from 'react';
 import { useReactTable, getCoreRowModel, getSortedRowModel, flexRender, createColumnHelper, type SortingState } from '@tanstack/react-table';
 import { ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
 import { PageBadge } from '@/components/ui/page-badge';
 import { TableActionsMenu, editAction, deleteAction, viewAction, openLinkAction, separator } from '@/components/ui/shared/table-actions-menu';
 import type { WikiLink } from '@/modules/docs/collections/wikiLinks';

@@ -1,17 +1,17 @@
 /**
  * useMeetings
  * ────────────
- * Hook for Meetings module using firestore-rq collection pattern.
+ * Hook for Meetings module using api-rq collection pattern.
  * Meeting notes are now embedded inside Meeting documents.
  * Meeting comments live in a subcollection: projects/{PROJECT_ID}/meetings/{meetingId}/comments
  */
 
 import { meetingsCollection } from '@/modules/meetings/collections/meetings';
 import type { Meeting } from '@/modules/meetings/types/meeting';
-import type { WithId } from '@/lib/firestore-rq';
+import type { WithId } from '@/lib/api-rq';
 
 export function useMeetings() {
-  // ── Firestore queries ─────────────────────────────────────────
+  // ── API queries ─────────────────────────────────────────
   const { data: meetings = [], isLoading } = meetingsCollection.useList();
 
   // ── Type assertions ───────────────────────────────────────────

@@ -1,5 +1,5 @@
-import { createSubcollection } from '@/lib/firestore-rq';
-import type { WithId } from '@/lib/firestore-rq';
+import { createSubcollection } from '@/lib/api-rq';
+import type { WithId } from '@/lib/api-rq';
 import type { RoleDefinition } from '../types/role-definition';
 
 /**
@@ -18,7 +18,7 @@ export const roleDefinitionsCollection = createSubcollection<RoleDefinition>({
   path: (projectId: string) => `projects/${projectId}/roles`,
   transform: (raw): WithId<RoleDefinition> => ({
     ...(raw as unknown as RoleDefinition),
-    // Document ID từ Firestore snapshot → gán vào field `id`
+    // Document ID từ API snapshot → gán vào field `id`
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     id: (raw as any).id ?? raw.name?.toLowerCase().replace(/\s+/g, '-') ?? '',
   }),

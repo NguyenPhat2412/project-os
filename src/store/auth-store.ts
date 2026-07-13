@@ -13,9 +13,9 @@ import { devtools, persist } from 'zustand/middleware';
 import type { UserProfile } from '@/lib/project-config';
 import { ROOT_ADMIN_ROLE } from '@/lib/admin-emails';
 
-// ─── Auth User Type (replaces Firebase User) ────────────────────────────────
+// ─── Auth User Type ───────────────────────────────────────────────────────────
 
-/** Plain user object from NextAuth session — replaces Firebase User */
+/** Plain user object returned by Identity service. */
 export interface AuthUser {
   uid: string;
   email: string | null;
@@ -31,7 +31,7 @@ export { ROOT_ADMIN_ROLE };
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 export interface AuthState {
-  // NextAuth user (plain object — replaces Firebase User)
+  // Identity session user
   user: AuthUser | null;
   // App-level profile
   profile: UserProfile | null;
@@ -48,11 +48,11 @@ export interface AuthState {
 // ─── Actions ─────────────────────────────────────────────────────────────────
 
 export interface AuthActions {
-  // Set user (from NextAuth session)
+  // Set user (from Spring Security session)
   setUser: (user: AuthUser | null) => void;
   // Set profile
   setProfile: (profile: UserProfile | null) => void;
-  // Set root roles (from Firestore)
+  // Set root roles (from API)
   setRootRoles: (roles: string[]) => void;
   // Set project roles for a specific project
   setProjectRoles: (projectId: string, roles: string[]) => void;
@@ -142,7 +142,7 @@ export const useAuthStore = create<AuthState & AuthActions>()(
       }),
       {
         name: 'projectos-auth', // localStorage key
-        // Only persist app state — user comes from NextAuth session on each load
+        // Only persist app state — user comes from Spring Security session on each load
         partialize: (state) => ({
           profile: state.profile,
           rootRoles: state.rootRoles,

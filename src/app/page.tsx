@@ -392,7 +392,7 @@ const FEATURES = [
     bg: 'rgba(245,197,24,0.12)',
     title: 'Timeline & Milestones',
     tag: 'Gantt · Epics · MS',
-    desc: 'Gantt chart trực quan hóa các Epic theo date range và progress. Milestone tracking với 4 trạng thái: Upcoming, In Progress, Completed, Delayed. CRUD milestones với giao diện table. Epic stats grid hiển thị tổng quan. Tất cả dữ liệu từ Firestore, real-time.',
+    desc: 'Gantt chart trực quan hóa các Epic theo date range và progress. Milestone tracking với 4 trạng thái: Upcoming, In Progress, Completed, Delayed. CRUD milestones với giao diện table. Epic stats grid hiển thị tổng quan. Tất cả dữ liệu từ API, real-time.',
   },
   {
     icon: UsersIcon,
@@ -408,7 +408,7 @@ const FEATURES = [
     bg: 'rgba(56,189,248,0.12)',
     title: 'Docs & Wiki',
     tag: 'Markdown · Upload · Search',
-    desc: 'Wiki pages với full Markdown editor và live preview. Upload file lên Firebase Storage với preview trong app. 7 loại file preview: PDF, Image, Video, Office docs. File metadata: title, type, size, author, tags. Xóa file đồng thời xóa cả Storage reference. Search toàn văn bản trong wiki.',
+    desc: 'Wiki pages với full Markdown editor và live preview. Upload file lên Spring/PostgreSQL Storage với preview trong app. 7 loại file preview: PDF, Image, Video, Office docs. File metadata: title, type, size, author, tags. Xóa file đồng thời xóa cả Storage reference. Search toàn văn bản trong wiki.',
   },
   {
     icon: MessageSquareIcon,
@@ -537,7 +537,7 @@ function OpenSourceSection() {
           </motion.h2>
 
           <motion.p className='text-[15px] max-w-lg mx-auto mb-10 leading-relaxed' style={{ color: 'var(--lp-text-secondary)' }} initial={{ opacity: 0, y: 12 }} animate={inView ? { opacity: 1, y: 0 } : {}} transition={{ delay: 0.3, duration: 0.4 }}>
-            Không phí subscription. Không vendor lock-in. Dữ liệu của bạn nằm trên Firebase của bạn. Deploy lên Vercel trong vài phút.
+            Không phí subscription. Không vendor lock-in. Dữ liệu của bạn nằm trên Spring/PostgreSQL của bạn. Deploy lên Vercel trong vài phút.
           </motion.p>
 
           {/* Stats */}
@@ -560,7 +560,7 @@ function OpenSourceSection() {
 
           {/* Checklist */}
           <motion.div className='flex flex-col sm:flex-row gap-3 justify-center mb-10' initial={{ opacity: 0 }} animate={inView ? { opacity: 1 } : {}} transition={{ delay: 0.4, duration: 0.3 }}>
-            {['Firebase + Next.js', 'TanStack Table + Recharts', 'Framer Motion', 'MIT License'].map((item, i) => (
+            {['Spring/PostgreSQL + Next.js', 'TanStack Table + Recharts', 'Framer Motion', 'MIT License'].map((item, i) => (
               <motion.div
                 key={item}
                 className='flex items-center gap-2 text-[13px]'

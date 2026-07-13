@@ -1,9 +1,9 @@
-// src/lib/firestore-rq/index.ts
+// src/lib/api-rq/index.ts
 export { createCollection } from './core/createCollection';
 export { createSubcollection } from './core/createSubcollection';
 export { createConfig } from './core/createConfig';
 export { batchWrite } from './core/batchWrite';
-export { firestoreKeys } from './core/queryKeys';
+export { apiKeys } from './core/queryKeys';
 
 // API-compatible field helpers.
 /** JSON Merge Patch: null removes the field on the Spring/PostgreSQL API. */

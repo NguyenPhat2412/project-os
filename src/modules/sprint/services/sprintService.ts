@@ -1,7 +1,7 @@
 /**
  * sprintService.ts — Sprint module
  * ─────────────────────────────────
- * Firestore CRUD for sprints collection.
+ * API CRUD for sprints collection.
  * Path: projects/{PROJECT_ID}/sprints
  */
 

@@ -1,28 +1,7 @@
 /**
- * Project constants
- * ───────────────────────
- * Active project ID — resolved via Zustand store's SSR-safe helper.
- *
- * The Zustand persist layer stores projectId in localStorage under
- * `activeProjectId` (see project-store.ts). On SSR or before hydration
- * we fall back to the persisted value by reading localStorage directly.
- * After hydration the Zustand store holds the same value.
- *
- * When the user switches project, Zustand updates + page hard-reloads,
- * so this module re-initializes with the new value and all collections
- * pick it up automatically.
+ * Symbolic path segment resolved to the current project UUID immediately before
+ * every API request and while creating its TanStack Query key. It is a scope
+ * marker, not a cached project ID, so changing projects cannot reuse data from
+ * the previous project's cache.
  */
-
-
-/**
- * Resolves the active project ID:
- * 1. SSR / pre-hydration → read persisted localStorage value via getPersistedProjectId()
- * 2. Not defined         → fall back to NEXT_PUBLIC_PROJECT_ID env var
- * 3. Neither set         → DEFAULT_PROJECT_ID ('ecommerce')
- *
- * All collection factories (createSubcollection(...)(PROJECT_ID)) use this
- * at module initialization time. Components needing reactive projectId should
- * use the `useProject()` hook from '@/store/project-store' instead.
- */
-/** Marker resolved to the current project UUID at request and query-key time. */
-export const ACTIVE_PROJECT_ID = ':active-project';
+export const ACTIVE_PROJECT_SCOPE = ':active-project';

@@ -2,8 +2,8 @@
 import { CalendarIcon, UsersIcon, LayersIcon, RocketIcon } from 'lucide-react';
 import { PageBadge } from '@/components/ui/page-badge';
 import { cn } from '@/lib/utils';
-import { toDate } from '@/lib/firestore-rq/utils/timestamp';
-import type { WithId } from '@/lib/firestore-rq';
+import { toDate } from '@/lib/api-rq/utils/timestamp';
+import type { WithId } from '@/lib/api-rq';
 import type { Project, ProjectStatus } from '../types/project';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -11,7 +11,6 @@ import type { EpicData, EpicItem, EpicStatus, UserStoryStatus } from '@/modules/
 import type { TeamMember } from '@/modules/team/types/team';
 import { TASK_PRIORITY_META } from '@/lib/constants/work-item-colors';
 
-type Priority = 'High' | 'Normal' | 'Low';
 const epicStatusVariant: Record<EpicStatus, 'muted' | 'accent' | 'green' | 'yellow'> = {
   Planning: 'muted',
   'In Progress': 'accent',

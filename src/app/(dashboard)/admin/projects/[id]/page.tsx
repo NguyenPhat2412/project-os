@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import { useParams } from 'next/navigation';
 import { ArrowLeftIcon, UsersIcon, InfoIcon, ShieldIcon } from 'lucide-react';
 import Link from 'next/link';
-import { createSubcollection } from '@/lib/firestore-rq';
+import { createSubcollection } from '@/lib/api-rq';
 import { useProjectDetail } from '@/modules/projects/hooks/useProjectDetail';
 import { ProjectOverviewPanel } from '@/modules/projects/components/ProjectOverviewPanel';
 import { ProjectMembersPanel } from '@/modules/projects/components/ProjectMembersPanel';
@@ -13,7 +13,7 @@ import { BREADCRUMBS } from '@/lib/breadcrumbs';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { PageLoader } from '@/components/ui/page-loader';
 import type { TeamMember } from '@/modules/team/types/team';
-import type { WithId } from '@/lib/firestore-rq';
+import type { WithId } from '@/lib/api-rq';
 
 function useTeamCount(projectId: string) {
   const col = useMemo(

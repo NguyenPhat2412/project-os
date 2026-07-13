@@ -6,7 +6,7 @@
  * Uses React Hook Form + Zod for validation.
  * Required fields: title, priority, status.
  * Optional: description, deadline, points, assignee.
- * All mutations use firestore-rq hooks (tasksCollection).
+ * All mutations use api-rq hooks (tasksCollection).
  */
 
 import { ChevronDownIcon, SparklesIcon } from 'lucide-react';
@@ -117,7 +117,7 @@ export function TaskDialog({ open, task, nextTaskIndex, teamMembers, statusOptio
   const { projectId } = useProject();
   const isNew = task === null;
 
-  // ── firestore-rq mutations ─────────────────────────────────────────────────
+  // ── api-rq mutations ─────────────────────────────────────────────────
   const createTask = tasksCollection.useSet();
   const updateTask = tasksCollection.useUpdate();
   const deleteTask = tasksCollection.useDelete();

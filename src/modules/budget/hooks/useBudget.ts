@@ -1,18 +1,17 @@
 /**
  * useBudget
  * ──────────
- * Hook for Budget module using firestore-rq collection pattern.
+ * Hook for Budget module using api-rq collection pattern.
  */
 
 import { useMemo } from 'react';
 import { budgetItemsCollection } from '@/modules/budget/collections/budget';
 import { expensesCollection } from '@/modules/budget/collections/expenses';
 import type { BudgetItem, ExpenseEntry } from '@/modules/budget/types/budget';
-import type { WithId } from '@/lib/firestore-rq';
-import type { StatData } from '@/lib/types';
+import type { WithId } from '@/lib/api-rq';
 
 export function useBudget() {
-  // ── Firestore queries ─────────────────────────────────────────
+  // ── API queries ─────────────────────────────────────────
   const { data: budgetItems = [] } = budgetItemsCollection.useList();
   const { data: expenses = [] } = expensesCollection.useList();
 

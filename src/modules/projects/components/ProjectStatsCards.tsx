@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { ArrowRightIcon } from 'lucide-react';
 import { PageBadge } from '@/components/ui/page-badge';
 import { cn } from '@/lib/utils';
-import type { WithId } from '@/lib/firestore-rq';
+import type { WithId } from '@/lib/api-rq';
 import type { Project, ProjectStatus } from '../types/project';
 
 const STATUS_VARIANT: Record<ProjectStatus, 'green' | 'muted' | 'accent'> = {

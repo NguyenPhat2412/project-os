@@ -1,7 +1,7 @@
 // collections/activityComments.ts
-import { createSubcollection } from '@/lib/firestore-rq';
-import type { WithId } from '@/lib/firestore-rq';
-import { ACTIVE_PROJECT_ID } from '@/lib/project';
+import { createSubcollection } from '@/lib/api-rq';
+import type { WithId } from '@/lib/api-rq';
+import { ACTIVE_PROJECT_SCOPE } from '@/lib/project';
 
 export interface ActivityComment {
   id: string;
@@ -14,9 +14,9 @@ export interface ActivityComment {
 }
 
 /**
- * ActivityComments subcollection: projects/{ACTIVE_PROJECT_ID}/activity_comments
+ * ActivityComments subcollection: projects/{ACTIVE_PROJECT_SCOPE}/activity_comments
  */
 export const activityCommentsCollection = createSubcollection<ActivityComment>({
   path: (projectId: string) => `projects/${projectId}/activity_comments`,
   transform: (raw): WithId<ActivityComment> => raw as unknown as WithId<ActivityComment>,
-})(ACTIVE_PROJECT_ID);
+})(ACTIVE_PROJECT_SCOPE);

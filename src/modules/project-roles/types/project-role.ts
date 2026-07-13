@@ -3,7 +3,7 @@
  * Stored in `projects/{projectId}/project_roles/{memberId}`.
  */
 export interface ProjectRole {
-  /** Firebase UID */
+  /** Spring/PostgreSQL UID */
   uid: string;
   /** Document ID (matches uid) */
   memberId: string;

@@ -13,7 +13,6 @@ import { ConfirmDialog } from '@/components/ui/shared/confirm-dialog';
 import { PageLoader } from '@/components/ui/page-loader';
 import { Avatar } from '@/components/ui/avatar';
 import { StatCard } from '@/components/ui/shared/stat-card';
-import { cn } from '@/lib/utils';
 import type { RootMember } from '@/modules/root/types/root-member';
 import type { TeamMember } from '@/modules/team/types/team';
 
@@ -223,7 +222,6 @@ export default function AdminRolesPage() {
                         <span className='text-[11px] text-muted-foreground italic'>Chưa có vai trò</span>
                       ) : (
                         member.roles.map((role) => {
-                          const roleDef = AVAILABLE_ROOT_ROLES.find((r) => r.name === role);
                           return (
                             <span key={role} className='inline-flex items-center gap-1'>
                               <Badge variant={role === ROOT_ADMIN_ROLE ? 'destructive' : 'outline'} className='text-[11px] gap-1'>

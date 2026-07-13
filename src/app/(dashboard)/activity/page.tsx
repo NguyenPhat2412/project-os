@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { activityCommentsCollection } from '@/modules/activity/collections/activityComments';
 import { activityFeedCollection } from '@/modules/activity/collections/activityFeed';
 import { notificationsCollection } from '@/modules/activity/collections/notifications';
-import { useBatchFetch, createCollectionListItem } from '@/lib/firestore-rq/hooks/useBatchFetch';
+import { useBatchFetch, createCollectionListItem } from '@/lib/api-rq/hooks/useBatchFetch';
 import { useDashboardReadModel } from '@/lib/api/read-models';
 import { PageLoader } from '@/components/ui/page-loader';
 import { ActivityPageHeader } from '@/modules/activity/components/ActivityPageHeader';

@@ -1,6 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
 
-import { firestoreKeys } from '../core/queryKeys';
+import { apiKeys } from '../core/queryKeys';
 
 import type { WithId, QueryOptions } from '../types';
 /**
@@ -25,7 +25,7 @@ export function useOptimistic<T>(collectionPath: string) {
 
   /** Thêm item giả vào cache list */
   async function addToList(item: WithId<T>, options?: QueryOptions): Promise<() => void> {
-    const key = firestoreKeys.list(collectionPath, options);
+    const key = apiKeys.list(collectionPath, options);
     await queryClient.cancelQueries({ queryKey: key });
     const prev = queryClient.getQueryData<WithId<T>[]>(key);
 
@@ -36,7 +36,7 @@ export function useOptimistic<T>(collectionPath: string) {
 
   /** Cập nhật item trong cache */
   async function updateInList(id: string, patch: Partial<T>, options?: QueryOptions): Promise<() => void> {
-    const key = firestoreKeys.list(collectionPath, options);
+    const key = apiKeys.list(collectionPath, options);
     await queryClient.cancelQueries({ queryKey: key });
     const prev = queryClient.getQueryData<WithId<T>[]>(key);
 
@@ -47,7 +47,7 @@ export function useOptimistic<T>(collectionPath: string) {
 
   /** Xoá item khỏi cache */
   async function removeFromList(id: string, options?: QueryOptions): Promise<() => void> {
-    const key = firestoreKeys.list(collectionPath, options);
+    const key = apiKeys.list(collectionPath, options);
     await queryClient.cancelQueries({ queryKey: key });
     const prev = queryClient.getQueryData<WithId<T>[]>(key);
 

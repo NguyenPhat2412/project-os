@@ -124,7 +124,7 @@ export function TeamStatsPanel({ members }: Props) {
             if (pieData.length === 0) return <p className='text-[12px] text-muted-foreground'>Chưa có thành viên.</p>;
             return (
               <>
-                <ResponsiveContainer width='100%' height={110}>
+                <ResponsiveContainer width='100%' height={110} initialDimension={{ width: 1, height: 1 }}>
                   <PieChart>
                     <Pie data={pieData} cx='50%' cy='50%' innerRadius={32} outerRadius={50} paddingAngle={3} dataKey='value' animationBegin={0} animationDuration={800} animationEasing='ease-out' strokeWidth={0}>
                       {pieData.map((d, i) => (
@@ -161,7 +161,7 @@ export function TeamStatsPanel({ members }: Props) {
           {sortedByWorkload.length === 0 ? (
             <p className='text-[12px] text-muted-foreground'>Chưa có thành viên.</p>
           ) : (
-            <ResponsiveContainer width='100%' height={sortedByWorkload.length * 30 + 8}>
+            <ResponsiveContainer width='100%' height={sortedByWorkload.length * 30 + 8} initialDimension={{ width: 1, height: 1 }}>
               <BarChart layout='vertical' data={sortedByWorkload.map((m) => ({ name: m.name.split(' ').slice(-1)[0], fullName: m.name, value: m.workload }))} margin={{ top: 0, right: 28, left: 0, bottom: 0 }} barCategoryGap='30%'>
                 <CartesianGrid strokeDasharray='3 3' stroke='var(--border)' horizontal={false} />
                 <XAxis type='number' domain={[0, 100]} tick={{ fill: 'var(--muted)', fontSize: 9, fontFamily: 'monospace' }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v}%`} />
@@ -185,7 +185,7 @@ export function TeamStatsPanel({ members }: Props) {
         </CardHeader>
         <CardContent className='flex flex-col items-center justify-center gap-3'>
           <div className='relative h-28 w-28'>
-            <ResponsiveContainer width='100%' height='100%'>
+            <ResponsiveContainer width='100%' height='100%' initialDimension={{ width: 1, height: 1 }}>
               <RadialBarChart cx='50%' cy='50%' innerRadius='72%' outerRadius='100%' startAngle={90} endAngle={-270} data={radialData}>
                 <RadialBar background={{ fill: '#17171f' }} dataKey='value' cornerRadius={8} animationBegin={0} animationDuration={900} animationEasing='ease-out' />
                 <Tooltip content={<HealthTooltip />} />

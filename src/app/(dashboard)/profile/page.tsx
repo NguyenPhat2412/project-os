@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { CameraIcon, SaveIcon, Phone, Building2, Briefcase, Globe, FileText, Lightbulb, Bell, CheckCircle2 } from 'lucide-react';
+import { SaveIcon, Phone, Building2, Briefcase, Globe, FileText, Lightbulb, Bell, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
 import { profileConfig, type UserProfile, type NotificationPrefs } from '@/lib/project-config';
 import { FormField } from '@/components/ui/form-field';
@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { getFieldErrorInputClass, getInlineErrorTextClass } from '@/lib/form-validation';
+import { getInlineErrorTextClass } from '@/lib/form-validation';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 const TIMEZONES = ['Asia/Ho_Chi_Minh', 'Asia/Bangkok', 'Asia/Singapore', 'Asia/Tokyo', 'Asia/Seoul', 'Asia/Shanghai', 'Asia/Dubai', 'Europe/London', 'Europe/Paris', 'Europe/Berlin', 'America/New_York', 'America/Los_Angeles', 'UTC'];
@@ -84,17 +84,13 @@ function AvatarBlock({ user }: { user: { displayName?: string | null; email?: st
             initials
           )}
         </div>
-        {/* Google badge */}
-        <div className='absolute -bottom-1 -right-1 flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-[#4285F4] text-white text-[9px] font-bold'>
-          <span>G</span>
-        </div>
       </div>
       <div>
         <div className='font-sans text-[15px] font-bold text-white'>{displayName}</div>
         <div className='text-[12px] text-muted-foreground mt-0.5'>{user.email}</div>
         <div className='flex items-center gap-1.5 mt-1'>
           <div className='w-1.5 h-1.5 rounded-full bg-green-500' />
-          <span className='text-[12px] text-green-500 font-medium'>Đăng nhập qua Google</span>
+          <span className='text-[12px] text-green-500 font-medium'>Tài khoản đang hoạt động</span>
         </div>
       </div>
     </div>

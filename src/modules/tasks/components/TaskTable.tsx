@@ -12,7 +12,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { TASK_PRIORITY_META, WorkItemBadgeVariant } from '@/lib/constants/work-item-colors';
 import { formatDateVi } from '@/lib/dayjs';
-import { deleteField } from '@/lib/firestore-rq';
+import { deleteField } from '@/lib/api-rq';
 import { cn } from '@/lib/utils';
 import { groupItems } from '@/lib/utils/group-items';
 import { getTaskColumnBadgeVariant, getTaskColumnLabel, isTaskDoneStatus } from '@/modules/tasks/utils/taskColumns';

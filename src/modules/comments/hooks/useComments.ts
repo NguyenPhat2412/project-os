@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 import { createCommentsCollection } from '@/modules/comments/collections/comments';
 import type { CommentEntityType, CommentThread } from '@/modules/comments/types/comment';
-import type { WithId } from '@/lib/firestore-rq';
+import type { WithId } from '@/lib/api-rq';
 import type { Comment } from '@/modules/comments/types/comment';
 
 interface UseCommentsOptions {

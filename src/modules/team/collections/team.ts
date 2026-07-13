@@ -1,7 +1,7 @@
-import { createSubcollection } from '@/lib/firestore-rq';
-import type { WithId } from '@/lib/firestore-rq';
+import { createSubcollection } from '@/lib/api-rq';
+import type { WithId } from '@/lib/api-rq';
 import type { ProjectTeamMember } from '@/modules/team/types/team';
-import { ACTIVE_PROJECT_ID } from '@/lib/project';
+import { ACTIVE_PROJECT_SCOPE } from '@/lib/project';
 
 /**
  * Project-scoped members subcollection factory.
@@ -19,4 +19,4 @@ export const projectMembersCollection = createSubcollection<ProjectTeamMember>({
 });
 
 /** Singleton for the active project — used by the Team module. */
-export const teamCollection = projectMembersCollection(ACTIVE_PROJECT_ID);
+export const teamCollection = projectMembersCollection(ACTIVE_PROJECT_SCOPE);

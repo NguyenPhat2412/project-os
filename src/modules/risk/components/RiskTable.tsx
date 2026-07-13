@@ -3,7 +3,6 @@ import { useMemo, useState } from 'react';
 import { useReactTable, getCoreRowModel, getSortedRowModel, flexRender, createColumnHelper, type SortingState, type Column } from '@tanstack/react-table';
 import { ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
 import { PageBadge } from '@/components/ui/page-badge';
 import { Avatar } from '@/components/ui/avatar';
 import { DatePicker } from '@/components/ui/date-picker';
@@ -12,7 +11,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { TableActionsMenu, editAction, deleteAction, viewAction } from '@/components/ui/shared/table-actions-menu';
 import { cn } from '@/lib/utils';
 import { formatDateVi } from '@/lib/dayjs';
-import { deleteField } from '@/lib/firestore-rq';
+import { deleteField } from '@/lib/api-rq';
 import type { Risk, RiskLevel } from '@/modules/risk/types/risk';
 import type { TeamMember } from '@/modules/team/types/team';
 

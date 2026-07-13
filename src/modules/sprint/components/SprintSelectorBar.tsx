@@ -3,7 +3,6 @@
 import { PlusIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { Sprint } from '@/modules/sprint/types/sprint';
-import { SprintStatusBadge } from './SprintStatusBadge';
 
 interface Props {
   sprints: (Sprint & { id: string })[];

@@ -152,14 +152,13 @@ class ApiClient {
    */
   async get<T>(path: string, params?: Record<string, unknown>): Promise<T[]> {
     const entries = Object.entries(params ?? {}).filter(([, v]) => v !== undefined && v !== null);
+    const queryEntries = entries.flatMap(([key, value]) =>
+      Array.isArray(value)
+        ? value.map((item) => [key, String(item)] as [string, string])
+        : [[key, String(value)] as [string, string]],
+    );
     const searchParams = entries.length > 0
-      ? '?' + new URLSearchParams(
-          entries.flatMap(([k, v]) =>
-            Array.isArray(v)
-              ? v.map(item => [k, String(item)])
-              : [[k, String(v)]])
-          .flat() as unknown as [string, string][]
-        ).toString()
+      ? `?${new URLSearchParams(queryEntries).toString()}`
       : '';
 
     const res = await this.request<{ data: T[] }>(`${path}${searchParams}`);

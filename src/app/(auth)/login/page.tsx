@@ -103,7 +103,7 @@ export default function LoginPage() {
         setSubmitting(false);
         return;
       }
-      // NextAuth v5: signIn returns { url } with the OAuth redirect URL
+      // Identity service owns the OAuth redirect and callback flow.
       if (result?.url) {
         window.location.href = result.url;
       } else {
@@ -115,7 +115,7 @@ export default function LoginPage() {
     }
   };
 
-  // Wait for NextAuth to initialize
+  // Wait for the current Identity session to initialize.
   if (loading) {
     return (
       <div className='flex h-screen items-center justify-center' style={{ background: 'var(--background)' }}>

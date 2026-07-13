@@ -5,7 +5,7 @@ import { DocActivityPanel } from '@/modules/docs/components/DocActivityPanel';
 import type { ActivityEntry } from '@/modules/activity/types/activity';
 import type { DocEntry } from '@/modules/docs/collections/documents';
 import type { WikiLink } from '@/modules/docs/collections/wikiLinks';
-import type { WithId } from '@/lib/firestore-rq';
+import type { WithId } from '@/lib/api-rq';
 
 type DocWithId = WithId<DocEntry>;
 type WikiEntry = WikiLink & { id: string };

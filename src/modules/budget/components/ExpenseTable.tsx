@@ -24,7 +24,7 @@ interface ExpenseTableProps {
   onSuccess: () => void;
 }
 
-export function ExpenseTable({ expenses, budgetItems, teamMembers, onSuccess }: ExpenseTableProps) {
+export function ExpenseTable({ expenses, teamMembers, onSuccess }: ExpenseTableProps) {
   'use no memo';
   const createExpense = expensesCollection.useCreate();
   const updateExpense = expensesCollection.useUpdate();

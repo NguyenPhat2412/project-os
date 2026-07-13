@@ -3,8 +3,8 @@ import { useState, useMemo, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { SearchIcon, UserPlusIcon, PencilIcon } from 'lucide-react';
 import { ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react';
-import { createSubcollection } from '@/lib/firestore-rq';
-import { firestoreKeys } from '@/lib/firestore-rq/core/queryKeys';
+import { createSubcollection } from '@/lib/api-rq';
+import { apiKeys } from '@/lib/api-rq/core/queryKeys';
 import { useReactTable, getCoreRowModel, getSortedRowModel, getFilteredRowModel, flexRender, createColumnHelper } from '@tanstack/react-table';
 import { membersCollection } from '@/modules/team/collections/members';
 import { projectRolesCollection } from '@/modules/project-roles/collections/project-roles';
@@ -26,7 +26,7 @@ import type { ProjectRole } from '@/modules/project-roles/types/project-role';
 import type { RoleDefinition } from '@/modules/project-roles/types/role-definition';
 import type { SortingState } from '@tanstack/react-table';
 
-// ─── Firestore collection paths ────────────────────────────────────────────────
+// ─── API collection paths ────────────────────────────────────────────────
 
 const TEAM_MEMBERS_PATH = (pid: string) => `projects/${pid}/members`;
 const PROJECT_ROLES_PATH = (pid: string) => `projects/${pid}/project_roles`;
@@ -313,7 +313,7 @@ export function ProjectMembersTable({ projectId }: { projectId: string }) {
     return map;
   }, [rbacRoles]);
 
-  // Firestore mutations
+  // API mutations
   const teamCol = useMemo(
     () =>
       createSubcollection<ProjectTeamMember>({
@@ -341,8 +341,8 @@ export function ProjectMembersTable({ projectId }: { projectId: string }) {
 
   // ─── Cache invalidation ───────────────────────────────────────────────────
   const invalidateTeamData = () => {
-    queryClient.invalidateQueries({ queryKey: firestoreKeys.lists(TEAM_MEMBERS_PATH(projectId)) });
-    queryClient.invalidateQueries({ queryKey: firestoreKeys.lists(PROJECT_ROLES_PATH(projectId)) });
+    queryClient.invalidateQueries({ queryKey: apiKeys.lists(TEAM_MEMBERS_PATH(projectId)) });
+    queryClient.invalidateQueries({ queryKey: apiKeys.lists(PROJECT_ROLES_PATH(projectId)) });
   };
 
   // ─── Table state ────────────────────────────────────────────────────────────

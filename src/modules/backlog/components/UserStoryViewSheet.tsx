@@ -17,7 +17,6 @@ import type { EpicData, EpicItem, UserStoryStatus } from '@/modules/backlog/type
 import type { TeamMember } from '@/modules/team/types/team';
 import { TASK_PRIORITY_META } from '@/lib/constants/work-item-colors';
 
-type Priority = 'High' | 'Normal' | 'Low';
 const statusVariant: Record<UserStoryStatus, 'muted' | 'accent' | 'green' | 'red'> = {
   Todo: 'muted',
   'In Progress': 'accent',

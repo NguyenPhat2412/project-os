@@ -4,7 +4,7 @@ import './globals.css';
 
 import { LayoutShell } from '@/components/layout/LayoutShell';
 import { AuthProvider } from '@/contexts/auth-context';
-import { ReactQueryProvider } from '@/lib/firestore-rq/ReactQueryProvider';
+import { ReactQueryProvider } from '@/lib/api-rq/ReactQueryProvider';
 
 export const metadata: Metadata = {
   title: 'ProjectOS — Enterprise',

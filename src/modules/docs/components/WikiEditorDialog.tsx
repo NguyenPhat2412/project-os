@@ -5,8 +5,8 @@
  * Split-pane Markdown editor for wiki entries.
  * - Left: toolbar + textarea
  * - Right: live preview (react-markdown + remark-gfm)
- * - Create new or edit existing wiki entry in Firestore
- * - Delete from Firestore
+ * - Create new or edit existing wiki entry in API
+ * - Delete from API
  */
 
 import { useRef, useState } from 'react';
@@ -30,34 +30,6 @@ import type { WikiLink } from '@/modules/docs/collections/wikiLinks';
 import type { Attachment } from '@/lib/types/attachment';
 // ── emoji icon options ────────────────────────────────────────────────────────
 const ICON_OPTIONS = ['⚙️', '📝', '✅', '🐛', '📖', '🚀', '🔒', '🗂️', '💡', '🧪', '📐', '🔌', '🎨', '📦', '🔧', '🌐', '📊', '🔑', '📋', '⭐', '🏗️', '🔄', '📡', '🛠️', '💬', '📌', '🗺️', '⚡', '🎯', '🔍'];
-
-// ── toolbar definition ────────────────────────────────────────────────────────
-interface ToolbarItem {
-  label: string;
-  title: string;
-  action: (sel: string) => { before: string; placeholder: string; after: string };
-}
-
-const TOOLBAR: (ToolbarItem | '|')[] = [
-  { label: 'H1', title: 'Heading 1', action: (sel) => ({ before: '# ', placeholder: sel || 'Tiêu đề 1', after: '' }) },
-  { label: 'H2', title: 'Heading 2', action: (sel) => ({ before: '## ', placeholder: sel || 'Tiêu đề 2', after: '' }) },
-  { label: 'H3', title: 'Heading 3', action: (sel) => ({ before: '### ', placeholder: sel || 'Tiêu đề 3', after: '' }) },
-  '|',
-  { label: 'B', title: 'Bold', action: (sel) => ({ before: '**', placeholder: sel || 'in đậm', after: '**' }) },
-  { label: 'I', title: 'Italic', action: (sel) => ({ before: '*', placeholder: sel || 'in nghiêng', after: '*' }) },
-  { label: '~~', title: 'Strikethrough', action: (sel) => ({ before: '~~', placeholder: sel || 'gạch ngang', after: '~~' }) },
-  '|',
-  { label: '`', title: 'Inline Code', action: (sel) => ({ before: '`', placeholder: sel || 'code', after: '`' }) },
-  { label: '```', title: 'Code Block', action: (sel) => ({ before: '```\n', placeholder: sel || 'code block', after: '\n```' }) },
-  '|',
-  { label: '🔗', title: 'Link', action: (sel) => ({ before: '[', placeholder: sel || 'link text', after: '](https://)' }) },
-  '|',
-  { label: '• UL', title: 'Bullet List', action: (sel) => ({ before: '- ', placeholder: sel || 'mục danh sách', after: '' }) },
-  { label: '1. OL', title: 'Numbered List', action: (sel) => ({ before: '1. ', placeholder: sel || 'mục đánh số', after: '' }) },
-  { label: '☐', title: 'Checkbox', action: (sel) => ({ before: '- [ ] ', placeholder: sel || 'việc cần làm', after: '' }) },
-  { label: '❝', title: 'Blockquote', action: (sel) => ({ before: '> ', placeholder: sel || 'trích dẫn', after: '' }) },
-  { label: '—', title: 'Horizontal Rule', action: () => ({ before: '\n---\n', placeholder: '', after: '' }) },
-];
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 function formatDate(d: Date) {

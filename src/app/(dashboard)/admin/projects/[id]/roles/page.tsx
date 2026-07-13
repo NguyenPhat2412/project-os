@@ -1,7 +1,7 @@
 'use client';
 import { useState, useMemo, use } from 'react';
 import { SearchIcon, ShieldIcon } from 'lucide-react';
-import { createSubcollection } from '@/lib/firestore-rq';
+import { createSubcollection } from '@/lib/api-rq';
 import { projectRolesCollection } from '@/modules/project-roles/collections/project-roles';
 import { membersCollection } from '@/modules/team/collections/members';
 import { SimplePageHeader } from '@/components/layout/SimplePageHeader';
@@ -16,7 +16,7 @@ import { Avatar } from '@/components/ui/avatar';
 import { StatCard } from '@/components/ui/shared/stat-card';
 import type { ProjectRole } from '@/modules/project-roles/types/project-role';
 import type { TeamMember, ProjectTeamMember } from '@/modules/team/types/team';
-import type { WithId } from '@/lib/firestore-rq';
+import type { WithId } from '@/lib/api-rq';
 
 const AVAILABLE_PROJECT_ROLES = [
   { name: 'Project Admin', description: 'Quản trị dự án', immutable: false },
@@ -47,17 +47,19 @@ export default function ProjectRolesPage({ params }: { params: Promise<{ id: str
 
   const collection = projectRolesCollection(projectId);
   const { data: projectRolesData, isLoading: rolesLoading } = collection.useList();
-  const projectRoles = (projectRolesData ?? []) as ProjectRole[];
+  const projectRoles = useMemo(() => (projectRolesData ?? []) as ProjectRole[], [projectRolesData]);
 
   const { data: globalMembersData, isLoading: membersLoading } = membersCollection.useList();
-  const globalMembers = (globalMembersData ?? []) as TeamMember[];
+  const globalMembers = useMemo(() => (globalMembersData ?? []) as TeamMember[], [globalMembersData]);
 
   const { data: teamMembersData } = teamCol.useList();
-  const projectTeamMembers = (teamMembersData ?? []) as (ProjectTeamMember & { id: string })[];
+  const projectTeamMembers = useMemo(
+    () => (teamMembersData ?? []) as (ProjectTeamMember & { id: string })[],
+    [teamMembersData],
+  );
 
   const setProjectRole = collection.useSet();
   const updateProjectRole = collection.useUpdate();
-  const deleteProjectRole = collection.useDelete();
 
   const projectRolesWithInfo = useMemo(() => {
     return projectRoles.map((pr) => {

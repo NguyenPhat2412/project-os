@@ -36,22 +36,6 @@ export interface paths {
         patch: operations["patchNestedComment"];
         trace?: never;
     };
-    "/api/v1/storage/attachments": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["upload"];
-        delete: operations["delete_1"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/projects/{projectId}/{resource}": {
         parameters: {
             query?: never;
@@ -100,7 +84,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/storage/attachments/content": {
+    "/api/v1/projects/{projectId}/attachments/content": {
         parameters: {
             query?: never;
             header?: never;
@@ -109,8 +93,8 @@ export interface paths {
         };
         get: operations["download"];
         put?: never;
-        post?: never;
-        delete?: never;
+        post: operations["upload"];
+        delete: operations["delete_1"];
         options?: never;
         head?: never;
         patch?: never;
@@ -121,9 +105,16 @@ export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
         JsonNode: {
+            integralNumber?: boolean;
+            missingNode?: boolean;
+            floatingPointNumber?: boolean;
             /** @enum {string} */
             nodeType?: "ARRAY" | "BINARY" | "BOOLEAN" | "MISSING" | "NULL" | "NUMBER" | "OBJECT" | "POJO" | "STRING";
             string?: boolean;
+            valueNode?: boolean;
+            object?: boolean;
+            pojo?: boolean;
+            short?: boolean;
             int?: boolean;
             long?: boolean;
             double?: boolean;
@@ -133,14 +124,7 @@ export interface components {
             textual?: boolean;
             boolean?: boolean;
             binary?: boolean;
-            integralNumber?: boolean;
-            missingNode?: boolean;
-            floatingPointNumber?: boolean;
             container?: boolean;
-            valueNode?: boolean;
-            object?: boolean;
-            pojo?: boolean;
-            short?: boolean;
             number?: boolean;
             array?: boolean;
             empty?: boolean;
@@ -150,6 +134,9 @@ export interface components {
         };
         ApiResponseJsonNode: {
             data?: components["schemas"]["JsonNode"];
+        };
+        ApiResponseListJsonNode: {
+            data?: components["schemas"]["JsonNode"][];
         };
         ApiResponseAttachmentView: {
             data?: components["schemas"]["AttachmentView"];
@@ -162,9 +149,6 @@ export interface components {
             size?: number;
             contentType?: string;
             uploadedAt?: string;
-        };
-        ApiResponseListJsonNode: {
-            data?: components["schemas"]["JsonNode"][];
         };
         Meta: {
             /** Format: int32 */
@@ -397,55 +381,6 @@ export interface operations {
             };
         };
     };
-    upload: {
-        parameters: {
-            query: {
-                storagePath: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "multipart/form-data": {
-                    /** Format: binary */
-                    file: string;
-                };
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["ApiResponseAttachmentView"];
-                };
-            };
-        };
-    };
-    delete_1: {
-        parameters: {
-            query: {
-                storagePath: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
     list: {
         parameters: {
             query?: {
@@ -587,7 +522,9 @@ export interface operations {
                 storagePath: string;
             };
             header?: never;
-            path?: never;
+            path: {
+                projectId: string;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -600,6 +537,59 @@ export interface operations {
                 content: {
                     "*/*": string;
                 };
+            };
+        };
+    };
+    upload: {
+        parameters: {
+            query: {
+                storagePath: string;
+            };
+            header?: never;
+            path: {
+                projectId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "multipart/form-data": {
+                    /** Format: binary */
+                    file: string;
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseAttachmentView"];
+                };
+            };
+        };
+    };
+    delete_1: {
+        parameters: {
+            query: {
+                storagePath: string;
+            };
+            header?: never;
+            path: {
+                projectId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

@@ -137,15 +137,12 @@ export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
         JsonNode: {
-            floatingPointNumber?: boolean;
-            integralNumber?: boolean;
-            missingNode?: boolean;
-            /** @enum {string} */
-            nodeType?: "ARRAY" | "BINARY" | "BOOLEAN" | "MISSING" | "NULL" | "NUMBER" | "OBJECT" | "POJO" | "STRING";
-            string?: boolean;
             valueNode?: boolean;
             container?: boolean;
             object?: boolean;
+            /** @enum {string} */
+            nodeType?: "ARRAY" | "BINARY" | "BOOLEAN" | "MISSING" | "NULL" | "NUMBER" | "OBJECT" | "POJO" | "STRING";
+            string?: boolean;
             pojo?: boolean;
             short?: boolean;
             int?: boolean;
@@ -157,6 +154,9 @@ export interface components {
             textual?: boolean;
             boolean?: boolean;
             binary?: boolean;
+            floatingPointNumber?: boolean;
+            missingNode?: boolean;
+            integralNumber?: boolean;
             number?: boolean;
             array?: boolean;
             empty?: boolean;
@@ -184,6 +184,8 @@ export interface components {
             teamSize?: number;
             /** Format: uuid */
             ownerId?: string;
+            /** Format: uuid */
+            organizationId?: string;
             legacyId?: string;
         };
         ApiResponseProjectView: {
@@ -209,6 +211,8 @@ export interface components {
             teamSize?: number;
             /** Format: uuid */
             ownerId?: string;
+            /** Format: uuid */
+            organizationId?: string;
             /** Format: date-time */
             createdAt?: string;
             /** Format: date-time */

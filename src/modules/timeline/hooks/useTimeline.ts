@@ -1,7 +1,7 @@
 /**
  * useTimeline
  * ─────────────
- * Hook for Timeline module using firestore-rq collection pattern.
+ * Hook for Timeline module using api-rq collection pattern.
  */
 
 import { useMemo } from 'react';
@@ -9,11 +9,11 @@ import { ganttPhasesCollection } from '@/modules/timeline/collections/ganttPhase
 import { milestonesCollection } from '@/modules/timeline/collections/milestones';
 import type { GanttPhase } from '@/modules/timeline/collections/ganttPhases';
 import type { Milestone } from '@/modules/timeline/collections/milestones';
-import type { WithId } from '@/lib/firestore-rq';
+import type { WithId } from '@/lib/api-rq';
 import type { StatData } from '@/lib/types';
 
 export function useTimeline() {
-  // ── Firestore queries ─────────────────────────────────────────
+  // ── API queries ─────────────────────────────────────────
   const { data: ganttPhases = [], isLoading } = ganttPhasesCollection.useList();
   const { data: milestones = [] } = milestonesCollection.useList();
 

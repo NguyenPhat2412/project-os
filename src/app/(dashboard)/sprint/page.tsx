@@ -24,14 +24,14 @@ import { tasksCollection } from '@/modules/tasks/collections/tasks';
 import { bugsCollection } from '@/modules/bugs/collections/bugs';
 import { teamCollection } from '@/modules/team/collections/team';
 import { membersCollection } from '@/modules/team/collections/members';
-import { useBatchFetch, createCollectionListItem } from '@/lib/firestore-rq/hooks/useBatchFetch';
+import { useBatchFetch, createCollectionListItem } from '@/lib/api-rq/hooks/useBatchFetch';
 import { resolveTaskColumns } from '@/modules/tasks/utils/taskColumns';
 import type { Sprint } from '@/modules/sprint/types/sprint';
 import type { Task, TaskColumn } from '@/modules/tasks/types/task';
 import type { Bug, BugStatus } from '@/modules/bugs/types/bug';
 import type { Priority } from '@/components/ui/shared/kaban-view/types';
 import type { TeamMember, TeamMemberWithRole, ProjectTeamMember } from '@/modules/team/types/team';
-import type { WithId } from '@/lib/firestore-rq';
+import type { WithId } from '@/lib/api-rq';
 
 export default function SprintPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -50,8 +50,11 @@ export default function SprintPage() {
   ]);
 
   const sprints = ((data.sprints ?? []) as (Sprint & { id: string })[]).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-  const projectMemberEntries = (data.teamMembers ?? []) as unknown as (ProjectTeamMember & { id: string })[];
-  const rootMembers = (data.rootMembers ?? []) as TeamMember[];
+  const projectMemberEntries = useMemo(
+    () => (data.teamMembers ?? []) as unknown as (ProjectTeamMember & { id: string })[],
+    [data.teamMembers],
+  );
+  const rootMembers = useMemo(() => (data.rootMembers ?? []) as TeamMember[], [data.rootMembers]);
   const teamMembers = useMemo((): TeamMemberWithRole[] => {
     const map = new Map(rootMembers.map((m) => [m.id, m]));
     return projectMemberEntries
@@ -128,10 +131,10 @@ export default function SprintPage() {
 
   // ── Sprint status transitions ──────────────────────────────────────────────
   const handleStartSprint = () => {
-    viewedSprint && updateSprint.mutate({ id: viewedSprint.id, data: { status: 'active' } as never });
+    if (viewedSprint) updateSprint.mutate({ id: viewedSprint.id, data: { status: 'active' } as never });
   };
   const handleCompleteSprint = () => {
-    viewedSprint && updateSprint.mutate({ id: viewedSprint.id, data: { status: 'completed' } as never });
+    if (viewedSprint) updateSprint.mutate({ id: viewedSprint.id, data: { status: 'completed' } as never });
   };
   const transitioning = updateSprint.isPending;
 

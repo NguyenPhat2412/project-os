@@ -1,4 +1,4 @@
-import { createCollection } from '@/lib/firestore-rq';
+import { createCollection } from '@/lib/api-rq';
 import type { Project } from '@/modules/projects/types/project';
 
 /**

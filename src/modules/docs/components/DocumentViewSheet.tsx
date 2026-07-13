@@ -16,7 +16,7 @@ import { PageBadge } from '@/components/ui/page-badge';
 import { formatFileSize } from '@/lib/numberjs';
 import { useAttachmentViewer } from '@/components/ui/shared/use-attachment-viewer';
 import type { DocEntry } from '@/modules/docs/collections/documents';
-import type { WithId } from '@/lib/firestore-rq';
+import type { WithId } from '@/lib/api-rq';
 
 type DocWithId = WithId<DocEntry>;
 type BadgeVariant = 'red' | 'green' | 'yellow' | 'accent' | 'purple' | 'muted';

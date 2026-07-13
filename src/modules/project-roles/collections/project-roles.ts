@@ -1,5 +1,5 @@
-import { createSubcollection } from '@/lib/firestore-rq';
-import type { WithId } from '@/lib/firestore-rq';
+import { createSubcollection } from '@/lib/api-rq';
+import type { WithId } from '@/lib/api-rq';
 import type { ProjectRole } from '../types/project-role';
 
 /**

@@ -89,7 +89,6 @@ export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
         JsonNode: {
-            container?: boolean;
             valueNode?: boolean;
             object?: boolean;
             /** @enum {string} */
@@ -106,10 +105,11 @@ export interface components {
             textual?: boolean;
             boolean?: boolean;
             binary?: boolean;
-            floatingPointNumber?: boolean;
             missingNode?: boolean;
             integralNumber?: boolean;
+            floatingPointNumber?: boolean;
             number?: boolean;
+            container?: boolean;
             array?: boolean;
             empty?: boolean;
             null?: boolean;

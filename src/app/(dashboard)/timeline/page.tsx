@@ -2,9 +2,10 @@
 import { useState } from 'react';
 import { epicsCollection } from '@/modules/backlog/collections/epics';
 import { milestonesCollection } from '@/modules/timeline/collections/milestones';
+import { ganttPhasesCollection, type GanttPhase } from '@/modules/timeline/collections/ganttPhases';
 import { PageLoader } from '@/components/ui/page-loader';
 import { teamCollection } from '@/modules/team/collections/team';
-import { useBatchFetch, createCollectionListItem } from '@/lib/firestore-rq/hooks/useBatchFetch';
+import { useBatchFetch, createCollectionListItem } from '@/lib/api-rq/hooks/useBatchFetch';
 import { ConfirmDialog } from '@/components/ui/shared/confirm-dialog';
 import { GanttChart } from '@/modules/timeline/components/GanttChart';
 import { MilestonesTable } from '@/modules/timeline/components/MilestonesTable';
@@ -12,6 +13,7 @@ import { MilestoneDialog } from '@/modules/timeline/components/MilestoneDialog';
 import { TimelineEpicStatsGrid } from '@/modules/timeline/components/TimelineEpicStatsGrid';
 import { MilestonesToolbar } from '@/modules/timeline/components/MilestonesToolbar';
 import { TimelinePageHeader } from '@/modules/timeline/components/TimelinePageHeader';
+import { TimelinePhasesSection } from '@/modules/timeline/components/TimelinePhasesSection';
 import type { Milestone } from '@/modules/timeline/collections/milestones';
 import type { TeamMember } from '@/modules/team/types/team';
 import type { Epic } from '@/modules/backlog/types/backlog';
@@ -28,10 +30,13 @@ export default function TimelinePage() {
   const milestones = milestonesRaw as (Milestone & { id: string })[];
   const deleteMilestone = milestonesCollection.useDelete();
 
+  const { data: phasesRaw = [], isLoading: phasesLoading } = ganttPhasesCollection.useList();
+  const phases = phasesRaw as (GanttPhase & { id: string })[];
+
   const { data: batchData, isLoading: batchLoading } = useBatchFetch([createCollectionListItem('teamMembers', teamCollection)]);
   const teamMembers = (batchData.teamMembers ?? []) as TeamMember[];
 
-  const loading = epicsLoading || milestonesLoading || batchLoading;
+  const loading = epicsLoading || milestonesLoading || phasesLoading || batchLoading;
 
   if (loading) {
     return <PageLoader />;
@@ -62,6 +67,8 @@ export default function TimelinePage() {
       <TimelineEpicStatsGrid epics={epics} />
 
       <GanttChart epics={epics} />
+
+      <TimelinePhasesSection phases={phases} />
 
       <MilestonesToolbar onCreate={openCreate} />
 

@@ -1,17 +1,17 @@
 /**
  * useDocs
  * ───────
- * Hook for Docs module using firestore-rq collection pattern.
+ * Hook for Docs module using api-rq collection pattern.
  */
 
 import { documentsCollection } from '@/modules/docs/collections/documents';
 import { wikiLinksCollection } from '@/modules/docs/collections/wikiLinks';
 import type { DocEntry } from '@/modules/docs/collections/documents';
 import type { WikiLink } from '@/modules/docs/collections/wikiLinks';
-import type { WithId } from '@/lib/firestore-rq';
+import type { WithId } from '@/lib/api-rq';
 
 export function useDocs() {
-  // ── Firestore queries ─────────────────────────────────────────
+  // ── API queries ─────────────────────────────────────────
   const { data: documents = [], isLoading } = documentsCollection.useList();
   const { data: wikiLinks = [] } = wikiLinksCollection.useList();
 

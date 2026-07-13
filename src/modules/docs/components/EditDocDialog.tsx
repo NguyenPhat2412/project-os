@@ -27,46 +27,6 @@ import type { DocEntry } from '@/modules/docs/collections/documents';
 import type { Attachment } from '@/lib/types/attachment';
 import type { FolderWithId } from '@/modules/docs/collections/folders';
 
-// ── helpers ───────────────────────────────────────────────────────────────────
-function getFileIcon(filename: string): string {
-  const ext = filename.split('.').pop()?.toLowerCase() ?? '';
-  const map: Record<string, string> = {
-    pdf: '📋',
-    doc: '📝',
-    docx: '📝',
-    xls: '📊',
-    xlsx: '📊',
-    csv: '📊',
-    png: '🖼️',
-    jpg: '🖼️',
-    jpeg: '🖼️',
-    gif: '🖼️',
-    webp: '🖼️',
-    svg: '🖼️',
-    mp4: '🎬',
-    mov: '🎬',
-    avi: '🎬',
-    mkv: '🎬',
-    zip: '📦',
-    rar: '📦',
-    '7z': '📦',
-    tar: '📦',
-    md: '📋',
-    txt: '📄',
-    yaml: '⚙️',
-    yml: '⚙️',
-    json: '🔧',
-    env: '🔧',
-    fig: '🎨',
-    sketch: '🎨',
-  };
-  return map[ext] ?? '📄';
-}
-
-function getFileType(filename: string): string {
-  return filename.split('.').pop()?.toUpperCase() ?? 'FILE';
-}
-
 // ── types ─────────────────────────────────────────────────────────────────────
 type BadgeOption = { label: string; variant: 'green' | 'accent' | 'yellow' | 'muted' | 'red' | 'purple' };
 

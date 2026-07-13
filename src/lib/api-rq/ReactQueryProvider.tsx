@@ -11,7 +11,7 @@ interface Props {
 
 /**
  * React Query Provider
- * Wraps the app to provide React Query context for firestore-rq hooks.
+ * Wraps the app to provide React Query context for api-rq hooks.
  */
 export function ReactQueryProvider({ children }: Props) {
   const [queryClient] = useState(

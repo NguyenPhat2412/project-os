@@ -15,13 +15,13 @@ import { getStatusFromWorkload } from '@/modules/team/types/team';
 import type { TeamMemberWithRole, ProjectTeamMember, Member } from '@/modules/team/types/team';
 import type { Task, TaskColumn } from '@/modules/tasks/types/task';
 import type { Bug } from '@/modules/bugs/types/bug';
-import type { WithId } from '@/lib/firestore-rq';
+import type { WithId } from '@/lib/api-rq';
 import type { StatData } from '@/lib/types';
 
 const DONE_BUG_STATUSES = new Set(['fixed', 'wont-fix']);
 
 export function useTeam() {
-  // ── Firestore queries ─────────────────────────────────────────
+  // ── API queries ─────────────────────────────────────────
   const { data: _projectEntries = [], isLoading: isLoading } = teamCollection.useList();
   const { data: _globalMembers = [] } = membersCollection.useList();
   const { data: _tasks = [] } = tasksCollection.useList();

@@ -13,7 +13,7 @@ interface Props {
   entityId: string;
 }
 
-/** Derive display info from Firebase Auth user (no team member required). */
+/** Derive display info from Spring/PostgreSQL Auth user (no team member required). */
 function getAuthorInitials(displayName: string | null, email: string | null): string {
   if (displayName) {
     const parts = displayName.trim().split(/\s+/);

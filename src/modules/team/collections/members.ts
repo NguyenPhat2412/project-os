@@ -1,10 +1,10 @@
-import { createCollection } from '@/lib/firestore-rq';
-import type { WithId } from '@/lib/firestore-rq';
+import { createCollection } from '@/lib/api-rq';
+import type { WithId } from '@/lib/api-rq';
 import type { RootMember } from '@/modules/root/types/root-member';
 import type { Member } from '@/modules/team/types/team';
 
 /**
- * Root-level `members` collection — backed by `/members/{uid}` in Firestore.
+ * Root-level `members` collection — backed by `/members/{uid}` in API.
  * Holds authoritative user profile data: displayName, email, initials, gradient, roles.
  *
  * Transform maps RootMember → Member fields.

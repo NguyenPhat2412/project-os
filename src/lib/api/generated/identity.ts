@@ -180,6 +180,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auth/providers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["providers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/me": {
         parameters: {
             query?: never;
@@ -217,12 +233,16 @@ export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
         JsonNode: {
+            number?: boolean;
+            floatingPointNumber?: boolean;
+            integralNumber?: boolean;
+            missingNode?: boolean;
+            string?: boolean;
+            /** @enum {string} */
+            nodeType?: "ARRAY" | "BINARY" | "BOOLEAN" | "MISSING" | "NULL" | "NUMBER" | "OBJECT" | "POJO" | "STRING";
             valueNode?: boolean;
             container?: boolean;
             object?: boolean;
-            /** @enum {string} */
-            nodeType?: "ARRAY" | "BINARY" | "BOOLEAN" | "MISSING" | "NULL" | "NUMBER" | "OBJECT" | "POJO" | "STRING";
-            string?: boolean;
             pojo?: boolean;
             short?: boolean;
             int?: boolean;
@@ -234,10 +254,6 @@ export interface components {
             textual?: boolean;
             boolean?: boolean;
             binary?: boolean;
-            missingNode?: boolean;
-            integralNumber?: boolean;
-            floatingPointNumber?: boolean;
-            number?: boolean;
             array?: boolean;
             empty?: boolean;
             null?: boolean;
@@ -318,6 +334,12 @@ export interface components {
         PageResponseDirectoryUser: {
             data?: components["schemas"]["DirectoryUser"][];
             meta?: components["schemas"]["Meta"];
+        };
+        ApiResponseProviderView: {
+            data?: components["schemas"]["ProviderView"];
+        };
+        ProviderView: {
+            google?: boolean;
         };
         PageResponseUserView: {
             data?: components["schemas"]["UserView"][];
@@ -713,6 +735,26 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["PageResponseDirectoryUser"];
+                };
+            };
+        };
+    };
+    providers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseProviderView"];
                 };
             };
         };

@@ -1,5 +1,5 @@
-import { createCollection } from '@/lib/firestore-rq';
-import type { WithId } from '@/lib/firestore-rq';
+import { createCollection } from '@/lib/api-rq';
+import type { WithId } from '@/lib/api-rq';
 import type { RootMember } from '../types/root-member';
 
 /**

@@ -47,7 +47,7 @@ export function BreakdownBarChart({ title, items, className }: Props) {
         {!hasData ? (
           <p className='text-[12px] text-muted-foreground'>Chưa có dữ liệu.</p>
         ) : (
-          <ResponsiveContainer width='100%' height={items.length * 28 + 16}>
+          <ResponsiveContainer width='100%' height={items.length * 28 + 16} initialDimension={{ width: 1, height: 1 }}>
             <BarChart layout='vertical' data={items} margin={{ top: 0, right: 28, left: 0, bottom: 0 }} barCategoryGap='30%'>
               <XAxis type='number' tick={{ fill: 'var(--muted)', fontSize: 9, fontFamily: 'monospace' }} axisLine={false} tickLine={false} allowDecimals={false} />
               <YAxis type='category' dataKey='name' tick={{ fill: 'var(--muted-foreground)', fontSize: 10 }} axisLine={false} tickLine={false} width={72} />

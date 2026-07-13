@@ -3,7 +3,7 @@ import { useState, useMemo } from 'react';
 import { epicsCollection } from '@/modules/backlog/collections/epics';
 import { teamCollection } from '@/modules/team/collections/team';
 import { membersCollection } from '@/modules/team/collections/members';
-import { useBatchFetch, createCollectionListItem } from '@/lib/firestore-rq/hooks/useBatchFetch';
+import { useBatchFetch, createCollectionListItem } from '@/lib/api-rq/hooks/useBatchFetch';
 import { EpicCard } from '@/modules/backlog/components/EpicCard';
 import { EpicViewSheet } from '@/modules/backlog/components/EpicViewSheet';
 import { UserStoryViewSheet } from '@/modules/backlog/components/UserStoryViewSheet';
@@ -35,8 +35,11 @@ export default function BacklogPage() {
   const epics = rawEpics as EpicData[];
 
   const { data: batchData } = useBatchFetch([createCollectionListItem('teamMembers', teamCollection), createCollectionListItem('rootMembers', membersCollection)]);
-  const projectMemberEntries = (batchData.teamMembers ?? []) as unknown as (ProjectTeamMember & { id: string })[];
-  const rootMembers = (batchData.rootMembers ?? []) as TeamMember[];
+  const projectMemberEntries = useMemo(
+    () => (batchData.teamMembers ?? []) as unknown as (ProjectTeamMember & { id: string })[],
+    [batchData.teamMembers],
+  );
+  const rootMembers = useMemo(() => (batchData.rootMembers ?? []) as TeamMember[], [batchData.rootMembers]);
   const teamMembers = useMemo((): TeamMemberWithRole[] => {
     const map = new Map(rootMembers.map((m) => [m.id, m]));
     return projectMemberEntries

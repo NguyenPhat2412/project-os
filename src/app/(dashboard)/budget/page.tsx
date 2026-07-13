@@ -9,7 +9,7 @@ import { BudgetTable } from '@/modules/budget/components/BudgetTable';
 import { ExpenseTable } from '@/modules/budget/components/ExpenseTable';
 import { BudgetStatsPanel } from '@/modules/budget/components/BudgetStatsPanel';
 import { BudgetPageHeader } from '@/modules/budget/components/BudgetPageHeader';
-import { useBatchFetch, createCollectionListItem } from '@/lib/firestore-rq/hooks/useBatchFetch';
+import { useBatchFetch, createCollectionListItem } from '@/lib/api-rq/hooks/useBatchFetch';
 import type { BudgetItem, ExpenseEntry } from '@/modules/budget/types/budget';
 import type { TeamMember } from '@/modules/team/types/team';
 

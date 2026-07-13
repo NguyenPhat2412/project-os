@@ -1,15 +1,15 @@
 /**
  * useBacklog
  * ────────────
- * Hook for Backlog module using firestore-rq collection pattern.
+ * Hook for Backlog module using api-rq collection pattern.
  */
 
 import { epicsCollection } from '@/modules/backlog/collections/epics';
 import type { Epic } from '@/modules/backlog/types/backlog';
-import type { WithId } from '@/lib/firestore-rq';
+import type { WithId } from '@/lib/api-rq';
 
 export function useBacklog() {
-  // ── Firestore queries ─────────────────────────────────────────
+  // ── API queries ─────────────────────────────────────────
   const { data: epics = [], isLoading } = epicsCollection.useList();
 
   // ── Type assertions ───────────────────────────────────────────

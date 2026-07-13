@@ -18,11 +18,11 @@
  * set.mutate({ id: 'dashboard', data: { ... } });
  * ```
  */
-import { createConfig } from '@/lib/firestore-rq';
-import { ACTIVE_PROJECT_ID } from '@/lib/project';
+import { createConfig } from '@/lib/api-rq';
+import { ACTIVE_PROJECT_SCOPE } from '@/lib/project';
 
 // Base path cho tất cả config documents
-const CONFIG_BASE = `projects/${ACTIVE_PROJECT_ID}/config`;
+const CONFIG_BASE = `projects/${ACTIVE_PROJECT_SCOPE}/config`;
 
 // ─── Type definitions ──────────────────────────────────────────────────────────
 
@@ -85,9 +85,9 @@ export interface NotificationPrefs {
 }
 
 export interface UserProfile {
-  /** Firebase UID — matches document ID */
+  /** Identity service user UUID. */
   uid: string;
-  /** Firebase Auth fields (read-only, synced on login) */
+  /** Identity fields (read-only, synchronized on login). */
   email?: string;
   displayName?: string;
   photoURL?: string;
@@ -112,42 +112,42 @@ export interface UserProfile {
 
 export const dashboardConfig = createConfig<DashboardConfig>({
   basePath: CONFIG_BASE,
-  projectId: ACTIVE_PROJECT_ID,
+  projectId: ACTIVE_PROJECT_SCOPE,
   name: 'dashboard',
 });
 
 export const budgetConfig = createConfig<BudgetConfig>({
   basePath: CONFIG_BASE,
-  projectId: ACTIVE_PROJECT_ID,
+  projectId: ACTIVE_PROJECT_SCOPE,
   name: 'budget',
 });
 
 export const reportsConfig = createConfig<ReportsConfig>({
   basePath: CONFIG_BASE,
-  projectId: ACTIVE_PROJECT_ID,
+  projectId: ACTIVE_PROJECT_SCOPE,
   name: 'reports',
 });
 
 export const sprintConfig = createConfig<SprintConfig>({
   basePath: CONFIG_BASE,
-  projectId: ACTIVE_PROJECT_ID,
+  projectId: ACTIVE_PROJECT_SCOPE,
   name: 'sprint',
 });
 
 export const aiSettingsConfig = createConfig<AISettingsConfig>({
   basePath: CONFIG_BASE,
-  projectId: ACTIVE_PROJECT_ID,
+  projectId: ACTIVE_PROJECT_SCOPE,
   name: 'ai_settings',
 });
 
 export const themeConfig = createConfig<ThemeSettingsConfig>({
   basePath: CONFIG_BASE,
-  projectId: ACTIVE_PROJECT_ID,
+  projectId: ACTIVE_PROJECT_SCOPE,
   name: 'theme',
 });
 
 export const profileConfig = createConfig<UserProfile>({
-  basePath: `projects/${ACTIVE_PROJECT_ID}/user_profiles`,
-  projectId: ACTIVE_PROJECT_ID,
+  basePath: `projects/${ACTIVE_PROJECT_SCOPE}/user_profiles`,
+  projectId: ACTIVE_PROJECT_SCOPE,
   name: 'profile',
 });

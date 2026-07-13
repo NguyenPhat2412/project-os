@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { createCollectionListItem } from '@/lib/firestore-rq/hooks/useBatchFetch';
-import { useBatchFetch } from '@/lib/firestore-rq/hooks/useBatchFetch';
-import { deleteField } from '@/lib/firestore-rq';
+import { createCollectionListItem } from '@/lib/api-rq/hooks/useBatchFetch';
+import { useBatchFetch } from '@/lib/api-rq/hooks/useBatchFetch';
+import { deleteField } from '@/lib/api-rq';
 import { deleteAttachment } from '@/lib/api/attachments';
 import { documentsCollection } from '@/modules/docs/collections/documents';
 import { foldersCollection } from '@/modules/docs/collections/folders';
@@ -22,7 +22,7 @@ import { FolderBreadcrumb } from '@/modules/docs/components/FolderBreadcrumb';
 import { CreateFolderDialog } from '@/modules/docs/components/CreateFolderDialog';
 import type { DocEntry } from '@/modules/docs/collections/documents';
 import type { FolderEntry } from '@/modules/docs/collections/folders';
-import type { WithId } from '@/lib/firestore-rq';
+import type { WithId } from '@/lib/api-rq';
 
 type DocWithId = WithId<DocEntry>;
 type FolderWithId = WithId<FolderEntry>;
@@ -36,7 +36,7 @@ export default function DocsPage() {
   ]);
 
   const folders = ((data.folders ?? []) as FolderWithId[]).sort((a, b) => a.order - b.order);
-  const documents = (data.documents ?? []) as DocWithId[];
+  const documents = useMemo(() => (data.documents ?? []) as DocWithId[], [data.documents]);
   const deleteDocument = documentsCollection.useDelete();
   const deleteFolder = foldersCollection.useDelete();
   const createFolder = foldersCollection.useSet();
@@ -53,12 +53,6 @@ export default function DocsPage() {
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [createFolderOpen, setCreateFolderOpen] = useState(false);
   const [confirmDeleteFolderId, setConfirmDeleteFolderId] = useState<string | null>(null);
-
-  const allDocTypes = useMemo(() => {
-    const typeSet = new Set<string>();
-    documents.forEach((d) => typeSet.add(d.type));
-    return Array.from(typeSet).sort();
-  }, [documents]);
 
   const filteredDocs = useMemo(() => {
     return documents.filter((d) => {

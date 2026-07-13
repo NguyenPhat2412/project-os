@@ -99,7 +99,7 @@ export function BudgetStatsPanel({ budgetItems, expenses }: Props) {
           {spendingData.length === 0 ? (
             <p className='text-[12px] text-muted-foreground'>Chưa có hạng mục.</p>
           ) : (
-            <ResponsiveContainer width='100%' height={spendingData.length * 28 + 16}>
+            <ResponsiveContainer width='100%' height={spendingData.length * 28 + 16} initialDimension={{ width: 1, height: 1 }}>
               <BarChart layout='vertical' data={spendingData} margin={{ top: 0, right: 36, left: 0, bottom: 0 }} barCategoryGap='30%'>
                 <XAxis type='number' domain={[0, 100]} tick={{ fill: 'var(--muted)', fontSize: 9, fontFamily: 'monospace' }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v}%`} />
                 <YAxis type='category' dataKey='category' tick={{ fill: 'var(--muted-foreground)', fontSize: 10 }} axisLine={false} tickLine={false} width={72} />

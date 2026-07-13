@@ -15,7 +15,6 @@ import { formatDateVi } from '@/lib/dayjs';
 import type { EpicData, EpicStatus, UserStoryStatus } from '@/modules/backlog/types/backlog';
 import { TASK_PRIORITY_META } from '@/lib/constants/work-item-colors';
 
-type Priority = 'High' | 'Normal' | 'Low';
 const storyStatusVariant: Record<UserStoryStatus, 'muted' | 'accent' | 'green' | 'red'> = {
   Todo: 'muted',
   'In Progress': 'accent',

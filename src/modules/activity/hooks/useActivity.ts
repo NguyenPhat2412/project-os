@@ -1,16 +1,16 @@
 /**
  * useActivity
  * ────────────
- * Hook for Activity module using firestore-rq collection pattern.
+ * Hook for Activity module using api-rq collection pattern.
  */
 
 import { activityFeedCollection } from '@/modules/activity/collections/activityFeed';
 import { notificationsCollection } from '@/modules/activity/collections/notifications';
 import type { ActivityEntry, Notification } from '@/modules/activity/types/activity';
-import type { WithId } from '@/lib/firestore-rq';
+import type { WithId } from '@/lib/api-rq';
 
 export function useActivity() {
-  // ── Firestore queries ─────────────────────────────────────────
+  // ── API queries ─────────────────────────────────────────
   const { data: activityFeed = [], isLoading } = activityFeedCollection.useList();
   const { data: notifications = [] } = notificationsCollection.useList();
 

@@ -53,7 +53,7 @@ export function ActivityStatsPanel({ tasksDone, tasksTotal, bugsOpen, sprintsAct
           <CardDescription>Tổng quan khối lượng hoạt động hiện tại</CardDescription>
         </CardHeader>
         <CardContent>
-          <ResponsiveContainer width='100%' height={72}>
+          <ResponsiveContainer width='100%' height={72} initialDimension={{ width: 1, height: 1 }}>
             <BarChart data={chartData} margin={{ top: 0, right: 0, left: -16, bottom: 0 }} barCategoryGap='30%'>
               <CartesianGrid strokeDasharray='3 3' stroke='var(--border)' vertical={false} />
               <XAxis dataKey='name' tick={{ fill: 'var(--muted)', fontSize: 10 }} axisLine={false} tickLine={false} />

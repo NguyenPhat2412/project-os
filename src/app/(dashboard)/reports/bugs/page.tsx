@@ -63,11 +63,11 @@ export default function ReportsBugsPage() {
   const [sorting, setSorting] = useState<SortingState>([]);
 
   const { data, isLoading } = useReportReadModel<WithId<Bug>>('bugs');
-  const bugs = data?.items ?? [];
-  const team = data?.members ?? [];
-  const memberMap = Object.fromEntries(team.map((m) => [m.id, m.name]));
+  const bugs = useMemo(() => data?.items ?? [], [data?.items]);
+  const team = useMemo(() => data?.members ?? [], [data?.members]);
+  const memberMap = useMemo(() => Object.fromEntries(team.map((m) => [m.id, m.name])), [team]);
 
-  const tableData = useMemo(() => bugs.map((b) => ({ ...b, assigneeName: memberMap[b.assigneeId ?? ''] ?? '—' })), [bugs, team]);
+  const tableData = useMemo(() => bugs.map((b) => ({ ...b, assigneeName: memberMap[b.assigneeId ?? ''] ?? '—' })), [bugs, memberMap]);
 
   const sevData = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -147,7 +147,7 @@ export default function ReportsBugsPage() {
       <div className='grid grid-cols-[1fr_2fr] max-lg:grid-cols-1 gap-4.5 mb-4.5'>
         <div className='bg-card border border-border panel p-5'>
           <div className='font-sans text-[16px] font-bold mb-3'>Theo mức độ</div>
-          <ResponsiveContainer width='100%' height={120}>
+          <ResponsiveContainer width='100%' height={120} initialDimension={{ width: 1, height: 1 }}>
             <PieChart>
               <Pie data={sevData} cx='50%' cy='50%' innerRadius={34} outerRadius={52} paddingAngle={3} dataKey='value' animationBegin={0} animationDuration={800} animationEasing='ease-out' strokeWidth={0}>
                 {sevData.map((d, i) => (

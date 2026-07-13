@@ -4,10 +4,9 @@ import { useReactTable, getCoreRowModel, getSortedRowModel, flexRender, createCo
 import { ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react';
 import type { DocEntry } from '@/modules/docs/collections/documents';
 import { PageBadge } from '@/components/ui/page-badge';
-import { Button } from '@/components/ui/button';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { TableActionsMenu, editAction, deleteAction, viewAction } from '@/components/ui/shared/table-actions-menu';
-import type { WithId } from '@/lib/firestore-rq';
+import type { WithId } from '@/lib/api-rq';
 
 type DocWithId = WithId<DocEntry>;
 
