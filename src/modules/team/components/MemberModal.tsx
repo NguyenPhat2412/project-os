@@ -26,7 +26,7 @@ const GRADIENTS = [
   { label: 'Xanh dương', value: 'linear-gradient(135deg,#3b82f6,#2563eb)' },
 ];
 
-const ROLES = ['Frontend Lead', 'Backend Lead', 'Frontend Developer', 'Backend Developer', 'UI/UX Designer', 'QA Engineer', 'DevOps Engineer', 'Business Analyst', 'Project Manager', 'Mobile Developer', 'Data Engineer', 'Security Engineer'];
+const ROLES = ['USER', 'ROOT_ADMIN'];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function getInitials(name: string): string {
@@ -48,7 +48,7 @@ export interface MemberModalProps {
   mode: 'add' | 'edit';
   member?: TeamMember;
   onClose: () => void;
-  onSave: (data: Omit<TeamMember, 'id'>) => Promise<void>;
+  onSave: (data: Omit<TeamMember, 'id'> & { password?: string }) => Promise<void>;
 }
 
 const memberSchema = z.object({
@@ -58,6 +58,7 @@ const memberSchema = z.object({
   taskCount: z.number().min(0, 'Số task không hợp lệ.').max(999, 'Số task tối đa là 999.'),
   workload: z.number().min(0).max(100),
   gradient: z.string().min(1),
+  password: z.string().optional(),
 });
 
 type MemberFormValues = z.infer<typeof memberSchema>;
@@ -84,6 +85,7 @@ export function MemberModal({ mode, member, onClose, onSave }: MemberModalProps)
       taskCount: member?.taskCount ?? 0,
       workload: member?.workload ?? 50,
       gradient: member?.gradient ?? GRADIENTS[0].value,
+      password: '',
     },
   });
   const [saving, setSaving] = useState(false);
@@ -97,6 +99,7 @@ export function MemberModal({ mode, member, onClose, onSave }: MemberModalProps)
       taskCount: member.taskCount,
       workload: member.workload,
       gradient: member.gradient,
+      password: '',
     });
   }, [member, reset]);
   const [apiError, setApiError] = useState('');
@@ -116,6 +119,11 @@ export function MemberModal({ mode, member, onClose, onSave }: MemberModalProps)
   const onSubmit = async (values: MemberFormValues) => {
     setSaving(true);
     setApiError('');
+    if (mode === 'add' && (!values.password || values.password.length < 8)) {
+      setApiError('Mật khẩu ban đầu phải có ít nhất 8 ký tự.');
+      setSaving(false);
+      return;
+    }
     try {
       await onSave({
         name: values.name.trim(),
@@ -127,6 +135,7 @@ export function MemberModal({ mode, member, onClose, onSave }: MemberModalProps)
         gradient: values.gradient,
         initials,
         status,
+        password: values.password || undefined,
       });
       onClose();
     } catch {
@@ -177,6 +186,12 @@ export function MemberModal({ mode, member, onClose, onSave }: MemberModalProps)
             {errors.email?.message && <span className={getInlineErrorTextClass()}>{errors.email.message}</span>}
           </FormField>
         </div>
+
+        {mode === 'add' && (
+          <FormField label='Mật khẩu ban đầu' required>
+            <Input className={iCls} type='password' autoComplete='new-password' placeholder='Ít nhất 8 ký tự' {...register('password')} />
+          </FormField>
+        )}
 
         {/* Role */}
         <FormField label='Vai trò' className={getFieldErrorLabelClass(!!errors.role)}>

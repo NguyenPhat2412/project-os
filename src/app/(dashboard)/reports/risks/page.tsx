@@ -3,9 +3,7 @@ import { useMemo, useState } from 'react';
 import { useReactTable, getCoreRowModel, getSortedRowModel, flexRender, createColumnHelper, type SortingState } from '@tanstack/react-table';
 import { ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react';
 import { BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { useBatchFetch, createCollectionListItem } from '@/lib/firestore-rq/hooks/useBatchFetch';
-import { risksCollection } from '@/modules/risk/collections/risks';
-import { teamCollection } from '@/modules/team/collections/team';
+import { useReportReadModel } from '@/lib/api/read-models';
 import { PageLoader } from '@/components/ui/page-loader';
 import { StatCard } from '@/components/ui/shared/stat-card';
 import { PageBadge } from '@/components/ui/page-badge';
@@ -13,7 +11,7 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@
 import { SimplePageHeader } from '@/components/layout/SimplePageHeader';
 import { BREADCRUMBS } from '@/lib/breadcrumbs';
 import type { Risk } from '@/modules/risk/types/risk';
-import type { TeamMember } from '@/modules/team/types/team';
+import { ReportExportButton } from '@/modules/reports/components/report-export-button';
 
 type WithId<T> = T & { id: string };
 type BadgeVariant = 'red' | 'green' | 'yellow' | 'accent' | 'purple' | 'muted';
@@ -55,10 +53,9 @@ function ChartTooltip({ active, payload }: { active?: boolean; payload?: { value
 export default function ReportsRisksPage() {
   const [sorting, setSorting] = useState<SortingState>([]);
 
-  const { data, isLoading } = useBatchFetch([createCollectionListItem('risks', risksCollection), createCollectionListItem('team', teamCollection)]);
-
-  const risks = (data.risks ?? []) as WithId<Risk>[];
-  const team = (data.team ?? []) as WithId<TeamMember>[];
+  const { data, isLoading } = useReportReadModel<WithId<Risk>>('risks');
+  const risks = data?.items ?? [];
+  const team = data?.members ?? [];
   const memberMap = Object.fromEntries(team.map((m) => [m.id, m.name]));
 
   const tableData = useMemo(() => risks.map((r) => ({ ...r, ownerName: memberMap[r.ownerId] ?? '—' })), [risks, team]);
@@ -129,7 +126,7 @@ export default function ReportsRisksPage() {
 
   return (
     <div>
-      <SimplePageHeader title='Báo cáo rủi ro' segments={BREADCRUMBS.reportsRisks} />
+      <SimplePageHeader title='Báo cáo rủi ro' segments={BREADCRUMBS.reportsRisks} actions={<ReportExportButton resource='risks' />} />
 
       {/* Stats */}
       <div className='grid grid-cols-4 max-lg:grid-cols-2 gap-4 mb-4.5'>

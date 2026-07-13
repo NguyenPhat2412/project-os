@@ -15,6 +15,7 @@ import { ModalShell } from '@/components/ui/shared/modal-shell';
 import { DatePicker } from '@/components/ui/date-picker';
 import { TimePicker } from '@/components/ui/time-picker';
 import { FileAttachmentsField, type FileAttachmentsFieldHandle } from '@/components/ui/shared/file-attachments-field';
+import { useProject } from '@/store/project-store';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -49,6 +50,7 @@ interface Props {
 const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'] as const;
 
 export function MeetingDialog({ open, meeting, nextId, teamMembers, onClose, onSuccess }: Props) {
+  const { projectId } = useProject();
   const isNew = meeting === null;
   const [apiError, setApiError] = useState('');
   const attachmentRef = useRef<FileAttachmentsFieldHandle>(null);
@@ -226,7 +228,7 @@ export function MeetingDialog({ open, meeting, nextId, teamMembers, onClose, onS
           <FileAttachmentsField
             ref={attachmentRef}
             mode={isNew ? 'create' : 'edit'}
-            storagePath={`projects/default/meetings/${isNew ? '__new__' : meeting?.id}/attachments`}
+            storagePath={`projects/${projectId}/meetings/${isNew ? nextId : meeting?.id}/attachments`}
             attachments={meeting?.attachments ?? []}
             onChange={() => {}}
             onAutoSave={

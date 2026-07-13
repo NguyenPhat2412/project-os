@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createCollectionListItem } from '@/lib/firestore-rq/hooks/useBatchFetch';
 import { useBatchFetch } from '@/lib/firestore-rq/hooks/useBatchFetch';
+import { deleteField } from '@/lib/firestore-rq';
+import { deleteAttachment } from '@/lib/api/attachments';
 import { documentsCollection } from '@/modules/docs/collections/documents';
 import { foldersCollection } from '@/modules/docs/collections/folders';
 import { DocsStatsPanel } from '@/modules/docs/components/DocsStatsPanel';
@@ -18,8 +20,6 @@ import { ConfirmDialog } from '@/components/ui/shared/confirm-dialog';
 import { FolderTree } from '@/modules/docs/components/FolderTree';
 import { FolderBreadcrumb } from '@/modules/docs/components/FolderBreadcrumb';
 import { CreateFolderDialog } from '@/modules/docs/components/CreateFolderDialog';
-import { ref as storageRef, deleteObject } from 'firebase/storage';
-import { storage } from '@/lib/firebase/storage';
 import type { DocEntry } from '@/modules/docs/collections/documents';
 import type { FolderEntry } from '@/modules/docs/collections/folders';
 import type { WithId } from '@/lib/firestore-rq';
@@ -92,13 +92,11 @@ export default function DocsPage() {
     const doc = documents.find((d) => d.id === confirmDeleteId);
     if (!doc) return;
     try {
-      if (doc.storagePath) {
-        try { await deleteObject(storageRef(storage, doc.storagePath)); }
-        catch { /* ignore */ }
-      }
-      if (doc.attachments && doc.attachments.length > 0) {
-        await Promise.allSettled(doc.attachments.map((att) => deleteObject(storageRef(storage, att.storagePath)).catch(() => {})));
-      }
+      const storagePaths = new Set([
+        ...(doc.storagePath ? [doc.storagePath] : []),
+        ...(doc.attachments ?? []).map((attachment) => attachment.storagePath),
+      ]);
+      await Promise.allSettled(Array.from(storagePaths, (storagePath) => deleteAttachment(storagePath)));
       await deleteDocument.mutateAsync(doc.id);
     } catch (err) {
       console.error('Delete doc failed:', err);
@@ -133,7 +131,7 @@ export default function DocsPage() {
       const docsInFolder = documents.filter((d) => d.folderId === confirmDeleteFolderId);
       await Promise.all(
         docsInFolder.map((doc) =>
-          documentsCollection.helpers.update(doc.id, { folderId: undefined } as never)
+          documentsCollection.helpers.update(doc.id, { folderId: deleteField() } as never)
         )
       );
       // Delete sub-folders' docs too (cascade to children)
@@ -142,7 +140,7 @@ export default function DocsPage() {
         const childDocs = documents.filter((d) => d.folderId === child.id);
         await Promise.all(
           childDocs.map((doc) =>
-            documentsCollection.helpers.update(doc.id, { folderId: undefined } as never)
+            documentsCollection.helpers.update(doc.id, { folderId: deleteField() } as never)
           )
         );
       }

@@ -9,6 +9,18 @@ import type { RootMember } from '../types/root-member';
  * Path: `members/{uid}`
  */
 export const rootMembersCollection = createCollection<RootMember>({
-  path: 'members',
-  transform: (raw): WithId<RootMember> => raw as unknown as WithId<RootMember>,
+  path: 'v1/admin/users',
+  transform: (raw): WithId<RootMember> => {
+    const user = raw as unknown as { id: string; email: string; displayName?: string; avatarUrl?: string; role?: string; createdAt?: string; updatedAt?: string };
+    return {
+      id: user.id,
+      uid: user.id,
+      email: user.email,
+      displayName: user.displayName,
+      photoURL: user.avatarUrl,
+      roles: user.role === 'ROOT_ADMIN' ? ['Administrators'] : [],
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    };
+  },
 });

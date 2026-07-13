@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from '@/lib/api/client';
+import { apiClient, resolveApiPath } from '@/lib/api/client';
 
 interface ConfigDocumentConfig {
   basePath: string;
@@ -14,22 +14,22 @@ export function createConfig<T extends object>(config: ConfigDocumentConfig) {
     : name === 'theme'
       ? '/v1/users/me/preferences/appearance'
       : null;
+  const queryProjectId = () => identityPath ? 'identity' : resolveApiPath(`projects/${projectId}`).split('/')[2];
 
   const fetchDocument = (docId?: string) => {
     if (identityPath) return apiClient.getOne<T>(identityPath);
-    const docParam = docId ? `?docId=${encodeURIComponent(docId)}` : '';
-    return apiClient.getOne<T>(`/config/${projectId}/${name}${docParam}`);
+    return apiClient.getOne<T>(`projects/${projectId}/settings/${docId ?? name}`);
   };
 
   const saveDocument = (docId: string, data: Partial<T>) => {
     if (name === 'profile') return apiClient.patch<T>(identityPath!, data);
     if (name === 'theme') return apiClient.put<T>(identityPath!, data);
-    return apiClient.put<T>(`/config/${projectId}/${name}?docId=${encodeURIComponent(docId)}`, data);
+    return apiClient.put<T>(`projects/${projectId}/settings/${docId || name}`, data);
   };
 
   function useDocument(docId?: string | null) {
     return useQuery<T | null>({
-      queryKey: ['config', projectId, name, docId ?? '__default__'],
+      queryKey: ['config', queryProjectId(), name, docId ?? '__default__'],
       queryFn: () => fetchDocument(docId ?? undefined),
     });
   }
@@ -40,8 +40,8 @@ export function createConfig<T extends object>(config: ConfigDocumentConfig) {
       mutationFn: ({ id, data }: { id: string; data: Partial<T> }) =>
         saveDocument(id, data),
       onSuccess: (_, { id }) => {
-        queryClient.invalidateQueries({ queryKey: ['config', projectId, name, id] });
-        queryClient.invalidateQueries({ queryKey: ['config', projectId, name, '__default__'] });
+        queryClient.invalidateQueries({ queryKey: ['config', queryProjectId(), name, id] });
+        queryClient.invalidateQueries({ queryKey: ['config', queryProjectId(), name, '__default__'] });
       },
     });
   }

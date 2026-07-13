@@ -2,7 +2,7 @@
 import { createSubcollection } from '@/lib/firestore-rq';
 import type { WithId } from '@/lib/firestore-rq';
 import type { Attachment } from '@/lib/types/attachment';
-import { PROJECT_ID } from '@/lib/project';
+import { ACTIVE_PROJECT_ID } from '@/lib/project';
 
 export interface DocEntry {
   id: string;
@@ -21,9 +21,9 @@ export interface DocEntry {
 export type DocWithId = WithId<DocEntry>;
 
 /**
- * Documents subcollection: projects/{PROJECT_ID}/documents
+ * Documents subcollection: projects/{ACTIVE_PROJECT_ID}/documents
  */
 export const documentsCollection = createSubcollection<DocEntry>({
   path: (projectId: string) => `projects/${projectId}/documents`,
   transform: (raw): WithId<DocEntry> => raw as unknown as WithId<DocEntry>,
-})(PROJECT_ID);
+})(ACTIVE_PROJECT_ID);

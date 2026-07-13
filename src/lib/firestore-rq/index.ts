@@ -5,8 +5,11 @@ export { createConfig } from './core/createConfig';
 export { batchWrite } from './core/batchWrite';
 export { firestoreKeys } from './core/queryKeys';
 
-// ─── Firebase re-exports (wrapped so component code never imports directly from firebase/firestore) ──
-export { deleteField } from 'firebase/firestore';
+// API-compatible field helpers.
+/** JSON Merge Patch: null removes the field on the Spring/PostgreSQL API. */
+export function deleteField(): null {
+  return null;
+}
 
 // ─── Hooks ───────────────────────────────────────────────────────────────────
 export { useOptimistic } from './hooks/useOptimistic';

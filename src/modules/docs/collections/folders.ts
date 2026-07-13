@@ -1,6 +1,6 @@
 import { createSubcollection } from '@/lib/firestore-rq';
 import type { WithId } from '@/lib/firestore-rq';
-import { PROJECT_ID } from '@/lib/project';
+import { ACTIVE_PROJECT_ID } from '@/lib/project';
 
 export interface FolderEntry {
   id: string;
@@ -17,4 +17,4 @@ export type FolderWithId = WithId<FolderEntry>;
 export const foldersCollection = createSubcollection<FolderEntry>({
   path: (projectId: string) => `projects/${projectId}/folders`,
   transform: (raw): WithId<FolderEntry> => raw as unknown as WithId<FolderEntry>,
-})(PROJECT_ID);
+})(ACTIVE_PROJECT_ID);

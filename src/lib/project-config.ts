@@ -19,10 +19,10 @@
  * ```
  */
 import { createConfig } from '@/lib/firestore-rq';
-import { PROJECT_ID } from '@/lib/project';
+import { ACTIVE_PROJECT_ID } from '@/lib/project';
 
 // Base path cho tất cả config documents
-const CONFIG_BASE = `projects/${PROJECT_ID}/config`;
+const CONFIG_BASE = `projects/${ACTIVE_PROJECT_ID}/config`;
 
 // ─── Type definitions ──────────────────────────────────────────────────────────
 
@@ -112,42 +112,42 @@ export interface UserProfile {
 
 export const dashboardConfig = createConfig<DashboardConfig>({
   basePath: CONFIG_BASE,
-  projectId: PROJECT_ID,
+  projectId: ACTIVE_PROJECT_ID,
   name: 'dashboard',
 });
 
 export const budgetConfig = createConfig<BudgetConfig>({
   basePath: CONFIG_BASE,
-  projectId: PROJECT_ID,
+  projectId: ACTIVE_PROJECT_ID,
   name: 'budget',
 });
 
 export const reportsConfig = createConfig<ReportsConfig>({
   basePath: CONFIG_BASE,
-  projectId: PROJECT_ID,
+  projectId: ACTIVE_PROJECT_ID,
   name: 'reports',
 });
 
 export const sprintConfig = createConfig<SprintConfig>({
   basePath: CONFIG_BASE,
-  projectId: PROJECT_ID,
+  projectId: ACTIVE_PROJECT_ID,
   name: 'sprint',
 });
 
 export const aiSettingsConfig = createConfig<AISettingsConfig>({
   basePath: CONFIG_BASE,
-  projectId: PROJECT_ID,
+  projectId: ACTIVE_PROJECT_ID,
   name: 'ai_settings',
 });
 
 export const themeConfig = createConfig<ThemeSettingsConfig>({
   basePath: CONFIG_BASE,
-  projectId: PROJECT_ID,
+  projectId: ACTIVE_PROJECT_ID,
   name: 'theme',
 });
 
 export const profileConfig = createConfig<UserProfile>({
-  basePath: `projects/${PROJECT_ID}/user_profiles`,
-  projectId: PROJECT_ID,
+  basePath: `projects/${ACTIVE_PROJECT_ID}/user_profiles`,
+  projectId: ACTIVE_PROJECT_ID,
   name: 'profile',
 });

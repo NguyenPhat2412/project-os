@@ -51,6 +51,7 @@ const roleSchema = z.object({
   name: z.string().trim().min(1, 'Tên role không được để trống'),
   description: z.string().optional(),
   color: z.enum(['default', 'secondary', 'destructive', 'success', 'warning', 'info', 'purple', 'orange', 'rose', 'cyan'] as const),
+  permissions: z.string().optional(),
 });
 type RoleFormValues = z.infer<typeof roleSchema>;
 
@@ -88,6 +89,7 @@ function RoleDefModal({ open, editDef, projectId, onClose, onSuccess }: RoleDefM
       name: editDef?.name ?? '',
       description: editDef?.description ?? '',
       color: editDef?.color ?? 'default',
+      permissions: editDef?.permissions?.join(', ') ?? '',
     },
   });
 
@@ -97,13 +99,15 @@ function RoleDefModal({ open, editDef, projectId, onClose, onSuccess }: RoleDefM
       name: editDef?.name ?? '',
       description: editDef?.description ?? '',
       color: editDef?.color ?? 'default',
+      permissions: editDef?.permissions?.join(', ') ?? '',
     });
   }, [open, editDef, reset]);
 
   const onSubmit = async (data: RoleFormValues) => {
     const newName = data.name.trim();
     const newId = slugify(newName);
-    const payload = { name: newName, description: data.description?.trim() || '', color: data.color };
+    const permissions = (data.permissions ?? '').split(',').map((permission) => permission.trim()).filter(Boolean);
+    const payload = { name: newName, description: data.description?.trim() || '', color: data.color, permissions };
 
     if (isNew) {
       await setDef.mutateAsync({ id: newId, data: payload as never });
@@ -171,6 +175,12 @@ function RoleDefModal({ open, editDef, projectId, onClose, onSuccess }: RoleDefM
         <div className='space-y-1.5'>
           <Label className='block text-[12px] font-semibold text-muted-foreground uppercase tracking-wider'>Mô tả</Label>
           <Input {...register('description')} disabled={saving} placeholder='VD: Nhóm kiểm thử chất lượng' className='text-[13px]' />
+        </div>
+
+        <div className='space-y-1.5'>
+          <Label className='block text-[12px] font-semibold text-muted-foreground uppercase tracking-wider'>Quyền API</Label>
+          <Input {...register('permissions')} disabled={saving} placeholder='tasks:*, bugs:update, comments:create' className='text-[13px]' />
+          <p className='text-[11px] text-muted-foreground'>Phân tách bằng dấu phẩy; dùng *:* cho toàn quyền.</p>
         </div>
 
         {/* Color */}

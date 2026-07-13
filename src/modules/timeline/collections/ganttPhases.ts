@@ -1,7 +1,7 @@
 // collections/ganttPhases.ts
 import { createSubcollection } from '@/lib/firestore-rq';
 import type { WithId } from '@/lib/firestore-rq';
-import { PROJECT_ID } from '@/lib/project';
+import { ACTIVE_PROJECT_ID } from '@/lib/project';
 
 export interface GanttPhase {
   rowLabel: string;
@@ -12,9 +12,9 @@ export interface GanttPhase {
 }
 
 /**
- * GanttPhases subcollection: projects/{PROJECT_ID}/gantt_phases
+ * GanttPhases subcollection: projects/{ACTIVE_PROJECT_ID}/gantt_phases
  */
 export const ganttPhasesCollection = createSubcollection<GanttPhase>({
   path: (projectId: string) => `projects/${projectId}/gantt_phases`,
   transform: (raw): WithId<GanttPhase> => raw as unknown as WithId<GanttPhase>,
-})(PROJECT_ID);
+})(ACTIVE_PROJECT_ID);

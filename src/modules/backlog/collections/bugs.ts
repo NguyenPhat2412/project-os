@@ -1,7 +1,7 @@
 // collections/bugs.ts
 import { createSubcollection } from '@/lib/firestore-rq';
 import type { WithId } from '@/lib/firestore-rq';
-import { PROJECT_ID } from '@/lib/project';
+import { ACTIVE_PROJECT_ID } from '@/lib/project';
 
 export interface Bug {
   id: string;
@@ -13,9 +13,9 @@ export interface Bug {
 }
 
 /**
- * Bugs subcollection: projects/{PROJECT_ID}/bugs
+ * Bugs subcollection: projects/{ACTIVE_PROJECT_ID}/bugs
  */
 export const bugsCollection = createSubcollection<Bug>({
   path: (projectId: string) => `projects/${projectId}/bugs`,
   transform: (raw): WithId<Bug> => raw as unknown as WithId<Bug>,
-})(PROJECT_ID);
+})(ACTIVE_PROJECT_ID);

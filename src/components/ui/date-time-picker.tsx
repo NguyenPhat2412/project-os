@@ -15,7 +15,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import dayjs from '@/lib/dayjs';
 import { cn } from '@/lib/utils';
-import type { FieldValue } from 'firebase/firestore';
 import { CalendarIcon, CheckIcon, XIcon } from 'lucide-react';
 import { useState } from 'react';
 
@@ -23,7 +22,7 @@ import { useState } from 'react';
 
 interface DateTimePickerProps {
   value?: string; // "DD/MM/YYYY,HH:mm"
-  onChange?: (value: string | FieldValue) => void;
+  onChange?: (value: string) => void;
   onClear?: () => void;
   placeholder?: string;
   disabled?: boolean;
@@ -40,7 +39,7 @@ function nowTime() {
   return `${h}:${m}`;
 }
 
-function parseValue(value: string | FieldValue | undefined) {
+function parseValue(value: string | undefined) {
   if (!value || typeof value !== 'string') return { date: undefined, time: nowTime() };
   const [datePart, timePart] = value.split(',');
   const d = datePart ? dayjs(datePart, 'DD/MM/YYYY') : dayjs();
@@ -55,7 +54,7 @@ function buildValue(date: Date | undefined, time: string): string {
   return `${dayjs(date).format('DD/MM/YYYY')},${time}`;
 }
 
-function displayLabel(value: string | FieldValue | undefined): string {
+function displayLabel(value: string | undefined): string {
   if (!value || typeof value !== 'string') return '';
   const [datePart, timePart] = value.split(',');
   if (!datePart) return value;

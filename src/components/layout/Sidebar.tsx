@@ -7,8 +7,10 @@ import {
   BotIcon,
   BugIcon,
   CalendarDaysIcon,
+  CalendarCheckIcon,
   CheckSquareIcon,
   ClipboardListIcon,
+  Building2Icon,
   FileTextIcon,
   FolderKanbanIcon,
   FolderOpenIcon,
@@ -41,6 +43,8 @@ const NAV_MAIN: NavItem[] = [
 ];
 
 const NAV_MANAGE: NavItem[] = [
+  { title: 'Tổ chức', url: '/organization', icon: Building2Icon, iconClassName: 'text-indigo-600' },
+  { title: 'Chấm công', url: '/attendance', icon: CalendarCheckIcon, iconClassName: 'text-teal-600' },
   { title: 'Nhân sự (Team)', url: '/team', icon: UsersIcon, iconClassName: 'text-fuchsia-600' },
   { title: 'Ngân sách (Budget)', url: '/budget', icon: WalletIcon, iconClassName: 'text-emerald-700' },
   { title: 'Rủi ro (Risks)', url: '/risk', icon: ShieldAlertIcon, iconClassName: 'text-orange-600' },

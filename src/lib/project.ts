@@ -13,7 +13,6 @@
  * pick it up automatically.
  */
 
-import { getPersistedProjectId, DEFAULT_PROJECT_ID } from '@/store/project-store';
 
 /**
  * Resolves the active project ID:
@@ -25,4 +24,5 @@ import { getPersistedProjectId, DEFAULT_PROJECT_ID } from '@/store/project-store
  * at module initialization time. Components needing reactive projectId should
  * use the `useProject()` hook from '@/store/project-store' instead.
  */
-export const PROJECT_ID: string = getPersistedProjectId() || DEFAULT_PROJECT_ID;
+/** Marker resolved to the current project UUID at request and query-key time. */
+export const ACTIVE_PROJECT_ID = ':active-project';

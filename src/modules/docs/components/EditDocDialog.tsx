@@ -22,7 +22,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { getFieldErrorInputClass, getInlineErrorTextClass } from '@/lib/form-validation';
-import { PROJECT_ID } from '@/lib/project';
+import { useProject } from '@/store/project-store';
 import type { DocEntry } from '@/modules/docs/collections/documents';
 import type { Attachment } from '@/lib/types/attachment';
 import type { FolderWithId } from '@/modules/docs/collections/folders';
@@ -100,6 +100,7 @@ export function EditDocDialog(props: Props) {
 }
 
 function EditDocDialogContent({ open, doc: initialDoc, folders, onClose, onSuccess, onRefetch }: Props) {
+  const { projectId } = useProject();
   const updateDocument = documentsCollection.useUpdate();
   const queryClient = useQueryClient();
 
@@ -231,7 +232,7 @@ function EditDocDialogContent({ open, doc: initialDoc, folders, onClose, onSucce
         {/* File attachments — auto-saves after each upload/delete */}
         <div className='space-y-1.5'>
           <Label className='block text-[12px] font-semibold text-muted-foreground uppercase tracking-wider'>Files đính kèm</Label>
-          <FileAttachmentsField ref={attachmentsRef} mode='edit' storagePath={`projects/${PROJECT_ID}/docs/${initialDoc.id}/attachments`} attachments={attachments} onChange={setAttachments} onAutoSave={handleAutoSave} disabled={isBusy} />
+          <FileAttachmentsField ref={attachmentsRef} mode='edit' storagePath={`projects/${projectId}/docs/${initialDoc.id}/attachments`} attachments={attachments} onChange={setAttachments} onAutoSave={handleAutoSave} disabled={isBusy} />
         </div>
       </div>
     </ModalShell>

@@ -1,11 +1,10 @@
 'use client';
-import { useMemo } from 'react';
 import type { ComponentProps } from 'react';
 import Link from 'next/link';
 import { ListChecks, BugIcon, ShieldAlert, Users, ArrowRight } from 'lucide-react';
 import { apiClient } from '@/lib/api/client';
 import { useProject } from '@/store/project-store';
-import { useBatchFetch } from '@/lib/firestore-rq/hooks/useBatchFetch';
+import { useQuery } from '@tanstack/react-query';
 import { PageLoader } from '@/components/ui/page-loader';
 import { StatCard } from '@/components/ui/shared/stat-card';
 import { ProgressBar } from '@/components/ui/progress-bar';
@@ -25,6 +24,15 @@ import type { TeamMember } from '@/modules/team/types/team';
 
 export const dynamic = 'force-dynamic';
 
+interface DashboardReadModel {
+  meetings: unknown[];
+  tasks: (Task & { id: string })[];
+  taskColumns: TaskColumn[];
+  bugs: Bug[];
+  risks: Risk[];
+  team: TeamMember[];
+}
+
 function SectionLink({ href }: { href: string }) {
   return (
     <Link href={href} className='flex items-center gap-1 text-[12px] text-muted-foreground hover:text-primary transition-colors'>
@@ -36,34 +44,36 @@ function SectionLink({ href }: { href: string }) {
 export default function DashboardPage() {
   const { projectId } = useProject();
 
-  const batchItems = useMemo(() => [
-    { key: 'meetings', fetcher: () => apiClient.get(`projects/${projectId}/meetings`) },
-    { key: 'tasks', fetcher: () => apiClient.get(`projects/${projectId}/tasks`) },
-    { key: 'taskColumns', fetcher: () => apiClient.get(`projects/${projectId}/task_columns`) },
-    { key: 'bugs', fetcher: () => apiClient.get(`projects/${projectId}/bugs`) },
-    { key: 'risks', fetcher: () => apiClient.get(`projects/${projectId}/risks`) },
-    { key: 'team', fetcher: () => apiClient.get(`projects/${projectId}/members`) },
-  ], [projectId]);
-
-  const { data, isLoading } = useBatchFetch(batchItems, `dashboard-${projectId}`);
+  const { data: readModel, isLoading } = useQuery({
+    queryKey: ['read-model', 'dashboard', projectId],
+    queryFn: () => apiClient.getOne<DashboardReadModel>(`projects/${projectId}/read-model/dashboard`),
+    enabled: !!projectId,
+  });
+  const data: DashboardReadModel = readModel ?? {
+    meetings: [],
+    tasks: [],
+    taskColumns: [],
+    bugs: [],
+    risks: [],
+    team: [],
+  };
 
   const loading = isLoading;
 
-  const tasks = (data.tasks ?? []) as (Task & { id: string })[];
-  const bugs = (data.bugs ?? []) as Bug[];
-  const risks = (data.risks ?? []) as Risk[];
-  const team = (data.team ?? []) as TeamMember[];
+  const tasks = data.tasks;
+  const bugs = data.bugs;
+  const risks = data.risks;
+  const team = data.team;
 
-  const resolvedTaskColumns = useMemo(() => {
-    const cols = data.taskColumns as TaskColumn[] | undefined;
-    return resolveTaskColumns(cols?.length ? cols : DEFAULT_TASK_COLUMNS);
-  }, [data.taskColumns]);
+  const resolvedTaskColumns = resolveTaskColumns(
+    data.taskColumns?.length ? data.taskColumns : DEFAULT_TASK_COLUMNS,
+  );
 
   if (loading) {
     return <PageLoader />;
   }
 
-  const meetings = data.meetings ?? [];
+  const meetings = data.meetings;
 
   const doneTasks = tasks.filter((task) => isTaskDoneStatus(task.status, resolvedTaskColumns)).length;
   const taskDoneRate = tasks.length > 0 ? Math.round((doneTasks / tasks.length) * 100) : 0;

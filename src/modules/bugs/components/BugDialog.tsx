@@ -29,7 +29,7 @@ import type { Bug, BugSeverity, BugColumn } from '@/modules/bugs/types/bug';
 import type { TeamMember } from '@/modules/team/types/team';
 import type { Sprint } from '@/modules/sprint/types/sprint';
 import type { Attachment } from '@/lib/types/attachment';
-import { PROJECT_ID } from '@/lib/project';
+import { useProject } from '@/store/project-store';
 import { BUG_SEVERITY_META, BUG_SEVERITY_VALUES } from '@/lib/constants/work-item-colors';
 
 type BugWithId = Bug & { id: string };
@@ -72,6 +72,7 @@ interface Props {
 }
 
 export function BugDialog({ open, bug, nextId, teamMembers, columns, sprints, onClose, onSuccess }: Props) {
+  const { projectId } = useProject();
   const isNew = bug === null;
   const [apiError, setApiError] = useState('');
   const [attachments, setAttachments] = useState<Attachment[]>(bug?.attachments ?? []);
@@ -486,7 +487,7 @@ export function BugDialog({ open, bug, nextId, teamMembers, columns, sprints, on
           <FileAttachmentsField
             ref={attachmentsRef}
             mode={isNew ? 'create' : 'edit'}
-            storagePath={`projects/${PROJECT_ID}/bugs/${isNew ? nextId : bug.id}/attachments`}
+            storagePath={`projects/${projectId}/bugs/${isNew ? nextId : bug.id}/attachments`}
             attachments={attachments}
             onChange={setAttachments}
             onAutoSave={

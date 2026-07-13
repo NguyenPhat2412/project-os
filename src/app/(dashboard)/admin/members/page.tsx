@@ -1,6 +1,6 @@
 'use client';
 import { useState, useMemo } from 'react';
-import { membersCollection } from '@/modules/team/collections/members';
+import { toTeamMember, useAdminUser, useAdminUsers, useCreateAdminUser, useDisableAdminUser, useUpdateAdminUser } from '@/lib/api/admin-users';
 import { ConfirmDialog } from '@/components/ui/shared/confirm-dialog';
 import { PageLoader } from '@/components/ui/page-loader';
 import { TeamStatsPanel } from '@/modules/team/components/TeamStatsPanel';
@@ -17,12 +17,12 @@ import type { TeamMember, WorkloadStatus } from '@/modules/team/types/team';
 const ALL = 'all' as const;
 
 export default function AdminMembersPage() {
-  const { data: membersData, isLoading } = membersCollection.useList();
-  const allMembers = (membersData ?? []) as TeamMember[];
+  const { data: membersData, isLoading } = useAdminUsers();
+  const allMembers = useMemo(() => (membersData ?? []).map(toTeamMember), [membersData]);
 
-  const createMember = membersCollection.useCreate();
-  const updateMember = membersCollection.useUpdate();
-  const deleteMember = membersCollection.useDelete();
+  const createMember = useCreateAdminUser();
+  const updateMember = useUpdateAdminUser();
+  const deleteMember = useDisableAdminUser();
   const mutating = createMember.isPending || updateMember.isPending || deleteMember.isPending;
 
   const [search, setSearch] = useState('');
@@ -34,8 +34,10 @@ export default function AdminMembersPage() {
   const [viewTarget, setViewTarget] = useState<TeamMember | null>(null);
   const [editTarget, setEditTarget] = useState<TeamMember | null>(null);
   const [delTarget, setDelTarget] = useState<TeamMember | null>(null);
-  const { data: freshViewData } = membersCollection.useDocument(viewTarget?.id ?? null, { staleTime: 0 });
-  const { data: freshEditData } = membersCollection.useDocument(editTarget?.id ?? null, { staleTime: 0 });
+  const { data: freshViewUser } = useAdminUser(viewTarget?.id ?? null);
+  const { data: freshEditUser } = useAdminUser(editTarget?.id ?? null);
+  const freshViewData = freshViewUser ? toTeamMember(freshViewUser) : null;
+  const freshEditData = freshEditUser ? toTeamMember(freshEditUser) : null;
 
   const filteredMembers = useMemo(() => {
     return allMembers.filter((m) => {
@@ -46,13 +48,28 @@ export default function AdminMembersPage() {
     });
   }, [allMembers, search, filterRole, filterStatus]);
 
-  const handleAdd = async (data: Omit<TeamMember, 'id'>) => {
-    createMember.mutate({ ...data, order: Date.now() } as never, { onSuccess: () => setShowAdd(false) });
+  const handleAdd = async (data: Omit<TeamMember, 'id'> & { password?: string }) => {
+    await createMember.mutateAsync({
+      email: data.email,
+      password: data.password ?? '',
+      displayName: data.displayName ?? data.name,
+      role: data.roles.includes('ROOT_ADMIN') ? 'ROOT_ADMIN' : 'USER',
+    });
+    setShowAdd(false);
   };
 
-  const handleEdit = async (data: Omit<TeamMember, 'id'>) => {
+  const handleEdit = async (data: Omit<TeamMember, 'id'> & { password?: string }) => {
     if (!editTarget) return;
-    updateMember.mutate({ id: editTarget.id, data: data as never }, { onSuccess: () => setEditTarget(null) });
+    await updateMember.mutateAsync({
+      id: editTarget.id,
+      data: {
+        email: data.email,
+        displayName: data.displayName ?? data.name,
+        role: data.roles.includes('ROOT_ADMIN') ? 'ROOT_ADMIN' : 'USER',
+        status: data.status === 'Vacant' ? 'DISABLED' : 'ACTIVE',
+      },
+    });
+    setEditTarget(null);
   };
 
   const handleDelete = () => {

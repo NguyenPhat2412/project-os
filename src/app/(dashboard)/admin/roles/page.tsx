@@ -1,11 +1,10 @@
 'use client';
 import { useState, useMemo } from 'react';
 import { ShieldCheckIcon, SearchIcon, UserIcon } from 'lucide-react';
-import { rootMembersCollection } from '@/modules/root/collections/root-members';
-import { membersCollection } from '@/modules/team/collections/members';
+import { toTeamMember, useAdminUsers, useUpdateAdminUser } from '@/lib/api/admin-users';
 import { SimplePageHeader } from '@/components/layout/SimplePageHeader';
 import { BREADCRUMBS } from '@/lib/breadcrumbs';
-import { usePermission, ROOT_ADMIN_ROLE, ADMIN_EMAILS } from '@/hooks/usePermission';
+import { ROOT_ADMIN_ROLE } from '@/hooks/usePermission';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -21,13 +20,9 @@ import type { TeamMember } from '@/modules/team/types/team';
 // Predefined root roles (Administrators is immutable)
 const AVAILABLE_ROOT_ROLES = [
   { name: 'Administrators', description: 'Toàn quyền quản trị hệ thống', immutable: true },
-  { name: 'Project Manager', description: 'Quản lý dự án', immutable: false },
-  { name: 'Developer', description: 'Phát triển viên', immutable: false },
-  { name: 'Viewer', description: 'Chỉ xem', immutable: false },
 ];
 
 export default function AdminRolesPage() {
-  const { isRootAdmin } = usePermission();
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [addTarget, setAddTarget] = useState<TeamMember | null>(null);
@@ -36,20 +31,20 @@ export default function AdminRolesPage() {
   const [revokeTarget, setRevokeTarget] = useState<{ member: RootMember; role: string } | null>(null);
   const [selectedRole, setSelectedRole] = useState<string>('');
 
-  // Fetch root members
-  const { data: rootMembersData, isLoading: rootLoading } = rootMembersCollection.useList();
-  const rootMembers = (rootMembersData ?? []) as RootMember[];
-
-  // Fetch all global members (for adding new root members)
-  const { data: globalMembersData, isLoading: globalLoading } = membersCollection.useList();
-  const globalMembers = (globalMembersData ?? []) as TeamMember[];
-
-  // Mutations
-  const addRootMember = rootMembersCollection.useSet();
-  const updateRootMember = rootMembersCollection.useUpdate();
-  const deleteRootMember = rootMembersCollection.useDelete();
-
-  const mutating = addRootMember.isPending || updateRootMember.isPending || deleteRootMember.isPending;
+  const { data: usersData, isLoading } = useAdminUsers();
+  const updateUser = useUpdateAdminUser();
+  const globalMembers = useMemo(() => (usersData ?? []).map(toTeamMember), [usersData]);
+  const rootMembers = useMemo<RootMember[]>(() => (usersData ?? [])
+    .filter((user) => user.role === 'ROOT_ADMIN')
+    .map((user) => ({
+      uid: user.id,
+      email: user.email,
+      displayName: user.displayName,
+      photoURL: user.avatarUrl ?? undefined,
+      roles: [ROOT_ADMIN_ROLE],
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    })), [usersData]);
 
   // Merge global member info into root members
   const rootMembersWithInfo = useMemo(() => {
@@ -86,33 +81,16 @@ export default function AdminRolesPage() {
 
   const confirmAddMember = () => {
     if (!addTarget) return;
-    addRootMember.mutate(
-      {
-        id: addTarget.id,
-        data: {
-          uid: addTarget.id,
-          email: addTarget.email,
-          displayName: addTarget.name,
-          photoURL: undefined,
-          roles: [],
-        },
-      },
+    updateUser.mutate(
+      { id: addTarget.id, data: { role: 'ROOT_ADMIN' } },
       { onSuccess: () => setAddTarget(null) },
     );
   };
 
   const confirmGrantRole = () => {
     if (!grantTarget) return;
-    const currentRoles = grantTarget.member.roles;
-    if (currentRoles.includes(grantTarget.role)) {
-      setGrantTarget(null);
-      return;
-    }
-    updateRootMember.mutate(
-      {
-        id: grantTarget.member.uid,
-        data: { roles: [...currentRoles, grantTarget.role] },
-      },
+    updateUser.mutate(
+      { id: grantTarget.member.uid, data: { role: 'ROOT_ADMIN' } },
       { onSuccess: () => setGrantTarget(null) },
     );
   };
@@ -124,22 +102,18 @@ export default function AdminRolesPage() {
       setRevokeTarget(null);
       return;
     }
-    const newRoles = revokeTarget.member.roles.filter((r) => r !== revokeTarget.role);
-    updateRootMember.mutate(
-      {
-        id: revokeTarget.member.uid,
-        data: { roles: newRoles },
-      },
+    updateUser.mutate(
+      { id: revokeTarget.member.uid, data: { role: 'USER' } },
       { onSuccess: () => setRevokeTarget(null) },
     );
   };
 
   const confirmRemoveMember = () => {
     if (!removeTarget) return;
-    deleteRootMember.mutate(removeTarget.uid, { onSuccess: () => setRemoveTarget(null) });
+    updateUser.mutate({ id: removeTarget.uid, data: { role: 'USER' } }, { onSuccess: () => setRemoveTarget(null) });
   };
 
-  if (rootLoading || globalLoading) return <PageLoader />;
+  if (isLoading) return <PageLoader />;
 
   const adminCount = rootMembersWithInfo.filter((m) => m.roles.includes(ROOT_ADMIN_ROLE)).length;
 
@@ -287,7 +261,7 @@ export default function AdminRolesPage() {
                     </div>
                   </td>
                   <td className='px-3 py-3'>
-                    {member.email != null && !ADMIN_EMAILS.includes(member.email) && (
+                    {member.email != null && (
                       <Button size='sm' variant='ghost' className='text-[12px] text-red-500 hover:text-red-500 hover:bg-red-500/10 h-7 px-2' onClick={() => setRemoveTarget(member)}>
                         Xóa
                       </Button>

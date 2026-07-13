@@ -1,16 +1,21 @@
 import { useQuery, useMutation, useQueryClient, type UseQueryOptions } from '@tanstack/react-query';
 import type { QueryKey } from '@tanstack/query-core';
-import { apiClient } from '@/lib/api/client';
+import { apiClient, resolveApiPath } from '@/lib/api/client';
 import type { QueryOptions, CreateInput, CollectionConfig, WithId } from '../types';
 import { firestoreKeys } from './queryKeys';
 
 export function createCollection<T extends object>(config: CollectionConfig<T>) {
   const { path } = config;
+  const queryPath = () => resolveApiPath(path).split('?')[0];
+  const transform = (value: WithId<T>) => config.transform ? config.transform(value) : value;
 
   function useDocument(id: string | null | undefined, queryOptions?: Omit<UseQueryOptions, 'queryKey' | 'queryFn'>) {
     return useQuery({
-      queryKey: firestoreKeys.detail(path, id ?? ''),
-      queryFn: () => apiClient.getOne<WithId<T>>(`${path}/${id}`),
+      queryKey: firestoreKeys.detail(queryPath(), id ?? ''),
+    queryFn: async () => {
+      const value = await apiClient.getOne<WithId<T>>(`${path}/${id}`);
+      return value ? transform(value) : null;
+    },
       enabled: !!id,
       ...queryOptions,
     });
@@ -25,7 +30,7 @@ export function createCollection<T extends object>(config: CollectionConfig<T>) 
     const isEnabled = enabledQuery ?? enabledOption;
 
     return useQuery<WithId<T>[], Error, WithId<T>[], QueryKey>({
-      queryKey: firestoreKeys.list(path, restOptions),
+      queryKey: firestoreKeys.list(queryPath(), restOptions),
       queryFn: () => {
         const params: Record<string, unknown> = {};
         if (restOptions.where) {
@@ -42,7 +47,7 @@ export function createCollection<T extends object>(config: CollectionConfig<T>) 
         }
         if (restOptions.limit) params.limit = restOptions.limit;
         if (restOptions.startAfter) params.startAfter = String(restOptions.startAfter);
-        return apiClient.get<WithId<T>>(`${path}`, params);
+        return apiClient.get<WithId<T>>(`${path}`, params).then((items) => items.map(transform));
       },
       enabled: isEnabled,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -55,10 +60,10 @@ export function createCollection<T extends object>(config: CollectionConfig<T>) 
     return useMutation({
       mutationFn: async (data: CreateInput<T>) => {
         const res = await apiClient.post<WithId<T>>(`${path}`, data);
-        return res.data;
+        return transform(res.data);
       },
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: firestoreKeys.lists(path) });
+        queryClient.invalidateQueries({ queryKey: firestoreKeys.lists(queryPath()) });
       },
     });
   }
@@ -67,10 +72,10 @@ export function createCollection<T extends object>(config: CollectionConfig<T>) 
     const queryClient = useQueryClient();
     return useMutation({
       mutationFn: ({ id, data }: { id: string; data: Partial<T> }) =>
-        apiClient.put<WithId<T>>(`${path}/${id}`, data),
+        apiClient.put<WithId<T>>(`${path}/${id}`, data).then(transform),
       onSuccess: (_, { id }) => {
-        queryClient.invalidateQueries({ queryKey: firestoreKeys.detail(path, id) });
-        queryClient.invalidateQueries({ queryKey: firestoreKeys.lists(path) });
+        queryClient.invalidateQueries({ queryKey: firestoreKeys.detail(queryPath(), id) });
+        queryClient.invalidateQueries({ queryKey: firestoreKeys.lists(queryPath()) });
       },
     });
   }
@@ -79,10 +84,10 @@ export function createCollection<T extends object>(config: CollectionConfig<T>) 
     const queryClient = useQueryClient();
     return useMutation({
       mutationFn: ({ id, data }: { id: string; data: Partial<T> }) =>
-        apiClient.patch<WithId<T>>(`${path}/${id}`, data),
+        apiClient.patch<WithId<T>>(`${path}/${id}`, data).then(transform),
       onSuccess: (_, { id }) => {
-        queryClient.invalidateQueries({ queryKey: firestoreKeys.detail(path, id) });
-        queryClient.invalidateQueries({ queryKey: firestoreKeys.lists(path) });
+        queryClient.invalidateQueries({ queryKey: firestoreKeys.detail(queryPath(), id) });
+        queryClient.invalidateQueries({ queryKey: firestoreKeys.lists(queryPath()) });
       },
     });
   }
@@ -92,13 +97,16 @@ export function createCollection<T extends object>(config: CollectionConfig<T>) 
     return useMutation({
       mutationFn: (id: string) => apiClient.delete(`${path}/${id}`),
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: firestoreKeys.lists(path) });
+        queryClient.invalidateQueries({ queryKey: firestoreKeys.lists(queryPath()) });
       },
     });
   }
 
   const helpers = {
-    fetch: (id: string) => apiClient.getOne<WithId<T>>(`${path}/${id}`),
+    fetch: async (id: string) => {
+      const value = await apiClient.getOne<WithId<T>>(`${path}/${id}`);
+      return value ? transform(value) : null;
+    },
     fetchList: (options?: QueryOptions) => {
       const params: Record<string, unknown> = {};
       if (options?.where) {
@@ -107,14 +115,14 @@ export function createCollection<T extends object>(config: CollectionConfig<T>) 
           params[`where[${i}]`] = `${c.field}:${c.op}:${String(c.value)}`;
         });
       }
-      return apiClient.get<WithId<T>>(`${path}`, params);
+      return apiClient.get<WithId<T>>(`${path}`, params).then((items) => items.map(transform));
     },
     create: async (data: CreateInput<T>) => {
       const res = await apiClient.post<WithId<T>>(`${path}`, data);
-      return res.data;
+      return transform(res.data);
     },
-    set: (id: string, data: Partial<T>) => apiClient.put<WithId<T>>(`${path}/${id}`, data),
-    update: (id: string, data: Partial<T>) => apiClient.patch<WithId<T>>(`${path}/${id}`, data),
+    set: (id: string, data: Partial<T>) => apiClient.put<WithId<T>>(`${path}/${id}`, data).then(transform),
+    update: (id: string, data: Partial<T>) => apiClient.patch<WithId<T>>(`${path}/${id}`, data).then(transform),
     delete: (id: string) => apiClient.delete(`${path}/${id}`),
   };
 
@@ -128,11 +136,11 @@ export function createCollection<T extends object>(config: CollectionConfig<T>) 
     helpers,
     path,
     keys: {
-      all: () => firestoreKeys.all(path),
-      lists: () => firestoreKeys.lists(path),
-      list: (options?: QueryOptions) => firestoreKeys.list(path, options),
-      details: () => firestoreKeys.details(path),
-      detail: (id: string) => firestoreKeys.detail(path, id),
+      all: () => firestoreKeys.all(queryPath()),
+      lists: () => firestoreKeys.lists(queryPath()),
+      list: (options?: QueryOptions) => firestoreKeys.list(queryPath(), options),
+      details: () => firestoreKeys.details(queryPath()),
+      detail: (id: string) => firestoreKeys.detail(queryPath(), id),
     },
   };
 }

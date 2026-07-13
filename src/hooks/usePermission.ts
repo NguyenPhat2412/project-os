@@ -10,8 +10,7 @@
  * ```
  */
 import { useAuth } from '@/contexts/auth-context';
-import { useAuthStore, ROOT_ADMIN_ROLE, ADMIN_EMAILS } from '@/store/auth-store';
-import { isAdminEmail } from '@/lib/admin-emails';
+import { useAuthStore, ROOT_ADMIN_ROLE } from '@/store/auth-store';
 
 // ─── Hook ────────────────────────────────────────────────────────────────────
 
@@ -49,7 +48,7 @@ export function usePermission() {
    */
   const isRootAdmin = (): boolean => {
     if (!ready) return false;
-    return rootRoles.includes(ROOT_ADMIN_ROLE) || rootRoles.includes('ROOT_ADMIN') || user?.role === 'ROOT_ADMIN' || isAdminEmail(user?.email, ADMIN_EMAILS);
+    return rootRoles.includes(ROOT_ADMIN_ROLE) || rootRoles.includes('ROOT_ADMIN') || user?.role === 'ROOT_ADMIN';
   };
 
   /**
@@ -102,4 +101,4 @@ export function usePermission() {
 
 // ─── Constants re-export ────────────────────────────────────────────────────
 
-export { ROOT_ADMIN_ROLE, ADMIN_EMAILS } from '@/store/auth-store';
+export { ROOT_ADMIN_ROLE } from '@/store/auth-store';

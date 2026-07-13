@@ -11,7 +11,7 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 import type { UserProfile } from '@/lib/project-config';
-import { getClientAdminEmails, isAdminEmail, ROOT_ADMIN_ROLE } from '@/lib/admin-emails';
+import { ROOT_ADMIN_ROLE } from '@/lib/admin-emails';
 
 // ─── Auth User Type (replaces Firebase User) ────────────────────────────────
 
@@ -26,7 +26,6 @@ export interface AuthUser {
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
-export const ADMIN_EMAILS = getClientAdminEmails();
 export { ROOT_ADMIN_ROLE };
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -115,7 +114,7 @@ export const useAuthStore = create<AuthState & AuthActions>()(
 
         isRootAdmin: () => {
           const { user, rootRoles } = get();
-          return rootRoles.includes(ROOT_ADMIN_ROLE) || rootRoles.includes('ROOT_ADMIN') || user?.role === 'ROOT_ADMIN' || isAdminEmail(user?.email, ADMIN_EMAILS);
+          return rootRoles.includes(ROOT_ADMIN_ROLE) || rootRoles.includes('ROOT_ADMIN') || user?.role === 'ROOT_ADMIN';
         },
 
         isAdmin: () => {

@@ -4,45 +4,8 @@ import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
 import { CheckIcon, ClockIcon, FileArchiveIcon, FileTextIcon, FileVideoIcon, ImageIcon, Loader2Icon, PaperclipIcon, PencilIcon, XIcon } from 'lucide-react';
 import type { Attachment } from '@/lib/types/attachment';
 import { formatFileSize } from '@/lib/numberjs';
+import { deleteAttachment, uploadAttachment } from '@/lib/api/attachments';
 import { useAttachmentViewer } from './use-attachment-viewer';
-
-function csrfToken() {
-  const item = document.cookie.split('; ').find((value) => value.startsWith('XSRF-TOKEN='));
-  return item ? decodeURIComponent(item.slice('XSRF-TOKEN='.length)) : null;
-}
-
-async function uploadAttachment(file: File, storagePath: string): Promise<Attachment> {
-  const form = new FormData();
-  form.set('file', file);
-  form.set('storagePath', storagePath);
-  const headers = new Headers();
-  const csrf = csrfToken();
-  if (csrf) headers.set('X-XSRF-TOKEN', csrf);
-  const response = await fetch('/api/v1/storage/attachments', {
-    method: 'POST',
-    headers,
-    credentials: 'include',
-    body: form,
-  });
-  const body = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(body.error?.message ?? 'Upload failed');
-  return body.data as Attachment;
-}
-
-async function deleteAttachment(storagePath: string) {
-  const headers = new Headers();
-  const csrf = csrfToken();
-  if (csrf) headers.set('X-XSRF-TOKEN', csrf);
-  const response = await fetch(`/api/v1/storage/attachments?storagePath=${encodeURIComponent(storagePath)}`, {
-    method: 'DELETE',
-    headers,
-    credentials: 'include',
-  });
-  if (!response.ok) {
-    const body = await response.json().catch(() => ({}));
-    throw new Error(body.error?.message ?? 'Delete failed');
-  }
-}
 
 function fileIcon(contentType: string) {
   if (contentType.startsWith('image/')) return <ImageIcon size={13} />;

@@ -17,7 +17,6 @@
 import { vi, type Locale } from 'date-fns/locale';
 import { CalendarIcon, XIcon } from 'lucide-react';
 import { useState } from 'react';
-import type { FieldValue } from 'firebase/firestore';
 
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -45,7 +44,7 @@ export type DateFormat = 'DD/MM/YYYY' | 'YYYY-MM-DD';
 
 interface DatePickerProps {
   value?: string;
-  onChange?: (value: string | FieldValue) => void;
+  onChange?: (value: string) => void;
   onClear?: () => void;
   format?: DateFormat;
   placeholder?: string;
@@ -56,7 +55,7 @@ interface DatePickerProps {
 }
 
 /** Parse stored string → JS Date (returns undefined if invalid) */
-function parseToDate(value: string | FieldValue | undefined, fmt: DateFormat): Date | undefined {
+function parseToDate(value: string | undefined, fmt: DateFormat): Date | undefined {
   if (!value || typeof value !== 'string') return undefined;
   const d = dayjs(value, fmt);
   return d.isValid() ? d.toDate() : undefined;
@@ -68,7 +67,7 @@ function formatFromDate(date: Date, fmt: DateFormat): string {
 }
 
 /** Display string for trigger button (always vi locale) */
-function displayValue(value: string | FieldValue | undefined, fmt: DateFormat): string {
+function displayValue(value: string | undefined, fmt: DateFormat): string {
   if (!value || typeof value !== 'string') return '';
   const d = dayjs(value, fmt);
   if (!d.isValid()) return value;

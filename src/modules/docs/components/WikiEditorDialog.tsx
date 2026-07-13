@@ -24,7 +24,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { wikiLinksCollection } from '@/modules/docs/collections/wikiLinks';
 import { getFieldErrorInputClass, getInlineErrorTextClass } from '@/lib/form-validation';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { PROJECT_ID } from '@/lib/project';
+import { useProject } from '@/store/project-store';
 
 import type { WikiLink } from '@/modules/docs/collections/wikiLinks';
 import type { Attachment } from '@/lib/types/attachment';
@@ -87,6 +87,7 @@ export function WikiEditorDialog(props: Props) {
 }
 
 function WikiEditorDialogContent({ open, wiki, nextWikiIndex, onClose, onSuccess }: Props) {
+  const { projectId } = useProject();
   const isNew = wiki === null;
 
   const [icon, setIcon] = useState(wiki?.icon ?? '📝');
@@ -269,7 +270,7 @@ function WikiEditorDialogContent({ open, wiki, nextWikiIndex, onClose, onSuccess
         <FileAttachmentsField
           ref={attachmentsRef}
           mode={isNew ? 'create' : 'edit'}
-          storagePath={`projects/${PROJECT_ID}/wiki/${isNew ? `WL-${String(nextWikiIndex).padStart(2, '0')}` : wiki!.id}/attachments`}
+          storagePath={`projects/${projectId}/wiki/${isNew ? `WL-${String(nextWikiIndex).padStart(2, '0')}` : wiki!.id}/attachments`}
           attachments={attachments}
           onChange={setAttachments}
           onAutoSave={!isNew ? handleAutoSave : undefined}

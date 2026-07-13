@@ -1,7 +1,7 @@
 // collections/milestones.ts
 import { createSubcollection } from '@/lib/firestore-rq';
 import type { WithId } from '@/lib/firestore-rq';
-import { PROJECT_ID } from '@/lib/project';
+import { ACTIVE_PROJECT_ID } from '@/lib/project';
 
 export interface Milestone {
   id: string;
@@ -12,9 +12,9 @@ export interface Milestone {
 }
 
 /**
- * Milestones subcollection: projects/{PROJECT_ID}/milestones
+ * Milestones subcollection: projects/{ACTIVE_PROJECT_ID}/milestones
  */
 export const milestonesCollection = createSubcollection<Milestone>({
   path: (projectId: string) => `projects/${projectId}/milestones`,
   transform: (raw): WithId<Milestone> => raw as unknown as WithId<Milestone>,
-})(PROJECT_ID);
+})(ACTIVE_PROJECT_ID);

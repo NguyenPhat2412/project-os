@@ -31,7 +31,7 @@ import { AI_LANGUAGES } from '@/lib/ai/language';
 import { getActiveAIProvider } from '@/lib/ai/provider';
 import { useAILanguage } from '@/lib/ai/useAILanguage';
 import { getFieldErrorInputClass, getInlineErrorTextClass } from '@/lib/form-validation';
-import { PROJECT_ID } from '@/lib/project';
+import { useProject } from '@/store/project-store';
 import { tasksCollection } from '@/modules/tasks/collections/tasks';
 import { DEFAULT_TASK_COLUMNS } from '@/modules/tasks/utils/taskColumns';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -114,6 +114,7 @@ interface Props {
 
 // ── component ─────────────────────────────────────────────────────────────────
 export function TaskDialog({ open, task, nextTaskIndex, teamMembers, statusOptions, sprints = [], defaultStatus = DEFAULT_TASK_COLUMNS[0]?.id ?? '', defaultSprintId, onClose, onSuccess }: Props) {
+  const { projectId } = useProject();
   const isNew = task === null;
 
   // ── firestore-rq mutations ─────────────────────────────────────────────────
@@ -486,7 +487,7 @@ export function TaskDialog({ open, task, nextTaskIndex, teamMembers, statusOptio
           <FileAttachmentsField
             ref={attachmentsRef}
             mode={isNew ? 'create' : 'edit'}
-            storagePath={`projects/${PROJECT_ID}/tasks/${isNew ? `TASK-${String(nextTaskIndex).padStart(2, '0')}` : task.id}/attachments`}
+            storagePath={`projects/${projectId}/tasks/${isNew ? `TASK-${String(nextTaskIndex).padStart(2, '0')}` : task.id}/attachments`}
             attachments={attachments}
             onChange={setAttachments}
             onAutoSave={

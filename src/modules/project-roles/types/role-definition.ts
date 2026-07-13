@@ -15,14 +15,17 @@ export interface RoleDefinition {
   description: string;
   /** Badge color variant */
   color: 'default' | 'secondary' | 'destructive' | 'success' | 'warning' | 'info' | 'purple' | 'orange' | 'rose' | 'cyan';
+  /** Backend-enforced permissions in resource:action form. */
+  permissions?: string[];
   createdAt?: Date;
   updatedAt?: Date;
 }
 
 /** Default role definitions available for new projects */
 export const DEFAULT_ROLE_DEFINITIONS: Omit<RoleDefinition, 'createdAt' | 'updatedAt'>[] = [
-  { id: 'dev', name: 'Developer', description: 'Lập trình viên', color: 'default' },
-  { id: 'qc', name: 'Quality Control', description: 'Chuyên viên kiểm thử', color: 'default' },
-  { id: 'pm', name: 'Project Manager', description: 'Quản lý dự án', color: 'secondary' },
-  { id: 'ba', name: 'Business Analyst', description: 'Phân tích kinh doanh', color: 'secondary' },
+  { id: 'project-admin', name: 'Project Admin', description: 'Quản trị dự án', color: 'purple', permissions: ['*:*'] },
+  { id: 'dev', name: 'Developer', description: 'Lập trình viên', color: 'default', permissions: ['tasks:*', 'bugs:*', 'comments:*', 'documents:*'] },
+  { id: 'qc', name: 'Quality Control', description: 'Chuyên viên kiểm thử', color: 'default', permissions: ['tasks:update', 'bugs:*', 'comments:*'] },
+  { id: 'pm', name: 'Project Manager', description: 'Quản lý dự án', color: 'secondary', permissions: ['tasks:*', 'sprints:*', 'epics:*', 'user-stories:*', 'risks:*', 'budget-items:*', 'expenses:*', 'meetings:*', 'milestones:*', 'documents:*'] },
+  { id: 'ba', name: 'Business Analyst', description: 'Phân tích kinh doanh', color: 'secondary', permissions: ['epics:*', 'user-stories:*', 'documents:*', 'comments:*'] },
 ];

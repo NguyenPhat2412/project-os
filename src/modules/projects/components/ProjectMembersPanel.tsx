@@ -16,13 +16,9 @@ import { UpdateRoleModal } from '@/modules/team/components/UpdateRoleModal';
 import { projectMembersCollection } from '@/modules/team/collections/team';
 import { membersCollection } from '@/modules/team/collections/members';
 import { roleDefinitionsCollection } from '@/modules/project-roles/collections/role-definitions';
-import { tasksCollection } from '@/modules/tasks/collections/tasks';
-import { taskColumnsCollection } from '@/modules/tasks/collections/taskColumns';
-import { bugsCollection } from '@/modules/bugs/collections/bugs';
+import { useWorkloadReadModel } from '@/lib/api/read-models';
 import { getStatusFromWorkload } from '@/modules/team/types/team';
 import type { Member, TeamMemberWithRole, ProjectTeamMember } from '@/modules/team/types/team';
-import type { Task, TaskColumn } from '@/modules/tasks/types/task';
-import type { Bug } from '@/modules/bugs/types/bug';
 import type { RoleDefinition } from '@/modules/project-roles/types/role-definition';
 
 const ALL = 'all' as const;
@@ -36,9 +32,7 @@ export function ProjectMembersPanel({ projectId }: Props) {
   const { data: projectMemberships, isLoading: loadingMemberships } = projectMembersCol.useList() as { data: (ProjectTeamMember & { id: string })[]; isLoading: boolean };
   const { data: globalMembersData, isLoading: loadingGlobalMembers } = membersCollection.useList();
   const { data: roleDefsData } = roleDefinitionsCollection(projectId).useList();
-  const { data: tasksData } = tasksCollection.useList();
-  const { data: columnsData } = taskColumnsCollection.useList();
-  const { data: bugsData } = bugsCollection.useList();
+  const { data: workloadData, isLoading: loadingWorkload } = useWorkloadReadModel();
 
   const setMember = projectMembersCol.useSet();
   const updateMember = projectMembersCol.useUpdate();
@@ -46,11 +40,7 @@ export function ProjectMembersPanel({ projectId }: Props) {
 
   const globalMembers = useMemo(() => (globalMembersData ?? []) as Member[], [globalMembersData]);
   const roleDefs = useMemo(() => (roleDefsData ?? []) as RoleDefinition[], [roleDefsData]);
-  const tasks = useMemo(() => (tasksData ?? []) as unknown as Task[], [tasksData]);
-  const columns = useMemo(() => (columnsData ?? []) as unknown as TaskColumn[], [columnsData]);
-  const bugs = useMemo(() => (bugsData ?? []) as unknown as Bug[], [bugsData]);
-
-  const doneColumnIds = useMemo(() => new Set(columns.filter((c) => c.isDone).map((c) => c.id)), [columns]);
+  const workloadMap = useMemo(() => new Map((workloadData?.workload ?? []).map((row) => [row.assigneeId, row])), [workloadData]);
 
   // Build lookup map from root member id → member data
   const memberMap = useMemo(() => new Map((globalMembersData ?? []).map((m) => [m.id, m as Member])), [globalMembersData]);
@@ -60,9 +50,8 @@ export function ProjectMembersPanel({ projectId }: Props) {
       .map((pm) => {
         const root = memberMap.get(pm.memberId);
         if (!root) return null;
-        const activeTasks = tasks.filter((t) => t.assigneeId === pm.memberId && !doneColumnIds.has(t.status)).length;
-        const activeBugs = bugs.filter((b) => b.assigneeId === pm.memberId && !['fixed', 'wont-fix'].includes(b.status)).length;
-        const taskCount = activeTasks + activeBugs;
+        const row = workloadMap.get(pm.memberId);
+        const taskCount = row?.tasks ?? 0;
         const workload = Math.min(100, Math.round((taskCount / 10) * 100));
         const status = getStatusFromWorkload(workload);
 
@@ -80,7 +69,7 @@ export function ProjectMembersPanel({ projectId }: Props) {
         } as TeamMemberWithRole;
       })
       .filter((m): m is TeamMemberWithRole => m !== null);
-  }, [projectMemberships, memberMap, tasks, bugs, doneColumnIds]);
+  }, [projectMemberships, memberMap, workloadMap]);
 
   const [search, setSearch] = useState('');
   const [filterRole, setFilterRole] = useState<string>(ALL);
@@ -105,7 +94,7 @@ export function ProjectMembersPanel({ projectId }: Props) {
     [teamMembers, search, filterRole],
   );
 
-  if (loadingMemberships || loadingGlobalMembers) return <PageLoader />;
+  if (loadingMemberships || loadingGlobalMembers || loadingWorkload) return <PageLoader />;
 
   return (
     <div className='space-y-4'>

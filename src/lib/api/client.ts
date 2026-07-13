@@ -34,6 +34,55 @@ const PROJECT_RESOURCE_ALIASES: Record<string, string> = {
   project_roles: 'role-assignments',
 };
 
+function activeProjectId(): string | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const state = JSON.parse(localStorage.getItem('activeProjectId') ?? '{}') as { state?: { projectId?: string } };
+    return state.state?.projectId ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function isUuid(value: string | undefined): boolean {
+  return !!value && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+}
+
+export function resolveApiPath(path: string): string {
+  const [rawPath, rawQuery = ''] = path.split('?');
+  const pathname = rawPath.replace(/^\/+/, '');
+  const query = new URLSearchParams(rawQuery);
+  const segments = pathname.split('/').filter(Boolean);
+  const withQuery = (value: string) => {
+    const search = query.toString();
+    return search ? `${value}?${search}` : value;
+  };
+
+  if (segments[0] === 'projects') {
+    if (segments.length >= 2 && !isUuid(segments[1])) {
+      const active = activeProjectId();
+      if (isUuid(active ?? undefined)) segments[1] = active!;
+    }
+    if (segments.length >= 3) {
+      const resource = PROJECT_RESOURCE_ALIASES[segments[2]] ?? segments[2];
+      return withQuery(['v1', 'projects', segments[1], resource, ...segments.slice(3)].join('/'));
+    }
+    const rootProjectPath = segments.slice(1).join('/');
+    return withQuery(rootProjectPath ? `v1/projects/${rootProjectPath}` : 'v1/projects');
+  }
+
+  if (segments[0] === 'members') {
+    const rootMemberPath = segments.slice(1).join('/');
+    return withQuery(rootMemberPath ? `v1/admin/users/${rootMemberPath}` : 'v1/admin/users');
+  }
+
+  if (segments[0] === 'organizations') {
+    return withQuery(['v1', ...segments].join('/'));
+  }
+
+  return withQuery(pathname);
+}
+
 function csrfToken() {
   if (typeof document === 'undefined') return null;
   const item = document.cookie.split('; ').find((value) => value.startsWith('XSRF-TOKEN='));
@@ -49,37 +98,8 @@ class ApiClient {
 
   private buildUrl(path: string): string {
     const base = this.baseUrl.replace(/\/+$/, '');
-    const normalizedPath = this.normalizePath(path);
+    const normalizedPath = resolveApiPath(path);
     return `${base}/${normalizedPath}`;
-  }
-
-  private normalizePath(path: string): string {
-    const [rawPath, rawQuery = ''] = path.split('?');
-    const pathname = rawPath.replace(/^\/+/, '');
-    const query = new URLSearchParams(rawQuery);
-    const segments = pathname.split('/').filter(Boolean);
-
-    if (segments[0] === 'projects') {
-      if (segments.length >= 3) {
-        const resource = PROJECT_RESOURCE_ALIASES[segments[2]] ?? segments[2];
-        return this.withQuery(['v1', 'projects', segments[1], resource, ...segments.slice(3)].join('/'), query);
-      }
-      const rootProjectPath = segments.slice(1).join('/');
-      return this.withQuery(rootProjectPath ? `v1/projects/${rootProjectPath}` : 'v1/projects', query);
-    }
-
-    if (segments[0] === 'members') {
-      // root-level: /members, /members/{id} → /api/members, /api/members/{id}
-      const rootMemberPath = segments.slice(1).join('/');
-      return this.withQuery(rootMemberPath ? `members/${rootMemberPath}` : 'members', query);
-    }
-
-    return this.withQuery(pathname, query);
-  }
-
-  private withQuery(pathname: string, query: URLSearchParams): string {
-    const search = query.toString();
-    return search ? `${pathname}?${search}` : pathname;
   }
 
   private async request<T>(path: string, options?: RequestInit, retry = true): Promise<T> {
