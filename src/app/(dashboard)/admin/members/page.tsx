@@ -123,7 +123,7 @@ export default function AdminMembersPage() {
 
       {showAdd && <MemberModal mode='add' onClose={() => setShowAdd(false)} onSave={handleAdd} />}
       {editTarget && <MemberModal mode='edit' member={(freshEditData as TeamMember | null) ?? editTarget} onClose={() => setEditTarget(null)} onSave={handleEdit} />}
-      {delTarget && <ConfirmDialog danger title='Xoa nhan su' message={`Ban co chac muon xoa "${delTarget.name}" khoi to chuc? Hanh dong nay khong the hoan tac.`} confirmLabel='Xoa' onCancel={() => setDelTarget(null)} onConfirm={handleDelete} />}
+      {delTarget && <ConfirmDialog danger title='Vô hiệu hóa tài khoản' message={`Vô hiệu hóa "${delTarget.name}"? Người dùng sẽ không thể đăng nhập; dữ liệu và lịch sử vẫn được giữ lại.`} confirmLabel='Vô hiệu hóa' onCancel={() => setDelTarget(null)} onConfirm={handleDelete} />}
     </div>
   );
 }

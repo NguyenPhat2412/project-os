@@ -6,24 +6,34 @@ import { apiClient } from '@/lib/api/client';
 export interface Shift { id: string; name: string; startTime: string; endTime: string; breakMinutes: number; active: boolean; }
 export interface Schedule { id: string; name: string; active: boolean; slots: { id: string; shiftId: string; dayOfWeek: number }[]; }
 export interface ScheduleAssignment { id: string; employeeId: string; scheduleId: string; effectiveFrom: string; effectiveTo?: string | null; }
+export interface AttendanceScope { employeeId?: string | null; organizationAdmin: boolean; }
 export interface AttendanceRecord { id: string; employeeId: string; workDate: string; shiftName: string; checkInAt?: string | null; checkOutAt?: string | null; status: string; }
-export interface Timesheet { recordId: string; workDate: string; shiftName: string; checkInAt?: string | null; checkOutAt?: string | null; actualMinutes: number; status: string; }
+export interface Timesheet { recordId: string; employeeId: string; workDate: string; shiftName: string; checkInAt?: string | null; checkOutAt?: string | null; actualMinutes: number; status: string; }
 export interface Adjustment { id: string; workDate: string; reason: string; status: string; }
 export interface LeaveRequest { id: string; startDate: string; endDate: string; reason: string; status: string; }
-export interface MonthlyReport { month: string; recordedDays: number; presentDays: number; actualMinutes: number; items: Timesheet[]; }
+export interface MonthlyReport { employeeId: string; month: string; recordedDays: number; presentDays: number; actualMinutes: number; items: Timesheet[]; }
 
 const path = (organizationId: string, suffix: string) => `organizations/${organizationId}/attendance/${suffix}`;
 const key = (organizationId: string | null, scope: string) => ['attendance', organizationId, scope] as const;
 const month = new Date().toISOString().slice(0, 7);
 
-export function useAttendance(organizationId: string | null) {
+export function useAttendanceScope(organizationId: string | null) {
+  return useQuery({
+    queryKey: key(organizationId, 'scope'),
+    queryFn: () => apiClient.getOne<AttendanceScope>(path(organizationId!, 'scope')),
+    enabled: Boolean(organizationId),
+  });
+}
+
+export function useAttendance(organizationId: string | null, employeeId: string | null, organizationAdmin = false) {
   const enabled = Boolean(organizationId);
+  const reportEnabled = enabled && Boolean(employeeId);
+  const employeeQuery = employeeId ? `employeeId=${encodeURIComponent(employeeId)}` : '';
   return {
     shifts: useQuery({ queryKey: key(organizationId, 'shifts'), queryFn: () => apiClient.get<Shift>(path(organizationId!, 'shifts')), enabled }),
     schedules: useQuery({ queryKey: key(organizationId, 'schedules'), queryFn: () => apiClient.get<Schedule>(path(organizationId!, 'schedules')), enabled }),
-    assignments: useQuery({ queryKey: key(organizationId, 'assignments'), queryFn: () => apiClient.get<ScheduleAssignment>(path(organizationId!, 'assignments')), enabled }),
-    timesheet: useQuery({ queryKey: key(organizationId, 'timesheet'), queryFn: () => apiClient.get<Timesheet>(path(organizationId!, 'timesheet')), enabled }),
-    monthlyReport: useQuery({ queryKey: key(organizationId, `monthly-${month}`), queryFn: () => apiClient.getOne<MonthlyReport>(path(organizationId!, `reports/monthly?month=${month}`)), enabled }),
+    assignments: useQuery({ queryKey: key(organizationId, 'assignments'), queryFn: () => apiClient.get<ScheduleAssignment>(path(organizationId!, 'assignments')), enabled: enabled && organizationAdmin }),
+    monthlyReport: useQuery({ queryKey: key(organizationId, `monthly-${month}-${employeeId}`), queryFn: () => apiClient.getOne<MonthlyReport>(path(organizationId!, `reports/monthly?month=${month}&${employeeQuery}`)), enabled: reportEnabled }),
     adjustments: useQuery({ queryKey: key(organizationId, 'adjustments'), queryFn: () => apiClient.get<Adjustment>(path(organizationId!, 'adjustments')), enabled }),
     leaves: useQuery({ queryKey: key(organizationId, 'leaves'), queryFn: () => apiClient.get<LeaveRequest>(path(organizationId!, 'leave-requests')), enabled }),
   };

@@ -31,6 +31,7 @@ export function KanbanView<T extends { id: string; status: string }>({
 
   // ── Drag handlers ──────────────────────────────────────────────────────────
   const handleDragStart = (itemId: string) => (e: React.DragEvent<HTMLDivElement>) => {
+    if (!onMoveItem) return;
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', itemId);
     setDraggingId(itemId);
@@ -52,6 +53,7 @@ export function KanbanView<T extends { id: string; status: string }>({
   };
 
   const handleCardDrop = (colId: string, itemId: string) => async (e: React.DragEvent<HTMLDivElement>) => {
+    if (!onMoveItem) return;
     e.preventDefault();
     e.stopPropagation();
     await onMoveItem(draggingId!, colId, itemId);
@@ -62,6 +64,7 @@ export function KanbanView<T extends { id: string; status: string }>({
 
   // Dropping on empty column (no `before` item)
   const handleColumnDrop = (colId: string) => async (e: React.DragEvent<HTMLDivElement>) => {
+    if (!onMoveItem) return;
     e.preventDefault();
     // Only fire if dropped directly on the column background (not a card)
     await onMoveItem(draggingId!, colId);
@@ -104,11 +107,11 @@ export function KanbanView<T extends { id: string; status: string }>({
             ...itemMapper(item), // display fields always win (may include title/priority/etc.)
             id, // KanbanView sources id from the item itself
             onClick: onItemClick ? () => onItemClick(item) : undefined,
-            draggable: true,
-            onDragStart: handleDragStart(item.id),
-            onDragEnd: handleDragEnd,
-            onDragOver: handleCardDragOver(col.id, item.id),
-            onDrop: handleCardDrop(col.id, item.id),
+            draggable: Boolean(onMoveItem),
+            onDragStart: onMoveItem ? handleDragStart(item.id) : undefined,
+            onDragEnd: onMoveItem ? handleDragEnd : undefined,
+            onDragOver: onMoveItem ? handleCardDragOver(col.id, item.id) : undefined,
+            onDrop: onMoveItem ? handleCardDrop(col.id, item.id) : undefined,
             showDropIndicator: Boolean(draggingId && draggingId !== item.id && dropBeforeId === item.id),
           };
         });
@@ -126,10 +129,10 @@ export function KanbanView<T extends { id: string; status: string }>({
             addButtonLabel={createItemLabel}
             isDragOver={dragOverColumnId === col.id}
             showDropAtEndIndicator={showDropAtEnd}
-            onDragOver={handleColumnDragOver}
-            onDragEnter={handleColumnDragEnter(col.id)}
-            onDragLeave={handleColumnDragLeave(col.id)}
-            onDrop={handleColumnDrop(col.id)}
+            onDragOver={onMoveItem ? handleColumnDragOver : undefined}
+            onDragEnter={onMoveItem ? handleColumnDragEnter(col.id) : undefined}
+            onDragLeave={onMoveItem ? handleColumnDragLeave(col.id) : undefined}
+            onDrop={onMoveItem ? handleColumnDrop(col.id) : undefined}
             onEditColumn={columnEditable && onEditColumn ? () => onEditColumn(col) : undefined}
             onDeleteColumn={columnEditable && onDeleteColumn && index > 0 && colItems.length === 0 ? () => onDeleteColumn(col.id) : undefined}
           />

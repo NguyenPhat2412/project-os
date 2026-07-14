@@ -85,6 +85,8 @@ export function MemberCardGrid({ members, disabled, onView, onUpdateRole, onDele
                   onDelete(member);
                 }}
                 disabled={disabled}
+                title='Vô hiệu hóa tài khoản'
+                aria-label={`Vô hiệu hóa ${member.name}`}
                 className='text-muted-foreground hover:text-red-500'
               >
                 <Trash2Icon size={12} />

@@ -80,6 +80,12 @@ export function resolveApiPath(path: string): string {
     return withQuery(['v1', ...segments].join('/'));
   }
 
+  if (segments[0] === 'v1' && segments[1] === 'users' && segments[2] === 'directory'
+      && !query.has('projectId')) {
+    const active = activeProjectId();
+    if (isUuid(active ?? undefined)) query.set('projectId', active!);
+  }
+
   return withQuery(pathname);
 }
 

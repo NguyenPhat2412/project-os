@@ -70,8 +70,8 @@ export function editAction(onClick: () => void, disabled?: boolean): TableAction
   return { label: 'Chỉnh sửa', icon: <PencilIcon size={13} />, shortcut: '⌘E', onClick, disabled };
 }
 
-export function deleteAction(onClick: () => void, disabled?: boolean): TableAction {
-  return { label: 'Xóa', icon: <Trash2Icon size={13} />, shortcut: '⌘⌫', variant: 'destructive', onClick, disabled };
+export function deleteAction(onClick: () => void, disabled?: boolean, label = 'Xóa'): TableAction {
+  return { label, icon: <Trash2Icon size={13} />, shortcut: '⌘⌫', variant: 'destructive', onClick, disabled };
 }
 
 export function viewAction(onClick: () => void, disabled?: boolean): TableAction {

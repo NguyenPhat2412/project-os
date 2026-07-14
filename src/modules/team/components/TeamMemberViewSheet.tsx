@@ -5,8 +5,10 @@
  * Shows member profile + RBAC roles with remove role functionality.
  */
 
+import dynamic from 'next/dynamic';
 import { useState } from 'react';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PageBadge } from '@/components/ui/page-badge';
 import { UserAvatar } from '@/components/shared/user-avatar';
 import { Button } from '@/components/ui/button';
@@ -14,6 +16,10 @@ import { PencilIcon, XIcon, PlusIcon } from 'lucide-react';
 import { ProgressBar } from '@/components/ui/progress-bar';
 import { ConfirmDialog } from '@/components/ui/shared/confirm-dialog';
 import type { TeamMemberWithRole } from '@/modules/team/types/team';
+
+const MemberPerformancePanel = dynamic(() => import('./MemberPerformancePanel').then((module) => module.MemberPerformancePanel), {
+  loading: () => <div className='h-80 animate-pulse rounded-lg border border-border bg-secondary/50' />,
+});
 
 const statusVariant: Record<string, 'red' | 'green' | 'yellow' | 'accent' | 'purple' | 'muted'> = {
   Active: 'green',
@@ -38,6 +44,7 @@ interface Props {
 
 export function TeamMemberViewSheet({ open, member, rbacRoles = [], rolesLabel = 'Vai tro', onClose, onEdit, onRemoveRole, onAddRole, removingRole = false }: Props) {
   const [removeTarget, setRemoveTarget] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState('details');
 
   const handleRemoveConfirm = () => {
     if (removeTarget && onRemoveRole) {
@@ -54,20 +61,36 @@ export function TeamMemberViewSheet({ open, member, rbacRoles = [], rolesLabel =
 
   return (
     <>
-      <Sheet open={open} onOpenChange={(o) => !o && onClose()}>
-        <SheetContent side='right' className='w-95 sm:max-w-95 bg-card border-l border-border p-0 flex flex-col'>
+      <Sheet
+        open={open}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) {
+            setActiveTab('details');
+            onClose();
+          }
+        }}
+      >
+        <SheetContent side='right' className={`${activeTab === 'performance' ? 'w-[96vw] sm:max-w-4xl' : 'w-95 sm:max-w-95'} bg-card border-l border-border p-0 flex flex-col transition-[max-width,width]`}>
           <SheetHeader className='p-5 border-b border-border shrink-0'>
             <div className='flex items-center gap-3'>
               <UserAvatar user={member} size='lg' />
               <div>
                 <SheetTitle className='font-sans text-[16px] font-bold text-foreground'>{name}</SheetTitle>
-                <div className='text-[12px] text-muted-foreground mt-0.5'>{roles.join(', ') || '—'}</div>
+                <SheetDescription className='text-[12px] text-muted-foreground mt-0.5'>{roles.join(', ') || '—'}</SheetDescription>
               </div>
             </div>
           </SheetHeader>
 
           {member && (
-            <div className='flex-1 overflow-y-auto p-5 space-y-4'>
+            <Tabs value={activeTab} onValueChange={setActiveTab} className='min-h-0 flex-1 gap-0'>
+              <div className='shrink-0 border-b border-border px-5 py-2'>
+                <TabsList variant='line' className='h-8'>
+                  <TabsTrigger value='details' className='px-3 text-xs'>Thông tin</TabsTrigger>
+                  <TabsTrigger value='performance' className='px-3 text-xs'>Hiệu suất</TabsTrigger>
+                </TabsList>
+              </div>
+
+              <TabsContent value='details' className='min-h-0 flex-1 overflow-y-auto p-5 space-y-4'>
               <Field label='Email'>
                 <span className='font-mono-dm text-[12px] text-muted-foreground'>{member.email}</span>
               </Field>
@@ -121,15 +144,22 @@ export function TeamMemberViewSheet({ open, member, rbacRoles = [], rolesLabel =
                   </div>
                 )}
               </Field>
-            </div>
+              </TabsContent>
+
+              <TabsContent value='performance' className='min-h-0 flex-1 overflow-y-auto p-5'>
+                <MemberPerformancePanel member={member} />
+              </TabsContent>
+            </Tabs>
           )}
 
-          <div className='p-5 border-t border-border shrink-0'>
-            <Button onClick={onEdit} className='w-full text-[13px] font-semibold'>
-              <PencilIcon size={14} />
-              Chinh sua thong tin
-            </Button>
-          </div>
+          {activeTab === 'details' && (
+            <div className='p-5 border-t border-border shrink-0'>
+              <Button onClick={onEdit} className='w-full text-[13px] font-semibold'>
+                <PencilIcon size={14} />
+                Chinh sua thong tin
+              </Button>
+            </div>
+          )}
         </SheetContent>
       </Sheet>
 

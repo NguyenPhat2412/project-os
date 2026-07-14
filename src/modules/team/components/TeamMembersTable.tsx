@@ -105,7 +105,7 @@ export function TeamMembersTable({ members, disabled, onView, onUpdateRole, onDe
         cell: (info) => {
           const actions = [updateRoleAction(() => onUpdateRole(info.row.original), disabled)];
           if (onView) actions.push(viewAction(() => onView(info.row.original), disabled));
-          actions.push(deleteAction(() => onDelete(info.row.original), disabled));
+          actions.push(deleteAction(() => onDelete(info.row.original), disabled, 'Vô hiệu hóa'));
           return (
             <div className='flex items-center justify-end'>
               <TableActionsMenu actions={actions} />

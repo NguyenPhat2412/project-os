@@ -110,10 +110,11 @@ interface Props {
   defaultSprintId?: string;
   onClose: () => void;
   onSuccess: () => void;
+  onCreateTask?: (id: string, data: Record<string, unknown>) => Promise<unknown>;
 }
 
 // ── component ─────────────────────────────────────────────────────────────────
-export function TaskDialog({ open, task, nextTaskIndex, teamMembers, statusOptions, sprints = [], defaultStatus = DEFAULT_TASK_COLUMNS[0]?.id ?? '', defaultSprintId, onClose, onSuccess }: Props) {
+export function TaskDialog({ open, task, nextTaskIndex, teamMembers, statusOptions, sprints = [], defaultStatus = DEFAULT_TASK_COLUMNS[0]?.id ?? '', defaultSprintId, onClose, onSuccess, onCreateTask }: Props) {
   const { projectId } = useProject();
   const isNew = task === null;
 
@@ -121,8 +122,9 @@ export function TaskDialog({ open, task, nextTaskIndex, teamMembers, statusOptio
   const createTask = tasksCollection.useSet();
   const updateTask = tasksCollection.useUpdate();
   const deleteTask = tasksCollection.useDelete();
+  const [customSaving, setCustomSaving] = useState(false);
 
-  const saving = createTask.isPending || updateTask.isPending || deleteTask.isPending;
+  const saving = customSaving || createTask.isPending || updateTask.isPending || deleteTask.isPending;
   const [attachments, setAttachments] = useState<Attachment[]>(task?.attachments ?? []);
   const attachmentsRef = useRef<FileAttachmentsFieldHandle>(null);
   const resolvedStatusOptions = statusOptions.length > 0 ? statusOptions : DEFAULT_TASK_COLUMNS;
@@ -234,7 +236,16 @@ export function TaskDialog({ open, task, nextTaskIndex, teamMembers, statusOptio
         attachments: allAttachments.length > 0 ? allAttachments : undefined,
       };
 
-      await createTask.mutateAsync({ id: newId, data: createPayload as never });
+      if (onCreateTask) {
+        setCustomSaving(true);
+        try {
+          await onCreateTask(newId, createPayload);
+        } finally {
+          setCustomSaving(false);
+        }
+      } else {
+        await createTask.mutateAsync({ id: newId, data: createPayload as never });
+      }
     } else {
       const updatePayload = {
         title: data.title.trim(),

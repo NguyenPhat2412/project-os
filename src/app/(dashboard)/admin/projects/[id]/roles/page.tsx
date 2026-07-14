@@ -33,7 +33,7 @@ export default function ProjectRolesPage({ params }: { params: Promise<{ id: str
     path: (pid: string) => `projects/${pid}/members`,
     transform: (raw): WithId<ProjectTeamMember> => {
       const data = raw as unknown as ProjectTeamMember;
-      return { id: data.memberId, ...data } as WithId<ProjectTeamMember>;
+      return { ...data, id: data.memberId } as WithId<ProjectTeamMember>;
     },
   })(projectId);
 

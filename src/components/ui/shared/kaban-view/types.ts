@@ -93,7 +93,7 @@ export interface KanbanBoardProps<T extends { id: string; status: string }> {
    * `toColumnId` = target column id.
    * `beforeItemId` = item id to insert before, or undefined = append at end.
    */
-  onMoveItem: (itemId: string, toColumnId: string, beforeItemId?: string) => Promise<void>;
+  onMoveItem?: (itemId: string, toColumnId: string, beforeItemId?: string) => Promise<void>;
   /** Column label shown on the "+ Thêm" button */
   createItemLabel?: string;
   /** Enable column CRUD (edit/delete icons appear on hover) */

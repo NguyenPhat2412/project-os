@@ -19,6 +19,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { getFieldErrorInputClass, getInlineErrorTextClass } from '@/lib/form-validation';
 import { formatDate } from '@/lib/dayjs';
+import { useProject } from '@/store/project-store';
 import type { Attachment } from '@/lib/types/attachment';
 import type { FolderWithId } from '@/modules/docs/collections/folders';
 
@@ -85,6 +86,7 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 export function UploadDocDialog({ open, folders, nextDocIndex, onClose, onSuccess }: Props) {
+  const { projectId } = useProject();
   const [badge, setBadge] = useState<BadgeOption>(BADGE_OPTIONS[0]);
   const [saving, setSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -207,7 +209,7 @@ export function UploadDocDialog({ open, folders, nextDocIndex, onClose, onSucces
         {/* Files */}
         <div className='space-y-1.5'>
           <Label className='block text-[12px] font-semibold text-muted-foreground uppercase tracking-wider'>Files đính kèm</Label>
-          <FileAttachmentsField ref={attachmentsRef} mode='create' storagePath={`projects/default/docs/DOC-${String(nextDocIndex).padStart(2, '0')}/attachments`} attachments={attachments} onChange={setAttachments} disabled={saving} />
+          <FileAttachmentsField ref={attachmentsRef} mode='create' storagePath={`projects/${projectId}/docs/DOC-${String(nextDocIndex).padStart(2, '0')}/attachments`} attachments={attachments} onChange={setAttachments} disabled={saving} />
         </div>
 
         {/* Error */}

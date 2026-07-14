@@ -83,7 +83,7 @@ export function MemberModal({ mode, member, onClose, onSave }: MemberModalProps)
       email: member?.email ?? '',
       role: member?.roles?.[0] ?? ROLES[0],
       taskCount: member?.taskCount ?? 0,
-      workload: member?.workload ?? 50,
+      workload: member?.workload ?? (member?.status === 'Vacant' ? 0 : 50),
       gradient: member?.gradient ?? GRADIENTS[0].value,
       password: '',
     },
@@ -95,10 +95,10 @@ export function MemberModal({ mode, member, onClose, onSave }: MemberModalProps)
     reset({
       name: member.name,
       email: member.email,
-      role: member.roles?.[0],
-      taskCount: member.taskCount,
-      workload: member.workload,
-      gradient: member.gradient,
+      role: member.roles?.[0] ?? ROLES[0],
+      taskCount: member.taskCount ?? 0,
+      workload: member.workload ?? (member.status === 'Vacant' ? 0 : 50),
+      gradient: member.gradient ?? GRADIENTS[0].value,
       password: '',
     });
   }, [member, reset]);

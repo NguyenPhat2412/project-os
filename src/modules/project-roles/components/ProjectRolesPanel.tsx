@@ -1,5 +1,5 @@
 'use client';
-import { useState, useMemo, useEffect } from 'react';
+import { Fragment, useState, useMemo, useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -8,6 +8,7 @@ import { useReactTable, getCoreRowModel, getFilteredRowModel, getSortedRowModel,
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import { ModalShell, ModalHeaderBar } from '@/components/ui/shared/modal-shell';
 import { ConfirmDialog } from '@/components/ui/shared/confirm-dialog';
 import { PageLoader } from '@/components/ui/page-loader';
@@ -45,13 +46,89 @@ const COLOR_OPTIONS: { value: RoleDefinition['color']; label: string; swatch: st
   { value: 'cyan', label: 'Cyan', swatch: 'oklch(0.7 0.15 210)' },
 ];
 
+const PERMISSION_ACTIONS = [
+  { value: 'create', label: 'Tạo' },
+  { value: 'update', label: 'Sửa' },
+  { value: 'delete', label: 'Xóa' },
+] as const;
+
+const PERMISSION_GROUPS = [
+  {
+    label: 'Dự án',
+    resources: [
+      { value: 'projects', label: 'Dự án' },
+      { value: 'members', label: 'Thành viên' },
+      { value: 'roles', label: 'Vai trò' },
+      { value: 'role-assignments', label: 'Gán vai trò' },
+      { value: 'settings', label: 'Cấu hình' },
+    ],
+  },
+  {
+    label: 'Công việc',
+    resources: [
+      { value: 'tasks', label: 'Công việc' },
+      { value: 'task-columns', label: 'Cột công việc' },
+      { value: 'sprints', label: 'Sprint' },
+      { value: 'epics', label: 'Epic' },
+      { value: 'user-stories', label: 'User story' },
+      { value: 'bugs', label: 'Lỗi' },
+      { value: 'bug-columns', label: 'Cột lỗi' },
+    ],
+  },
+  {
+    label: 'Vận hành',
+    resources: [
+      { value: 'risks', label: 'Rủi ro' },
+      { value: 'budget-items', label: 'Ngân sách' },
+      { value: 'expenses', label: 'Chi phí' },
+      { value: 'timeline-phases', label: 'Giai đoạn timeline' },
+      { value: 'milestones', label: 'Mốc tiến độ' },
+      { value: 'meetings', label: 'Cuộc họp' },
+      { value: 'notes', label: 'Ghi chú' },
+      { value: 'action-items', label: 'Việc sau họp' },
+    ],
+  },
+  {
+    label: 'Tri thức',
+    resources: [
+      { value: 'folders', label: 'Thư mục' },
+      { value: 'documents', label: 'Tài liệu' },
+      { value: 'wikis', label: 'Wiki' },
+      { value: 'attachments', label: 'Tệp đính kèm' },
+    ],
+  },
+  {
+    label: 'Giao tiếp',
+    resources: [
+      { value: 'comments', label: 'Bình luận' },
+      { value: 'activities', label: 'Hoạt động' },
+      { value: 'notifications', label: 'Thông báo' },
+    ],
+  },
+] as const;
+
+function togglePermission(current: string[], permission: string, checked: boolean): string[] {
+  if (permission === '*:*') return checked ? ['*:*'] : [];
+
+  const [resource, action] = permission.split(':');
+  const withoutGlobal = current.filter((value) => value !== '*:*');
+  if (action === '*') {
+    const withoutResource = withoutGlobal.filter((value) => !value.startsWith(`${resource}:`));
+    return checked ? [...withoutResource, permission] : withoutResource;
+  }
+
+  const withoutResourceWildcard = withoutGlobal.filter((value) => value !== `${resource}:*`);
+  if (checked) return [...withoutResourceWildcard.filter((value) => value !== permission), permission];
+  return withoutResourceWildcard.filter((value) => value !== permission);
+}
+
 // ─── Schema ──────────────────────────────────────────────────────────────────
 
 const roleSchema = z.object({
   name: z.string().trim().min(1, 'Tên role không được để trống'),
   description: z.string().optional(),
   color: z.enum(['default', 'secondary', 'destructive', 'success', 'warning', 'info', 'purple', 'orange', 'rose', 'cyan'] as const),
-  permissions: z.string().optional(),
+  permissions: z.array(z.string()),
 });
 type RoleFormValues = z.infer<typeof roleSchema>;
 
@@ -89,7 +166,7 @@ function RoleDefModal({ open, editDef, projectId, onClose, onSuccess }: RoleDefM
       name: editDef?.name ?? '',
       description: editDef?.description ?? '',
       color: editDef?.color ?? 'default',
-      permissions: editDef?.permissions?.join(', ') ?? '',
+      permissions: editDef?.permissions ?? [],
     },
   });
 
@@ -99,15 +176,14 @@ function RoleDefModal({ open, editDef, projectId, onClose, onSuccess }: RoleDefM
       name: editDef?.name ?? '',
       description: editDef?.description ?? '',
       color: editDef?.color ?? 'default',
-      permissions: editDef?.permissions?.join(', ') ?? '',
+      permissions: editDef?.permissions ?? [],
     });
   }, [open, editDef, reset]);
 
   const onSubmit = async (data: RoleFormValues) => {
     const newName = data.name.trim();
     const newId = slugify(newName);
-    const permissions = (data.permissions ?? '').split(',').map((permission) => permission.trim()).filter(Boolean);
-    const payload = { name: newName, description: data.description?.trim() || '', color: data.color, permissions };
+    const payload = { name: newName, description: data.description?.trim() || '', color: data.color, permissions: data.permissions };
 
     if (isNew) {
       await setDef.mutateAsync({ id: newId, data: payload as never });
@@ -134,7 +210,7 @@ function RoleDefModal({ open, editDef, projectId, onClose, onSuccess }: RoleDefM
     <ModalShell
       open={open}
       onClose={handleClose}
-      maxWidth='max-w-md'
+      maxWidth='max-w-4xl'
       header={<ModalHeaderBar onClose={handleClose} closeDisabled={saving} heading={isNew ? 'Tạo Role Mới' : 'Sửa Role'} leading={<span className='text-[18px]'>🛡️</span>} />}
       onCancel={handleClose}
       cancelDisabled={saving}
@@ -177,10 +253,80 @@ function RoleDefModal({ open, editDef, projectId, onClose, onSuccess }: RoleDefM
           <Input {...register('description')} disabled={saving} placeholder='VD: Nhóm kiểm thử chất lượng' className='text-[13px]' />
         </div>
 
-        <div className='space-y-1.5'>
-          <Label className='block text-[12px] font-semibold text-muted-foreground uppercase tracking-wider'>Quyền API</Label>
-          <Input {...register('permissions')} disabled={saving} placeholder='tasks:*, bugs:update, comments:create' className='text-[13px]' />
-          <p className='text-[11px] text-muted-foreground'>Phân tách bằng dấu phẩy; dùng *:* cho toàn quyền.</p>
+        <div className='space-y-2'>
+          <Label className='block text-[12px] font-semibold text-muted-foreground uppercase tracking-wider'>Ma trận quyền</Label>
+          <Controller
+            name='permissions'
+            control={control}
+            render={({ field }) => {
+              const selected = new Set(field.value);
+              const hasGlobalAccess = selected.has('*:*');
+              return (
+                <div className='overflow-hidden rounded-md border border-border'>
+                  <label className='flex cursor-pointer items-center gap-2 border-b border-border bg-secondary px-3 py-2 text-[12px] font-medium'>
+                    <Checkbox
+                      checked={hasGlobalAccess}
+                      disabled={saving}
+                      onCheckedChange={(checked) => field.onChange(togglePermission(field.value, '*:*', checked === true))}
+                      aria-label='Toàn quyền dự án'
+                    />
+                    Toàn quyền dự án
+                  </label>
+                  <div className='max-h-72 overflow-auto'>
+                    <table className='w-full min-w-[560px] text-[12px]'>
+                      <thead className='sticky top-0 z-10 bg-card'>
+                        <tr className='border-b border-border'>
+                          <th className='px-3 py-2 text-left font-medium'>Chức năng</th>
+                          {PERMISSION_ACTIONS.map((action) => <th key={action.value} className='w-16 px-2 py-2 text-center font-medium'>{action.label}</th>)}
+                          <th className='w-24 px-2 py-2 text-center font-medium'>Tất cả</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {PERMISSION_GROUPS.map((group) => (
+                          <Fragment key={group.label}>
+                            <tr className='border-b border-border bg-muted/40'>
+                              <td colSpan={5} className='px-3 py-1.5 font-semibold text-muted-foreground'>{group.label}</td>
+                            </tr>
+                            {group.resources.map((resource) => {
+                              const wildcard = `${resource.value}:*`;
+                              const hasResourceAccess = selected.has(wildcard);
+                              return (
+                                <tr key={resource.value} className='border-b border-border last:border-b-0'>
+                                  <td className='px-3 py-2'>{resource.label}</td>
+                                  {PERMISSION_ACTIONS.map((action) => {
+                                    const permission = `${resource.value}:${action.value}`;
+                                    return (
+                                      <td key={action.value} className='px-2 py-2 text-center'>
+                                        <Checkbox
+                                          checked={hasGlobalAccess || hasResourceAccess || selected.has(permission)}
+                                          disabled={saving || hasGlobalAccess || hasResourceAccess}
+                                          onCheckedChange={(checked) => field.onChange(togglePermission(field.value, permission, checked === true))}
+                                          aria-label={`${resource.label}: ${action.label}`}
+                                        />
+                                      </td>
+                                    );
+                                  })}
+                                  <td className='px-2 py-2 text-center'>
+                                    <Checkbox
+                                      checked={hasGlobalAccess || hasResourceAccess}
+                                      disabled={saving || hasGlobalAccess}
+                                      onCheckedChange={(checked) => field.onChange(togglePermission(field.value, wildcard, checked === true))}
+                                      aria-label={`${resource.label}: Tất cả thao tác`}
+                                    />
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </Fragment>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <p className='border-t border-border px-3 py-2 text-[11px] text-muted-foreground'>Thành viên dự án luôn có quyền xem; ma trận này quản lý quyền tạo, sửa và xóa.</p>
+                </div>
+              );
+            }}
+          />
         </div>
 
         {/* Color */}

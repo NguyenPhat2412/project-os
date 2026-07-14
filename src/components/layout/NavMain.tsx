@@ -1,6 +1,6 @@
 'use client'
 
-import { ChevronRight, type LucideIcon } from 'lucide-react'
+import { ChevronRight, ClipboardListIcon, type LucideIcon } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
@@ -20,6 +20,7 @@ import {
   SidebarMenuSubItem,
   useSidebar,
 } from '@/components/ui/sidebar'
+import { useWorkspace } from '@/lib/api/workspace'
 
 export interface NavItem {
   title: string
@@ -43,6 +44,21 @@ export function NavMain({
 }) {
   const pathname = usePathname()
   const { setOpenMobile } = useSidebar()
+  const { data: workspace } = useWorkspace()
+  const moduleByRoute: Record<string, string> = {
+    '/dashboard': 'dashboard', '/projects': 'projects', '/timeline': 'project-management',
+    '/backlog': 'project-management', '/sprint': 'project-management', '/tasks': 'tasks',
+    '/bugs': 'project-management', '/organization': 'organization', '/attendance': 'attendance',
+    '/team': 'employees', '/budget': 'operations', '/risk': 'operations', '/docs': 'knowledge',
+    '/wiki': 'knowledge', '/meetings': 'operations', '/activity': 'activity', '/reports': 'reports',
+  }
+  const modules = new Set(workspace?.modules ?? [])
+  const scopedItems = workspace
+    ? items.filter((item) => !moduleByRoute[item.url] || modules.has(moduleByRoute[item.url]))
+    : items
+  const visibleItems = scopedItems.some((item) => item.url === '/attendance') && modules.has('daily-reports')
+    ? [...scopedItems, { title: 'Báo cáo ngày', url: '/daily-reports', icon: ClipboardListIcon, iconClassName: 'text-sky-600' }]
+    : scopedItems
 
   const isActive = (url: string) =>
     pathname === url || (url !== '/' && pathname.startsWith(url + '/'))
@@ -54,7 +70,7 @@ export function NavMain({
     <SidebarGroup>
       <SidebarGroupLabel>{label}</SidebarGroupLabel>
       <SidebarMenu>
-        {items.map((item) => (
+        {visibleItems.map((item) => (
           <Collapsible
             key={item.title}
             asChild

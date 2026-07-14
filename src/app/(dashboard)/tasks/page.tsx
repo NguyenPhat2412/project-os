@@ -14,6 +14,10 @@ import { KanbanView } from '@/components/ui/shared/kaban-view';
 import { PageLoader } from '@/components/ui/page-loader';
 import { Pagination } from '@/components/ui/pagination';
 import { batchWrite } from '@/lib/api-rq';
+import { apiClient } from '@/lib/api/client';
+import { useWorkspace } from '@/lib/api/workspace';
+import { usePermission } from '@/hooks/usePermission';
+import { useProject } from '@/store/project-store';
 import { createCollectionListItem, useBatchFetch } from '@/lib/api-rq/hooks/useBatchFetch';
 import { sprintsCollection } from '@/modules/sprint/collections/sprint';
 import { taskColumnsCollection } from '@/modules/tasks/collections/taskColumns';
@@ -38,19 +42,38 @@ type ViewMode = 'list' | 'kanban' | 'calendar';
 const ALL = 'all' as const;
 
 export default function TasksPage() {
+  const { projectId } = useProject();
+  const { isRootAdmin } = usePermission();
+  const { data: workspace, isLoading: workspaceLoading } = useWorkspace();
+  const isDepartmentManager = workspace?.systemRole === 'DEPARTMENT_MANAGER';
+  const canAdministerTasks = isRootAdmin() || workspace?.systemRole === 'PLATFORM_ADMIN';
+  const canCreateTasks = canAdministerTasks || isDepartmentManager;
+  const taskItem = canCreateTasks
+    ? workspace?.systemRole === 'DEPARTMENT_MANAGER' && !isRootAdmin()
+      ? {
+          key: 'tasks',
+          scope: `manager:${workspace.organization.id}:${projectId}`,
+          fetcher: () => apiClient.get<Task>('v1/manager/team/tasks', { organizationId: workspace.organization.id, projectId }),
+        }
+      : createCollectionListItem('tasks', tasksCollection)
+    : {
+        key: 'tasks',
+        scope: `self:${projectId}`,
+        fetcher: () => apiClient.get<Task>('v1/me/tasks', { projectId }),
+      };
   // Batch fetch all data in parallel - much faster than multiple useList() calls
   const {
     data,
     isLoading,
     refetch: _refetch,
   } = useBatchFetch([
-    createCollectionListItem('tasks', tasksCollection),
+    taskItem,
     createCollectionListItem('taskColumns', taskColumnsCollection),
     createCollectionListItem('teamMembers', teamCollection),
     createCollectionListItem('rootMembers', membersCollection),
     createCollectionListItem('sprints', sprintsCollection),
   ]);
-  const loading = isLoading;
+  const loading = isLoading || workspaceLoading;
 
   // Optimistic task updates — merged with batch data, no refetch needed
   const [optimisticTasks, setOptimisticTasks] = useState<Record<string, Partial<Task>>>({});
@@ -112,7 +135,13 @@ export default function TasksPage() {
       setInlineUpdatingIds((prev) => new Set(prev).add(taskId));
       setOptimisticTasks((prev) => ({ ...prev, [taskId]: { ...prev[taskId], ...patch } }));
       try {
-        await updateTaskMutation.mutateAsync({ id: taskId, data: patch });
+        if (canAdministerTasks) {
+          await updateTaskMutation.mutateAsync({ id: taskId, data: patch });
+        } else if (patch.status) {
+          await apiClient.patch(`v1/me/tasks/${taskId}/status?projectId=${projectId}`, { status: patch.status });
+        } else {
+          await _refetch();
+        }
       } finally {
         setInlineUpdatingIds((prev) => {
           const next = new Set(prev);
@@ -121,7 +150,7 @@ export default function TasksPage() {
         });
       }
     },
-    [updateTaskMutation],
+    [canAdministerTasks, projectId, updateTaskMutation, _refetch],
   );
 
   // Track which column is updating — drives per-column spinner, not per-row
@@ -191,12 +220,17 @@ export default function TasksPage() {
 
   // ── Handlers ──────────────────────────────────────────────────────────────
   const openCreate = (status: string = defaultColumnId) => {
+    if (!canCreateTasks) return;
     setSelectedTask(null);
     setDefaultStatus(status);
     setDialogOpen(true);
   };
 
   const openEdit = (task: Task) => {
+    if (!canAdministerTasks) {
+      setViewTask(task);
+      return;
+    }
     setSelectedTask(task);
     setDialogOpen(true);
   };
@@ -298,7 +332,7 @@ export default function TasksPage() {
   };
 
   const confirmDeleteTask = async () => {
-    if (!deletingTask) return;
+    if (!deletingTask || !canAdministerTasks) return;
     await deleteTaskMutation.mutateAsync(deletingTask.id);
     setDeletingTask(null);
     if (viewTask?.id === deletingTask.id) setViewTask(null);
@@ -337,7 +371,7 @@ export default function TasksPage() {
         onGroupByChange={setGroupBy}
         view={activeView}
         onViewChange={setActiveView}
-        onCreate={() => openCreate()}
+        onCreate={canCreateTasks ? () => openCreate() : undefined}
         filteredTasksCount={filteredTasks.length}
       />
 
@@ -371,8 +405,8 @@ export default function TasksPage() {
             };
           }}
           onItemClick={openEdit}
-          onCreateItem={openCreate}
-          onMoveItem={handleMoveTask}
+          onCreateItem={canCreateTasks ? openCreate : undefined}
+          onMoveItem={canAdministerTasks ? handleMoveTask : undefined}
           createItemLabel='+ Thêm task'
         />
       ) : (
@@ -386,7 +420,7 @@ export default function TasksPage() {
                 sprints={sprints}
                 groupBy={groupBy}
                 onEditTask={openEdit}
-                onDeleteTask={setDeletingTask}
+                onDeleteTask={canAdministerTasks ? setDeletingTask : () => undefined}
                 onViewTask={setViewTask}
                 onUpdateTask={handleInlineUpdateWithIndicator}
                 inlineUpdatingIds={inlineUpdatingIds}
@@ -400,7 +434,7 @@ export default function TasksPage() {
       )}
 
       {/* ── Task Dialog — conditional render ensures clean unmount/remount ── */}
-      {dialogOpen && (
+      {dialogOpen && canCreateTasks && (
         <TaskDialog
           open={dialogOpen}
           task={selectedTask ? ((freshSelectedTaskData as Task | null) ?? selectedTask) : null}
@@ -411,9 +445,15 @@ export default function TasksPage() {
           defaultStatus={effectiveDefaultStatus}
           onClose={handleDialogClose}
           onSuccess={handleSuccess}
+          onCreateTask={isDepartmentManager && workspace ? (id, payload) => apiClient.post('v1/manager/tasks', {
+            ...payload,
+            legacyId: id,
+            projectId,
+            organizationId: workspace.organization.id,
+          }) : undefined}
         />
       )}
-      {deletingTask && <ConfirmDialog title='Xoá task' message={`Bạn có chắc muốn xoá task "${deletingTask.title}"? Hành động này không thể hoàn tác.`} confirmLabel='Xoá task' danger onConfirm={confirmDeleteTask} onCancel={() => setDeletingTask(null)} />}
+      {deletingTask && canAdministerTasks && <ConfirmDialog title='Xoá task' message={`Bạn có chắc muốn xoá task "${deletingTask.title}"? Hành động này không thể hoàn tác.`} confirmLabel='Xoá task' danger onConfirm={confirmDeleteTask} onCancel={() => setDeletingTask(null)} />}
       <TaskViewSheet
         open={!!viewTask}
         task={(freshTaskData as Task | null) ?? viewTask}

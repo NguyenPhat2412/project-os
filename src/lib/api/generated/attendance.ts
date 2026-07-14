@@ -228,6 +228,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/organizations/{organizationId}/attendance/scope": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["scope"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/organizations/{organizationId}/attendance/reports/monthly": {
         parameters: {
             query?: never;
@@ -478,6 +494,8 @@ export interface components {
         TimesheetView: {
             /** Format: uuid */
             recordId?: string;
+            /** Format: uuid */
+            employeeId?: string;
             /** Format: date */
             workDate?: string;
             shiftName?: string;
@@ -493,6 +511,14 @@ export interface components {
             data?: components["schemas"]["ShiftView"][];
             meta?: components["schemas"]["Meta"];
         };
+        ApiResponseAttendanceScopeView: {
+            data?: components["schemas"]["AttendanceScopeView"];
+        };
+        AttendanceScopeView: {
+            /** Format: uuid */
+            employeeId?: string;
+            organizationAdmin?: boolean;
+        };
         PageResponseScheduleView: {
             data?: components["schemas"]["ScheduleView"][];
             meta?: components["schemas"]["Meta"];
@@ -501,6 +527,8 @@ export interface components {
             data?: components["schemas"]["MonthlyReport"];
         };
         MonthlyReport: {
+            /** Format: uuid */
+            employeeId?: string;
             month?: string;
             /** Format: int64 */
             recordedDays?: number;
@@ -1058,6 +1086,7 @@ export interface operations {
     timesheet: {
         parameters: {
             query?: {
+                employeeId?: string;
                 from?: string;
                 to?: string;
                 page?: number;
@@ -1082,9 +1111,32 @@ export interface operations {
             };
         };
     };
+    scope: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                organizationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseAttendanceScopeView"];
+                };
+            };
+        };
+    };
     monthlyReport: {
         parameters: {
             query: {
+                employeeId?: string;
                 month: string;
             };
             header?: never;
@@ -1109,6 +1161,7 @@ export interface operations {
     dailyReport: {
         parameters: {
             query: {
+                employeeId?: string;
                 date: string;
                 page?: number;
                 size?: number;
