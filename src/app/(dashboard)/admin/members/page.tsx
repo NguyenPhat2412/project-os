@@ -8,7 +8,7 @@ import { TeamMembersTable } from '@/modules/team/components/TeamMembersTable';
 import { MemberCardGrid } from '@/modules/team/components/MemberCardGrid';
 import { MemberFilterBar } from '@/modules/team/components/MemberFilterBar';
 import { TeamMemberViewSheet } from '@/modules/team/components/TeamMemberViewSheet';
-import { MemberModal } from '@/modules/team/components/MemberModal';
+import { MemberModal, type MemberSaveData } from '@/modules/team/components/MemberModal';
 import { OverloadedWarning } from '@/modules/team/components/OverloadedWarning';
 import { SimplePageHeader } from '@/components/layout/SimplePageHeader';
 import { BREADCRUMBS } from '@/lib/breadcrumbs';
@@ -48,25 +48,33 @@ export default function AdminMembersPage() {
     });
   }, [allMembers, search, filterRole, filterStatus]);
 
-  const handleAdd = async (data: Omit<TeamMember, 'id'> & { password?: string }) => {
-    await createMember.mutateAsync({
+  const handleAdd = async (data: MemberSaveData) => {
+    const created = await createMember.mutateAsync({
       email: data.email,
       password: data.password ?? '',
       displayName: data.displayName ?? data.name,
       role: data.roles.includes('ROOT_ADMIN') ? 'ROOT_ADMIN' : 'USER',
     });
+    if (data.photoURL || data.accountStatus === 'DISABLED') {
+      await updateMember.mutateAsync({
+        id: created.id,
+        data: { avatarUrl: data.photoURL || null, status: data.accountStatus },
+      });
+    }
     setShowAdd(false);
   };
 
-  const handleEdit = async (data: Omit<TeamMember, 'id'> & { password?: string }) => {
+  const handleEdit = async (data: MemberSaveData) => {
     if (!editTarget) return;
     await updateMember.mutateAsync({
       id: editTarget.id,
       data: {
         email: data.email,
         displayName: data.displayName ?? data.name,
+        avatarUrl: data.photoURL || null,
         role: data.roles.includes('ROOT_ADMIN') ? 'ROOT_ADMIN' : 'USER',
-        status: data.status === 'Vacant' ? 'DISABLED' : 'ACTIVE',
+        status: data.accountStatus,
+        password: data.password || undefined,
       },
     });
     setEditTarget(null);

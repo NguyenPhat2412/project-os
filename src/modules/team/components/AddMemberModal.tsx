@@ -15,7 +15,7 @@ interface Props {
   globalMembers: TeamMember[];
   projectMemberIds: Set<string>;
   roleDefs: RoleDefinition[];
-  onAdd: (memberId: string, roles: string[]) => void;
+  onAdd: (memberId: string, roles: string[]) => Promise<void>;
   adding: boolean;
 }
 
@@ -23,6 +23,7 @@ export function AddMemberModal({ open, onClose, globalMembers, projectMemberIds,
   const [search, setSearch] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
+  const [apiError, setApiError] = useState('');
 
   const available = useMemo(
     () =>
@@ -43,11 +44,16 @@ export function AddMemberModal({ open, onClose, globalMembers, projectMemberIds,
     setSearch('');
   };
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (!selectedId) return;
-    onAdd(selectedId, selectedRoles);
-    onClose();
-    reset();
+    setApiError('');
+    try {
+      await onAdd(selectedId, selectedRoles.length > 0 ? selectedRoles : ['Developer']);
+      onClose();
+      reset();
+    } catch (error) {
+      setApiError(error instanceof Error && error.message ? error.message : 'Không thể thêm thành viên vào dự án. Vui lòng thử lại.');
+    }
   };
 
   const toggleRole = (roleName: string) => {
@@ -68,7 +74,7 @@ export function AddMemberModal({ open, onClose, globalMembers, projectMemberIds,
       size='md'
       header={<ModalHeaderBar heading='Thêm thành viên vào dự án' onClose={handleClose} />}
       submitLabel='Thêm vào dự án'
-      submitDisabled={!selectedId || selectedRoles.length === 0 || adding}
+      submitDisabled={!selectedId || adding || (roleDefs.length > 0 && selectedRoles.length === 0)}
       submitLoading={adding}
       onSubmit={handleConfirm}
       cancelLabel='Hủy'
@@ -124,7 +130,7 @@ export function AddMemberModal({ open, onClose, globalMembers, projectMemberIds,
             <div>
               <label className='font-mono-dm text-[12px] text-muted-foreground uppercase tracking-[1.2px] block mb-1.5'>Vai trò trong dự án này</label>
               {roleDefs.length === 0 ? (
-                <p className='text-[11px] text-muted-foreground/60 italic'>Chưa có role. Tạo role tại Admin &gt; Projects &gt; Vai trò trước.</p>
+              <p className='text-[11px] text-muted-foreground/60 italic'>Chưa có role riêng. Thành viên sẽ được thêm với vai trò Developer mặc định.</p>
               ) : (
                 <div className='flex flex-col gap-2'>
                   {roleDefs.map((r) => (
@@ -144,6 +150,8 @@ export function AddMemberModal({ open, onClose, globalMembers, projectMemberIds,
             </div>
           </div>
         )}
+
+        {apiError && <p role='alert' className='rounded-sm border border-destructive/30 bg-destructive/10 px-3 py-2 text-[12px] text-destructive'>{apiError}</p>}
       </DialogBody>
     </ModalShell>
   );

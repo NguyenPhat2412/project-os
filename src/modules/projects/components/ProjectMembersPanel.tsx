@@ -157,8 +157,8 @@ export function ProjectMembersPanel({ projectId }: Props) {
         globalMembers={globalMembers}
         projectMemberIds={projectMemberIds}
         roleDefs={roleDefs}
-        onAdd={(memberId, roles) => {
-          setMember.mutate({
+        onAdd={async (memberId, roles) => {
+          await setMember.mutateAsync({
             id: memberId,
             data: { memberId, roles, notes: '' },
           });

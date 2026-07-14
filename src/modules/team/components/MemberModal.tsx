@@ -48,8 +48,13 @@ export interface MemberModalProps {
   mode: 'add' | 'edit';
   member?: TeamMember;
   onClose: () => void;
-  onSave: (data: Omit<TeamMember, 'id'> & { password?: string }) => Promise<void>;
+  onSave: (data: MemberSaveData) => Promise<void>;
 }
+
+export type MemberSaveData = Omit<TeamMember, 'id'> & {
+  password?: string;
+  accountStatus: 'ACTIVE' | 'DISABLED';
+};
 
 const memberSchema = z.object({
   name: z.string().trim().min(1, 'Vui lòng nhập họ và tên.'),
@@ -58,6 +63,8 @@ const memberSchema = z.object({
   taskCount: z.number().min(0, 'Số task không hợp lệ.').max(999, 'Số task tối đa là 999.'),
   workload: z.number().min(0).max(100),
   gradient: z.string().min(1),
+  avatarUrl: z.string().trim(),
+  accountStatus: z.enum(['ACTIVE', 'DISABLED']),
   password: z.string().optional(),
 });
 
@@ -85,6 +92,8 @@ export function MemberModal({ mode, member, onClose, onSave }: MemberModalProps)
       taskCount: member?.taskCount ?? 0,
       workload: member?.workload ?? (member?.status === 'Vacant' ? 0 : 50),
       gradient: member?.gradient ?? GRADIENTS[0].value,
+      avatarUrl: member?.photoURL ?? '',
+      accountStatus: member?.status === 'Vacant' ? 'DISABLED' : 'ACTIVE',
       password: '',
     },
   });
@@ -99,6 +108,8 @@ export function MemberModal({ mode, member, onClose, onSave }: MemberModalProps)
       taskCount: member.taskCount ?? 0,
       workload: member.workload ?? (member.status === 'Vacant' ? 0 : 50),
       gradient: member.gradient ?? GRADIENTS[0].value,
+      avatarUrl: member.photoURL ?? '',
+      accountStatus: member.status === 'Vacant' ? 'DISABLED' : 'ACTIVE',
       password: '',
     });
   }, [member, reset]);
@@ -108,9 +119,10 @@ export function MemberModal({ mode, member, onClose, onSave }: MemberModalProps)
   const role = watch('role');
   const workload = Number(watch('workload') ?? 0);
   const gradient = watch('gradient');
+  const accountStatus = watch('accountStatus');
 
   const initials = getInitials(name || 'XX');
-  const status = getStatusFromWorkload(workload);
+  const status = accountStatus === 'DISABLED' ? 'Vacant' : getStatusFromWorkload(workload);
 
   const statusColor = status === 'Overloaded' ? 'oklch(0.577 0.245 27.325)' : status === 'Busy' ? 'oklch(0.769 0.188 70.08)' : status === 'Active' ? 'oklch(0.646 0.222 142.116)' : 'var(--muted-foreground)';
 
@@ -135,11 +147,13 @@ export function MemberModal({ mode, member, onClose, onSave }: MemberModalProps)
         gradient: values.gradient,
         initials,
         status,
+        photoURL: values.avatarUrl || undefined,
+        accountStatus: values.accountStatus,
         password: values.password || undefined,
       });
       onClose();
-    } catch {
-      setApiError('Có lỗi xảy ra, vui lòng thử lại.');
+    } catch (error) {
+      setApiError(error instanceof Error && error.message ? error.message : 'Có lỗi xảy ra, vui lòng thử lại.');
       setSaving(false);
     }
   };
@@ -187,11 +201,20 @@ export function MemberModal({ mode, member, onClose, onSave }: MemberModalProps)
           </FormField>
         </div>
 
-        {mode === 'add' && (
-          <FormField label='Mật khẩu ban đầu' required>
-            <Input className={iCls} type='password' autoComplete='new-password' placeholder='Ít nhất 8 ký tự' {...register('password')} />
+        <FormField label='URL ảnh đại diện'>
+          <Input className={iCls} type='url' placeholder='https://example.com/avatar.png' {...register('avatarUrl')} />
+        </FormField>
+
+        <FormField label={mode === 'add' ? 'Mật khẩu ban đầu' : 'Mật khẩu mới'} required={mode === 'add'}>
+            <Input
+              className={iCls}
+              type='password'
+              autoComplete='new-password'
+              placeholder={mode === 'add' ? 'Ít nhất 8 ký tự' : 'Để trống nếu không đổi mật khẩu'}
+              {...register('password')}
+            />
+            {mode === 'edit' && <p className='mt-1 text-[11px] text-muted-foreground'>Chỉ nhập khi cần đặt lại mật khẩu cho người dùng.</p>}
           </FormField>
-        )}
 
         {/* Role */}
         <FormField label='Vai trò' className={getFieldErrorLabelClass(!!errors.role)}>
@@ -210,21 +233,33 @@ export function MemberModal({ mode, member, onClose, onSave }: MemberModalProps)
           {errors.role?.message && <span className={getInlineErrorTextClass()}>{errors.role.message}</span>}
         </FormField>
 
+        <FormField label='Trạng thái tài khoản'>
+          <Select value={accountStatus} onValueChange={(val) => setValue('accountStatus', val === 'DISABLED' ? 'DISABLED' : 'ACTIVE', { shouldDirty: true })}>
+            <SelectTrigger className='w-full h-9 text-[13px]'>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value='ACTIVE' className='text-[13px]'>Đang hoạt động</SelectItem>
+              <SelectItem value='DISABLED' className='text-[13px]'>Vô hiệu hóa</SelectItem>
+            </SelectContent>
+          </Select>
+        </FormField>
+
         {/* Task count + Workload */}
         <div className='grid grid-cols-2 gap-3'>
-          <FormField label='Số task đang làm' className={getFieldErrorLabelClass(!!errors.taskCount)}>
-            <Input className={`${iCls} ${getFieldErrorInputClass(!!errors.taskCount)}`} type='number' min={0} max={999} aria-invalid={!!errors.taskCount} {...register('taskCount', { setValueAs: (v) => Number(v || 0) })} />
+          <FormField label='Số task đang làm (tự động)' className={getFieldErrorLabelClass(!!errors.taskCount)}>
+            <Input className={`${iCls} ${getFieldErrorInputClass(!!errors.taskCount)}`} type='number' min={0} max={999} readOnly aria-readonly='true' aria-invalid={!!errors.taskCount} {...register('taskCount', { setValueAs: (v) => Number(v || 0) })} />
             {errors.taskCount?.message && <span className={getInlineErrorTextClass()}>{errors.taskCount.message}</span>}
           </FormField>
-          <FormField label={`Workload: ${workload}%`} className={getFieldErrorLabelClass(!!errors.workload)}>
+          <FormField label={`Workload (tự động): ${workload}%`} className={getFieldErrorLabelClass(!!errors.workload)}>
             <div className='pt-2 pb-1'>
               <input
                 type='range'
                 min={0}
                 max={100}
                 value={workload}
-                onChange={(e) => setValue('workload', Number(e.target.value), { shouldValidate: true, shouldDirty: true })}
-                className='w-full h-1.5 rounded-full appearance-none cursor-pointer'
+                disabled
+                className='w-full h-1.5 rounded-full appearance-none cursor-not-allowed opacity-80'
                 style={{
                   background: `linear-gradient(to right, ${workloadBarColor} 0%, ${workloadBarColor} ${workload}%, var(--border) ${workload}%, var(--border) 100%)`,
                   accentColor: workloadBarColor,
@@ -242,16 +277,18 @@ export function MemberModal({ mode, member, onClose, onSave }: MemberModalProps)
           </FormField>
         </div>
 
+        <p className='-mt-3 text-[11px] text-muted-foreground'>Số task và workload được tính từ công việc đã giao. Hãy chỉnh tại Tasks, không chỉnh trong hồ sơ tài khoản.</p>
+
         {/* Gradient picker */}
-        <FormField label='Màu avatar'>
+        <FormField label='Màu fallback của avatar'>
           <div className='flex flex-wrap gap-[10px] pt-1'>
             {GRADIENTS.map((g) => (
               <button
                 key={g.value}
                 type='button'
                 title={g.label}
-                onClick={() => setValue('gradient', g.value, { shouldValidate: true, shouldDirty: true })}
-                className='w-8 h-8 rounded-full transition-all duration-150 hover:scale-110'
+                disabled
+                className='w-8 h-8 rounded-full opacity-70 cursor-not-allowed'
                 style={{
                   background: g.value,
                   outline: gradient === g.value ? '2.5px solid white' : '2.5px solid transparent',

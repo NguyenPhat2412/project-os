@@ -251,15 +251,17 @@ export function TaskDialog({ open, task, nextTaskIndex, teamMembers, statusOptio
         title: data.title.trim(),
         priority: data.priority,
         status: data.status,
-        description: data.description?.trim() || undefined,
-        deadline: data.deadline || undefined,
-        startDate: data.startDate || undefined,
-        completedAt: data.completedAt || undefined,
-        points: !isNaN(pointsNum) ? pointsNum : undefined,
-        assigneeId: data.assigneeId || undefined,
-        reporterId: data.reporterId || undefined,
-        sprintId: data.sprintId || undefined,
-        attachments: attachments.length > 0 ? attachments : undefined,
+        // PATCH removes fields only when they are sent as null. Sending
+        // undefined omits them from JSON and leaves the old server value.
+        description: data.description?.trim() || null,
+        deadline: data.deadline || null,
+        startDate: data.startDate || null,
+        completedAt: data.completedAt || null,
+        points: !isNaN(pointsNum) ? pointsNum : null,
+        assigneeId: data.assigneeId || null,
+        reporterId: data.reporterId || null,
+        sprintId: data.sprintId || null,
+        attachments: attachments.length > 0 ? attachments : null,
       };
       await updateTask.mutateAsync({ id: task.id, data: updatePayload as never });
     }
