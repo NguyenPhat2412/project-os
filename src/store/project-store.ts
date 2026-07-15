@@ -7,6 +7,13 @@ import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 
 const DEFAULT_PROJECT_ID = '';
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function projectIdFromUrl(): string {
+  if (typeof window === 'undefined') return '';
+  const projectId = new URLSearchParams(window.location.search).get('projectId') ?? '';
+  return UUID_PATTERN.test(projectId) ? projectId : '';
+}
 
 /**
  * SSR-safe projectId getter for use at module-initialization time.
@@ -16,6 +23,8 @@ const DEFAULT_PROJECT_ID = '';
  */
 function getPersistedProjectId(): string {
   if (typeof window !== 'undefined') {
+    const linkedProjectId = projectIdFromUrl();
+    if (linkedProjectId) return linkedProjectId;
     try {
       const raw = localStorage.getItem('activeProjectId');
       if (raw) {
@@ -54,7 +63,10 @@ export const useProjectStore = create<ProjectState & ProjectActions>()(
         switchProject: (id) => {
           set({ projectId: id });
           if (typeof window !== 'undefined') {
-            window.location.href = '/dashboard';
+            const url = new URL(window.location.href);
+            url.searchParams.set('projectId', id);
+            url.searchParams.delete('taskId');
+            window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`);
           }
         },
 
@@ -64,6 +76,8 @@ export const useProjectStore = create<ProjectState & ProjectActions>()(
         name: 'activeProjectId',
         partialize: (state) => ({ projectId: state.projectId }),
         onRehydrateStorage: () => (state) => {
+          const linkedProjectId = projectIdFromUrl();
+          if (linkedProjectId) state?.setProjectId(linkedProjectId);
           state?.setHydrated(true);
         },
       }
@@ -78,10 +92,12 @@ export const useProjectStore = create<ProjectState & ProjectActions>()(
 
 export function useProject() {
   const projectId = useProjectStore((s) => s.projectId);
+  const setProjectId = useProjectStore((s) => s.setProjectId);
   const switchProject = useProjectStore((s) => s.switchProject);
 
   return {
     projectId,
+    setProjectId,
     switchProject,
   };
 }

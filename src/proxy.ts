@@ -14,7 +14,7 @@ export function proxy(req: NextRequest) {
   // No session → redirect to login
   if (!sessionToken) {
     const loginUrl = new URL('/login', req.url);
-    loginUrl.searchParams.set('callbackUrl', pathname);
+    loginUrl.searchParams.set('callbackUrl', `${pathname}${req.nextUrl.search}`);
     return NextResponse.redirect(loginUrl);
   }
 

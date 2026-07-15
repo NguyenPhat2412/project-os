@@ -11,7 +11,9 @@ export interface TaskColumn {
 }
 
 export interface Task {
-  id: string; // "TASK-01", "TASK-02", ...
+  id: string; // Display key: "TASK-01", "TASK-02", ...
+  uuid?: string; // Stable PostgreSQL identity used by links and API requests
+  legacyId?: string;
   title: string;
   priority: Priority;
   status: TaskStatus;

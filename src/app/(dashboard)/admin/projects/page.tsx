@@ -9,6 +9,7 @@ import { ModalShell, ModalHeaderBar, DialogBody, SubmitButton, CancelButton } fr
 import { ConfirmDialog } from '@/components/ui/shared/confirm-dialog';
 import { useProjectMutations, useProjects } from '@/modules/projects/hooks/useProjects';
 import { useProject } from '@/store/project-store';
+import { useWorkspace } from '@/lib/api/workspace';
 import { cn } from '@/lib/utils';
 import { SimplePageHeader } from '@/components/layout/SimplePageHeader';
 import { BREADCRUMBS } from '@/lib/breadcrumbs';
@@ -275,6 +276,7 @@ function ProjectFormModal({
 export default function AdminProjectsPage() {
   const { projects, isLoading } = useProjects();
   const { projectId, switchProject } = useProject();
+  const workspace = useWorkspace();
   const { create: createProject, update: updateProject, remove: deleteProject } = useProjectMutations();
 
   const [showForm, setShowForm] = useState(false);
@@ -319,9 +321,16 @@ export default function AdminProjectsPage() {
 
     try {
       if (editId) {
-        await updateProject.mutateAsync({ id: editId, data });
+        const { organizationId, ...projectPatch } = data;
+        void organizationId;
+        await updateProject.mutateAsync({ id: editId, data: projectPatch });
       } else {
-        await createProject.mutateAsync(data);
+        const organizationId = workspace.data?.organization.id;
+        if (!organizationId) {
+          setFormError('Create an organization before creating a project.');
+          return;
+        }
+        await createProject.mutateAsync({ ...data, organizationId });
       }
       setShowForm(false);
     } catch (error) {
@@ -350,7 +359,7 @@ export default function AdminProjectsPage() {
         summary={`${projects.length} project${projects.length !== 1 ? 's' : ''} · Project đang active quyết định data được hiển thị`}
         segments={BREADCRUMBS.adminProjects}
         actions={
-          <Button onClick={openCreate} className='gap-2 h-9'>
+          <Button onClick={openCreate} disabled={!workspace.data?.organization.id} className='gap-2 h-9'>
             <PlusIcon size={15} /> New Project
           </Button>
         }

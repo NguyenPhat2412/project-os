@@ -89,6 +89,7 @@ interface Props {
   open: boolean;
   task: {
     id: string;
+    uuid?: string;
     title: string;
     priority: Priority;
     status: string;
@@ -263,7 +264,7 @@ export function TaskDialog({ open, task, nextTaskIndex, teamMembers, statusOptio
         sprintId: data.sprintId || null,
         attachments: attachments.length > 0 ? attachments : null,
       };
-      await updateTask.mutateAsync({ id: task.id, data: updatePayload as never });
+      await updateTask.mutateAsync({ id: task.uuid ?? task.id, data: updatePayload as never });
     }
 
     onSuccess();
@@ -272,7 +273,7 @@ export function TaskDialog({ open, task, nextTaskIndex, teamMembers, statusOptio
 
   const handleDelete = async () => {
     if (isNew || !task) return;
-    await deleteTask.mutateAsync(task.id);
+    await deleteTask.mutateAsync(task.uuid ?? task.id);
     onSuccess();
     onClose();
   };

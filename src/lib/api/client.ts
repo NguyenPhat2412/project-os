@@ -1,4 +1,5 @@
 // src/lib/api/client.ts
+import { useProjectStore } from '@/store/project-store';
 
 export class ApiError extends Error {
   constructor(
@@ -36,6 +37,10 @@ const PROJECT_RESOURCE_ALIASES: Record<string, string> = {
 
 function activeProjectId(): string | null {
   if (typeof window === 'undefined') return null;
+  const linkedProjectId = new URLSearchParams(window.location.search).get('projectId');
+  if (isUuid(linkedProjectId ?? undefined)) return linkedProjectId;
+  const projectId = useProjectStore.getState().projectId;
+  if (isUuid(projectId)) return projectId;
   try {
     const state = JSON.parse(localStorage.getItem('activeProjectId') ?? '{}') as { state?: { projectId?: string } };
     return state.state?.projectId ?? null;

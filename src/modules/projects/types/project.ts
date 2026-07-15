@@ -17,4 +17,5 @@ export interface Project {
   createdAt?: string;
   updatedAt?: string;
   ownerId?: string;
+  organizationId?: string;
 }

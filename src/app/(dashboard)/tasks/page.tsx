@@ -40,9 +40,18 @@ import type { Sprint } from '@/modules/sprint/types/sprint';
 type ViewMode = 'list' | 'kanban' | 'calendar';
 
 const ALL = 'all' as const;
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function urlParam(name: string): string | null {
+  if (typeof window === 'undefined') return null;
+  return new URLSearchParams(window.location.search).get(name);
+}
 
 export default function TasksPage() {
-  const { projectId } = useProject();
+  const { projectId, setProjectId } = useProject();
+  const linkedProjectId = urlParam('projectId');
+  const linkedTaskId = urlParam('taskId');
+  const activeProjectId = linkedProjectId && UUID_PATTERN.test(linkedProjectId) ? linkedProjectId : projectId;
   const { isRootAdmin } = usePermission();
   const { data: workspace, isLoading: workspaceLoading } = useWorkspace();
   const isDepartmentManager = workspace?.systemRole === 'DEPARTMENT_MANAGER';
@@ -52,14 +61,14 @@ export default function TasksPage() {
     ? workspace?.systemRole === 'DEPARTMENT_MANAGER' && !isRootAdmin()
       ? {
           key: 'tasks',
-          scope: `manager:${workspace.organization.id}:${projectId}`,
-          fetcher: () => apiClient.get<Task>('v1/manager/team/tasks', { organizationId: workspace.organization.id, projectId }),
+          scope: `manager:${workspace.organization.id}:${activeProjectId}`,
+          fetcher: () => apiClient.get<Task>('v1/manager/team/tasks', { organizationId: workspace.organization.id, projectId: activeProjectId }),
         }
       : createCollectionListItem('tasks', tasksCollection)
     : {
         key: 'tasks',
-        scope: `self:${projectId}`,
-        fetcher: () => apiClient.get<Task>('v1/me/tasks', { projectId }),
+        scope: `self:${activeProjectId}`,
+        fetcher: () => apiClient.get<Task>('v1/me/tasks', { projectId: activeProjectId }),
       };
   // Batch fetch all data in parallel - much faster than multiple useList() calls
   const {
@@ -74,6 +83,28 @@ export default function TasksPage() {
     createCollectionListItem('sprints', sprintsCollection),
   ]);
   const loading = isLoading || workspaceLoading;
+
+  const syncTaskUrl = useCallback((task?: Task | null) => {
+    if (typeof window === 'undefined' || !activeProjectId) return;
+    const url = new URL(window.location.href);
+    url.searchParams.set('projectId', activeProjectId);
+    if (workspace?.organization.id) url.searchParams.set('organizationId', workspace.organization.id);
+    if (task !== undefined) {
+      if (task) url.searchParams.set('taskId', task.uuid ?? task.id);
+      else url.searchParams.delete('taskId');
+    }
+    window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`);
+  }, [activeProjectId, workspace?.organization.id]);
+
+  useEffect(() => {
+    if (linkedProjectId && UUID_PATTERN.test(linkedProjectId) && linkedProjectId !== projectId) {
+      setProjectId(linkedProjectId);
+    }
+  }, [linkedProjectId, projectId, setProjectId]);
+
+  useEffect(() => {
+    syncTaskUrl();
+  }, [syncTaskUrl]);
 
   // Optimistic task updates — merged with batch data, no refetch needed
   const [optimisticTasks, setOptimisticTasks] = useState<Record<string, Partial<Task>>>({});
@@ -121,8 +152,14 @@ export default function TasksPage() {
   const [defaultStatus, setDefaultStatus] = useState(defaultColumnId);
   const [viewTask, setViewTask] = useState<Task | null>(null);
   const [inlineUpdatingIds, setInlineUpdatingIds] = useState<Set<string>>(new Set());
-  const { data: freshTaskData } = tasksCollection.useDocument(viewTask?.id ?? null, { staleTime: 0 });
-  const { data: freshSelectedTaskData } = tasksCollection.useDocument(selectedTask?.id ?? null, { staleTime: 0 });
+  const { data: freshTaskData } = tasksCollection.useDocument(viewTask ? (viewTask.uuid ?? viewTask.id) : null, { staleTime: 0 });
+  const { data: freshSelectedTaskData } = tasksCollection.useDocument(selectedTask ? (selectedTask.uuid ?? selectedTask.id) : null, { staleTime: 0 });
+
+  useEffect(() => {
+    if (!linkedTaskId) return;
+    const linkedTask = tasks.find((task) => task.uuid === linkedTaskId || task.id === linkedTaskId);
+    if (linkedTask && !dialogOpen && !selectedTask && viewTask?.id !== linkedTask.id) setViewTask(linkedTask);
+  }, [dialogOpen, linkedTaskId, selectedTask, tasks, viewTask?.id]);
 
   // Mutation helpers — defined at component level (not inside handlers)
   const deleteTaskMutation = tasksCollection.useDelete();
@@ -132,13 +169,15 @@ export default function TasksPage() {
   // Applies optimistic patch locally → Select reflects new value instantly, no refetch needed
   const handleInlineUpdate = useCallback(
     async (taskId: string, patch: Partial<Task>) => {
+      const task = tasks.find((item) => item.id === taskId || item.uuid === taskId);
+      const resourceId = task?.uuid ?? taskId;
       setInlineUpdatingIds((prev) => new Set(prev).add(taskId));
       setOptimisticTasks((prev) => ({ ...prev, [taskId]: { ...prev[taskId], ...patch } }));
       try {
         if (canAdministerTasks) {
-          await updateTaskMutation.mutateAsync({ id: taskId, data: patch });
+          await updateTaskMutation.mutateAsync({ id: resourceId, data: patch });
         } else if (patch.status) {
-          await apiClient.patch(`v1/me/tasks/${taskId}/status?projectId=${projectId}`, { status: patch.status });
+          await apiClient.patch(`v1/me/tasks/${resourceId}/status?projectId=${activeProjectId}`, { status: patch.status });
         } else {
           await _refetch();
         }
@@ -150,7 +189,7 @@ export default function TasksPage() {
         });
       }
     },
-    [canAdministerTasks, projectId, updateTaskMutation, _refetch],
+    [activeProjectId, canAdministerTasks, tasks, updateTaskMutation, _refetch],
   );
 
   // Track which column is updating — drives per-column spinner, not per-row
@@ -223,10 +262,12 @@ export default function TasksPage() {
     if (!canCreateTasks) return;
     setSelectedTask(null);
     setDefaultStatus(status);
+    syncTaskUrl(null);
     setDialogOpen(true);
   };
 
   const openEdit = (task: Task) => {
+    syncTaskUrl(task);
     if (!canAdministerTasks) {
       setViewTask(task);
       return;
@@ -238,6 +279,12 @@ export default function TasksPage() {
   const handleDialogClose = () => {
     setDialogOpen(false);
     setSelectedTask(null);
+    syncTaskUrl(null);
+  };
+
+  const openView = (task: Task) => {
+    syncTaskUrl(task);
+    setViewTask(task);
   };
 
   const handleSuccess = () => {
@@ -313,6 +360,7 @@ export default function TasksPage() {
       })
       .map(({ task, order }) => ({
         id: task.id,
+        resourceId: task.uuid ?? task.id,
         status: task.status,
         order,
       }));
@@ -321,25 +369,43 @@ export default function TasksPage() {
 
     const bw = batchWrite();
     updates.forEach((update) => {
-      bw.update(tasksCollection.path, update.id, {
+      bw.update(tasksCollection.path, update.resourceId, {
         status: update.status,
         order: update.order,
       });
     });
 
-    await bw.commit();
-    _refetch();
+    setOptimisticTasks((previous) => {
+      const next = { ...previous };
+      updates.forEach((update) => {
+        next[update.id] = { ...next[update.id], status: update.status, order: update.order };
+      });
+      return next;
+    });
+
+    try {
+      await bw.commit();
+    } catch (error) {
+      setOptimisticTasks((previous) => {
+        const next = { ...previous };
+        updates.forEach((update) => delete next[update.id]);
+        return next;
+      });
+      await _refetch();
+      throw error;
+    }
   };
 
   const confirmDeleteTask = async () => {
     if (!deletingTask || !canAdministerTasks) return;
-    await deleteTaskMutation.mutateAsync(deletingTask.id);
+    await deleteTaskMutation.mutateAsync(deletingTask.uuid ?? deletingTask.id);
     setDeletingTask(null);
     if (viewTask?.id === deletingTask.id) setViewTask(null);
     if (selectedTask?.id === deletingTask.id) {
       setSelectedTask(null);
       setDialogOpen(false);
     }
+    syncTaskUrl(null);
     _refetch();
   };
 
@@ -421,7 +487,7 @@ export default function TasksPage() {
                 groupBy={groupBy}
                 onEditTask={openEdit}
                 onDeleteTask={canAdministerTasks ? setDeletingTask : () => undefined}
-                onViewTask={setViewTask}
+                onViewTask={openView}
                 onUpdateTask={handleInlineUpdateWithIndicator}
                 inlineUpdatingIds={inlineUpdatingIds}
                 updatingColumn={updatingColumn}
@@ -448,7 +514,7 @@ export default function TasksPage() {
           onCreateTask={isDepartmentManager && workspace ? (id, payload) => apiClient.post('v1/manager/tasks', {
             ...payload,
             legacyId: id,
-            projectId,
+            projectId: activeProjectId,
             organizationId: workspace.organization.id,
           }) : undefined}
         />
@@ -460,7 +526,10 @@ export default function TasksPage() {
         columns={resolvedTaskColumns}
         sprints={sprints}
         teamMembers={teamMembers}
-        onClose={() => setViewTask(null)}
+        onClose={() => {
+          setViewTask(null);
+          syncTaskUrl(null);
+        }}
         onEdit={() => {
           if (viewTask) {
             openEdit(viewTask);

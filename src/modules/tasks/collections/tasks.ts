@@ -10,10 +10,14 @@ import { ACTIVE_PROJECT_SCOPE } from '@/lib/project';
  */
 export const tasksCollection = createSubcollection<Task>({
   path: (projectId: string) => `projects/${projectId}/tasks`,
-  transform: (raw): WithId<Task> => ({
-    ...(raw as unknown as WithId<Task>),
-    dueDate: toDate(raw.dueDate),
-    createdAt: toDate(raw.createdAt) ?? new Date(),
-    updatedAt: toDate(raw.updatedAt) ?? new Date(),
-  }),
+  transform: (raw): WithId<Task> => {
+    const task = raw as unknown as WithId<Task>;
+    return {
+      ...task,
+      uuid: task.uuid ?? task.id,
+      dueDate: toDate(task.dueDate),
+      createdAt: toDate(task.createdAt) ?? new Date(),
+      updatedAt: toDate(task.updatedAt) ?? new Date(),
+    };
+  },
 })(ACTIVE_PROJECT_SCOPE);
