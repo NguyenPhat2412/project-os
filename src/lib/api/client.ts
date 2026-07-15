@@ -17,6 +17,18 @@ export interface ListResponse<T> {
   total?: number;
 }
 
+export interface PageMeta {
+  page: number;
+  size: number;
+  total: number;
+  totalPages: number;
+}
+
+export interface PageResponse<T> {
+  data: T[];
+  meta: PageMeta;
+}
+
 export interface MutationResponse<T> {
   data: T;
   id: string;
@@ -57,6 +69,8 @@ export function resolveApiPath(path: string): string {
   const [rawPath, rawQuery = ''] = path.split('?');
   const pathname = rawPath.replace(/^\/+/, '');
   const query = new URLSearchParams(rawQuery);
+  const globalDirectory = query.get('_directoryScope') === 'global';
+  query.delete('_directoryScope');
   const segments = pathname.split('/').filter(Boolean);
   const withQuery = (value: string) => {
     const search = query.toString();
@@ -86,7 +100,7 @@ export function resolveApiPath(path: string): string {
   }
 
   if (segments[0] === 'v1' && segments[1] === 'users' && segments[2] === 'directory'
-      && !query.has('projectId')) {
+      && !globalDirectory && !query.has('projectId')) {
     const active = activeProjectId();
     if (isUuid(active ?? undefined)) query.set('projectId', active!);
   }
@@ -157,23 +171,34 @@ class ApiClient {
     return res.json();
   }
 
+  private withParams(path: string, params?: Record<string, unknown>): string {
+    const [pathname, rawQuery = ''] = path.split('?');
+    const query = new URLSearchParams(rawQuery);
+    for (const [key, value] of Object.entries(params ?? {})) {
+      if (value === undefined || value === null) continue;
+      query.delete(key);
+      if (Array.isArray(value)) {
+        value.forEach((item) => query.append(key, String(item)));
+      } else {
+        query.set(key, String(value));
+      }
+    }
+    const search = query.toString();
+    return search ? `${pathname}?${search}` : pathname;
+  }
+
   /**
    * List GET — for collection endpoints.
    * API: { data: T[] } → returns T[]
    */
   async get<T>(path: string, params?: Record<string, unknown>): Promise<T[]> {
-    const entries = Object.entries(params ?? {}).filter(([, v]) => v !== undefined && v !== null);
-    const queryEntries = entries.flatMap(([key, value]) =>
-      Array.isArray(value)
-        ? value.map((item) => [key, String(item)] as [string, string])
-        : [[key, String(value)] as [string, string]],
-    );
-    const searchParams = entries.length > 0
-      ? `?${new URLSearchParams(queryEntries).toString()}`
-      : '';
-
-    const res = await this.request<{ data: T[] }>(`${path}${searchParams}`);
+    const res = await this.request<{ data: T[] }>(this.withParams(path, params));
     return res.data ?? [];
+  }
+
+  /** Paginated GET — preserves the API response metadata. */
+  async getPage<T>(path: string, params?: Record<string, unknown>): Promise<PageResponse<T>> {
+    return this.request<PageResponse<T>>(this.withParams(path, params));
   }
 
   /**

@@ -1,11 +1,16 @@
 'use client';
 
-import { FormEvent, useState } from 'react';
+import { FormEvent } from 'react';
 import { Building2, Plus, Users } from 'lucide-react';
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
+import { OrganizationMembersPanel } from './OrganizationMembersPanel';
 import { PermissionGroupsPanel } from './PermissionGroupsPanel';
-import { useWorkspace } from '@/lib/api/workspace';
+import { usePermission } from '@/hooks/usePermission';
+import { rememberOrganization, useWorkspace } from '@/lib/api/workspace';
 import { PageLoader } from '@/components/ui/page-loader';
 import { useDepartments, useEmployees, useOrganizationMutations, useOrganizations } from '@/lib/api/organizations';
+import { useProject } from '@/store/project-store';
 
 const roleLabel = (role: string | undefined) => {
   if (role === 'PLATFORM_ADMIN') return 'Sếp';
@@ -16,18 +21,26 @@ const roleLabel = (role: string | undefined) => {
 export default function OrganizationPage() {
   const organizations = useOrganizations();
   const workspace = useWorkspace();
-  const [organizationId, setOrganizationId] = useState<string | null>(null);
-  const selectedOrganizationId = organizationId ?? workspace.data?.organization.id ?? organizations.data?.[0]?.id ?? null;
+  const router = useRouter();
+  const pathname = usePathname();
+  const { setProjectId } = useProject();
+  const selectedOrganizationId = workspace.data?.organization.id ?? organizations.data?.[0]?.id ?? null;
   const { createOrganization, createDepartment, createEmployee } = useOrganizationMutations();
+  const { isRootAdmin } = usePermission();
   const departments = useDepartments(selectedOrganizationId);
   const employees = useEmployees(selectedOrganizationId);
   const isAdmin = workspace.data?.systemRole === 'PLATFORM_ADMIN';
   const canManageEmployees = isAdmin || workspace.data?.systemRole === 'HR';
+  const selectOrganization = (nextOrganizationId: string) => {
+    rememberOrganization(nextOrganizationId);
+    setProjectId('');
+    router.replace(`${pathname}?organizationId=${encodeURIComponent(nextOrganizationId)}`, { scroll: false });
+  };
   if (organizations.isLoading) return <PageLoader />;
   const selected = organizations.data?.find(item => item.id === selectedOrganizationId);
   const submitOrganization = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault(); const form = new FormData(event.currentTarget); const name = String(form.get('name') ?? '').trim();
-    if (name) createOrganization.mutate({ name, timezone: 'Asia/Ho_Chi_Minh' }, { onSuccess: response => setOrganizationId(response.data.id) });
+    if (name) createOrganization.mutate({ name, timezone: 'Asia/Ho_Chi_Minh' }, { onSuccess: response => selectOrganization(response.data.id) });
     event.currentTarget.reset();
   };
   const submitDepartment = (event: FormEvent<HTMLFormElement>) => {
@@ -42,8 +55,17 @@ export default function OrganizationPage() {
     <div><h1 className='text-2xl font-bold'>Tổ chức & Nhân sự</h1><p className='text-sm text-muted-foreground'>Tổ chức sở hữu phòng ban, nhân sự và dự án. Vai trò hiện tại của bạn: {roleLabel(workspace.data?.systemRole)}.</p></div>
     <form onSubmit={submitOrganization} className='flex max-w-xl gap-2'><input name='name' required placeholder='Tên tổ chức' className='h-9 flex-1 rounded-md border bg-background px-3 text-sm' /><button disabled={createOrganization.isPending} className='inline-flex h-9 items-center gap-2 rounded-md bg-primary px-3 text-sm text-primary-foreground disabled:opacity-50'><Plus size={16} />Tạo tổ chức</button></form>
     <div className='grid gap-4 lg:grid-cols-[260px_1fr]'>
-      <aside className='max-h-72 overflow-y-auto rounded-lg border bg-card p-3 lg:max-h-none'>{organizations.data?.length ? organizations.data.map(item => <button key={item.id} onClick={() => setOrganizationId(item.id)} className={`mb-1 w-full rounded-md p-3 text-left text-sm ${item.id === selectedOrganizationId ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'}`}><div className='font-medium'>{item.name}</div><div className='text-xs opacity-75'>{item.timezone}</div></button>) : <p className='p-3 text-sm text-muted-foreground'>Chưa có tổ chức.</p>}</aside>
+      <aside className='max-h-72 overflow-y-auto rounded-lg border bg-card p-3 lg:max-h-none'>{organizations.data?.length ? organizations.data.map(item => <button key={item.id} onClick={() => selectOrganization(item.id)} className={`mb-1 w-full rounded-md p-3 text-left text-sm ${item.id === selectedOrganizationId ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'}`}><div className='font-medium'>{item.name}</div><div className='text-xs opacity-75'>{item.timezone}</div></button>) : <p className='p-3 text-sm text-muted-foreground'>Chưa có tổ chức.</p>}</aside>
       <main className='space-y-4'>{selected && <>
+        <section className='rounded-lg border bg-card p-5'>
+          <h2 className='font-semibold'>Luồng cấp tài khoản và quyền</h2>
+          <ol className='mt-3 grid gap-2 text-sm md:grid-cols-4'>
+            <li><Link className='text-primary hover:underline' href={`/admin/members?organizationId=${selected.id}`}>1. Tạo hoặc cập nhật tài khoản</Link></li>
+            <li><a className='text-primary hover:underline' href='#organization-members'>2. Thêm vào tổ chức</a></li>
+            <li><a className='text-primary hover:underline' href='#permission-groups'>3. Gán nhóm quyền</a></li>
+            <li><Link className='text-primary hover:underline' href={`/admin/projects?organizationId=${selected.id}`}>4. Cấp vai trò dự án</Link></li>
+          </ol>
+        </section>
         <section className='grid gap-3 rounded-lg border bg-card p-5 md:grid-cols-3'>
           <RoleCard title='Sếp' description='Tạo tổ chức/dự án, quản lý phòng ban, thành viên và quyền tổ chức.' active={workspace.data?.systemRole === 'PLATFORM_ADMIN'} />
           <RoleCard title='Quản lý' description='Quản lý nhân sự trực tiếp và các dự án được giao; không có quyền vận hành hệ thống.' active={workspace.data?.systemRole === 'DEPARTMENT_MANAGER'} />
@@ -51,6 +73,7 @@ export default function OrganizationPage() {
         </section>
         <section className='rounded-lg border bg-card p-5'><div className='mb-4 flex items-center gap-2 font-semibold'><Building2 size={18} />{selected.name}</div>{isAdmin && <form onSubmit={submitDepartment} className='flex gap-2'><input name='name' required placeholder='Tên phòng ban' className='h-9 flex-1 rounded-md border bg-background px-3 text-sm' /><button className='h-9 rounded-md border px-3 text-sm'>Thêm phòng ban</button></form>}<div className='mt-3 flex flex-wrap gap-2'>{departments.data?.map(item => <span key={item.id} className='rounded-full bg-muted px-3 py-1 text-xs'>{item.name}</span>)}</div></section>
         <section className='rounded-lg border bg-card p-5'><div className='mb-4 flex items-center gap-2 font-semibold'><Users size={18} />Nhân sự</div>{canManageEmployees && <form onSubmit={submitEmployee} className='grid gap-2 md:grid-cols-4'><input name='fullName' required placeholder='Họ tên' className='h-9 rounded-md border bg-background px-3 text-sm' /><input name='email' required type='email' placeholder='Email' className='h-9 rounded-md border bg-background px-3 text-sm' /><input name='title' placeholder='Chức danh' className='h-9 rounded-md border bg-background px-3 text-sm' /><button className='h-9 rounded-md border px-3 text-sm'>Thêm nhân sự</button></form>}<div className='mt-4 divide-y'>{employees.data?.map(item => <div key={item.id} className='flex items-center justify-between py-2 text-sm'><span>{item.fullName}<span className='ml-2 text-muted-foreground'>{item.title}</span></span><span className='text-muted-foreground'>{item.email}</span></div>)}</div></section>
+        {isRootAdmin() && <OrganizationMembersPanel organizationId={selected.id} />}
         {isAdmin && <PermissionGroupsPanel organizationId={selected.id} />}
       </>}</main>
     </div>

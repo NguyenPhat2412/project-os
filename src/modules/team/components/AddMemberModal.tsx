@@ -1,13 +1,18 @@
 'use client';
-import { useState, useMemo } from 'react';
+import { useDeferredValue, useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { SearchIcon } from 'lucide-react';
 import { ModalShell, ModalHeaderBar, DialogBody } from '@/components/ui/shared/modal-shell';
 import { Input } from '@/components/ui/input';
+import { Pagination } from '@/components/ui/pagination';
 import { UserAvatar } from '@/components/shared/user-avatar';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import type { DirectoryPage } from '@/modules/team/collections/members';
 import type { TeamMember } from '@/modules/team/types/team';
 import type { RoleDefinition } from '@/modules/project-roles/types/role-definition';
+
+const PAGE_SIZE = 10;
 
 interface Props {
   open: boolean;
@@ -17,15 +22,36 @@ interface Props {
   roleDefs: RoleDefinition[];
   onAdd: (memberId: string, roles: string[]) => Promise<void>;
   adding: boolean;
+  directoryLabel?: string;
+  loadDirectoryPage?: (page: number, search: string) => Promise<DirectoryPage>;
 }
 
-export function AddMemberModal({ open, onClose, globalMembers, projectMemberIds, roleDefs, onAdd, adding }: Props) {
+export function AddMemberModal({
+  open,
+  onClose,
+  globalMembers,
+  projectMemberIds,
+  roleDefs,
+  onAdd,
+  adding,
+  directoryLabel,
+  loadDirectoryPage,
+}: Props) {
   const [search, setSearch] = useState('');
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const deferredSearch = useDeferredValue(search);
+  const [page, setPage] = useState(1);
+  const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
   const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
   const [apiError, setApiError] = useState('');
 
-  const available = useMemo(
+  const directory = useQuery({
+    queryKey: ['project-member-directory', page, deferredSearch],
+    queryFn: () => loadDirectoryPage!(page - 1, deferredSearch),
+    enabled: open && !!loadDirectoryPage,
+    staleTime: 30_000,
+  });
+
+  const localAvailable = useMemo(
     () =>
       globalMembers.filter((m) => {
         if (projectMemberIds.has(m.id)) return false;
@@ -36,19 +62,29 @@ export function AddMemberModal({ open, onClose, globalMembers, projectMemberIds,
     [globalMembers, projectMemberIds, search],
   );
 
-  const selectedMember = useMemo(() => globalMembers.find((m) => m.id === selectedId) ?? null, [globalMembers, selectedId]);
+  const databaseAvailable = useMemo(
+    () => (directory.data?.data ?? []).filter((member) => !projectMemberIds.has(member.id)),
+    [directory.data?.data, projectMemberIds],
+  );
+  const available = loadDirectoryPage ? databaseAvailable : localAvailable.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const total = loadDirectoryPage ? (directory.data?.meta.total ?? 0) : localAvailable.length;
+  const totalPages = loadDirectoryPage
+    ? (directory.data?.meta.totalPages ?? 0)
+    : Math.ceil(localAvailable.length / PAGE_SIZE);
 
   const reset = () => {
-    setSelectedId(null);
+    setSelectedMember(null);
     setSelectedRoles([]);
     setSearch('');
+    setPage(1);
+    setApiError('');
   };
 
   const handleConfirm = async () => {
-    if (!selectedId) return;
+    if (!selectedMember) return;
     setApiError('');
     try {
-      await onAdd(selectedId, selectedRoles.length > 0 ? selectedRoles : ['Developer']);
+      await onAdd(selectedMember.id, selectedRoles.length > 0 ? selectedRoles : ['Developer']);
       onClose();
       reset();
     } catch (error) {
@@ -74,7 +110,7 @@ export function AddMemberModal({ open, onClose, globalMembers, projectMemberIds,
       size='md'
       header={<ModalHeaderBar heading='Thêm thành viên vào dự án' onClose={handleClose} />}
       submitLabel='Thêm vào dự án'
-      submitDisabled={!selectedId || adding || (roleDefs.length > 0 && selectedRoles.length === 0)}
+      submitDisabled={!selectedMember || adding || (roleDefs.length > 0 && selectedRoles.length === 0)}
       submitLoading={adding}
       onSubmit={handleConfirm}
       cancelLabel='Hủy'
@@ -83,12 +119,26 @@ export function AddMemberModal({ open, onClose, globalMembers, projectMemberIds,
       <DialogBody className='flex flex-col gap-4'>
         <div className='relative'>
           <SearchIcon size={13} className='absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground' />
-          <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder='Tìm theo tên, email...' className='pl-8 h-8 text-[12px]' autoFocus />
+          <Input
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+              setSelectedMember(null);
+            }}
+            placeholder='Tìm theo tên, email...'
+            className='pl-8 h-8 text-[12px]'
+            autoFocus
+          />
         </div>
 
-        {available.length === 0 ? (
+        {directoryLabel && <p className='text-[12px] text-muted-foreground'>{directoryLabel}</p>}
+
+        {directory.isLoading ? (
+          <div className='text-center py-8 text-[13px] text-muted-foreground'>Đang tải danh bạ...</div>
+        ) : available.length === 0 ? (
           <div className='text-center py-8 text-[13px] text-muted-foreground'>
-            {globalMembers.length === 0 ? (
+            {search ? 'Không tìm thấy người phù hợp.' : total === 0 && (loadDirectoryPage || globalMembers.length === 0) ? (
               <>
                 Chưa có thành viên. Thêm tại{' '}
                 <a href='/admin/members' className='text-primary hover:underline'>
@@ -105,17 +155,33 @@ export function AddMemberModal({ open, onClose, globalMembers, projectMemberIds,
             {available.map((member) => (
               <div
                 key={member.id}
-                onClick={() => setSelectedId(member.id)}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-sm cursor-pointer transition-colors ${selectedId === member.id ? 'bg-primary/15 border border-primary' : 'hover:bg-secondary'}`}
+                onClick={() => setSelectedMember(member)}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-sm cursor-pointer transition-colors ${selectedMember?.id === member.id ? 'bg-primary/15 border border-primary' : 'hover:bg-secondary'}`}
               >
                 <UserAvatar user={member} size='sm' />
                 <div className='flex-1 min-w-0'>
                   <div className='text-[13px] font-semibold truncate'>{member.name}</div>
                   <div className='text-[12px] text-muted-foreground truncate'>{member.email}</div>
+                  <div className='text-[11px] text-muted-foreground truncate'>
+                    {member.roles.length > 0 ? `Vai trò: ${member.roles.join(', ')}` : 'Vai trò dự án: chọn sau khi chọn thành viên'}
+                  </div>
                 </div>
               </div>
             ))}
           </div>
+        )}
+
+        {totalPages > 1 && (
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            total={total}
+            limit={PAGE_SIZE}
+            onPageChange={(nextPage) => {
+              setPage(nextPage);
+              setSelectedMember(null);
+            }}
+          />
         )}
 
         {selectedMember && (
@@ -151,7 +217,11 @@ export function AddMemberModal({ open, onClose, globalMembers, projectMemberIds,
           </div>
         )}
 
-        {apiError && <p role='alert' className='rounded-sm border border-destructive/30 bg-destructive/10 px-3 py-2 text-[12px] text-destructive'>{apiError}</p>}
+        {(directory.error || apiError) && (
+          <p role='alert' className='rounded-sm border border-destructive/30 bg-destructive/10 px-3 py-2 text-[12px] text-destructive'>
+            {apiError || 'Không thể tải danh bạ thành viên. Vui lòng thử lại.'}
+          </p>
+        )}
       </DialogBody>
     </ModalShell>
   );

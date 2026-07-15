@@ -1,10 +1,13 @@
 'use client';
+import { useCallback, useEffect } from 'react';
 import { CheckIcon, ChevronDownIcon, PlusIcon } from 'lucide-react';
 import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useProject } from '@/store/project-store';
 import { cn } from '@/lib/utils';
+import { useWorkspace } from '@/lib/api/workspace';
 import { useProjects } from '@/modules/projects/hooks/useProjects';
 
 import type { WithId } from '@/lib/api-rq';
@@ -16,13 +19,12 @@ const STATUS_DOT: Record<string, string> = {
   completed: 'bg-blue-500',
 };
 
-function ProjectDropdownItem({ project, isActive }: { project: WithId<Project>; isActive: boolean }) {
-  const { switchProject } = useProject();
+function ProjectDropdownItem({ project, isActive, onSelect }: { project: WithId<Project>; isActive: boolean; onSelect: (projectId: string) => void }) {
   return (
     <DropdownMenuItem
       key={project.id}
       onClick={() => {
-        if (!isActive) switchProject(project.id);
+        if (!isActive) onSelect(project.id);
       }}
       className={cn('flex items-center gap-2.5 px-2.5 py-2 cursor-pointer', isActive && 'bg-primary/10 text-primary')}
     >
@@ -40,10 +42,36 @@ function ProjectDropdownItem({ project, isActive }: { project: WithId<Project>; 
 }
 
 export function ProjectSelector() {
-  const { projectId } = useProject();
+  const { projectId, switchProject } = useProject();
   const { projects, isLoading } = useProjects();
+  const { data: workspace } = useWorkspace();
+  const pathname = usePathname();
+  const router = useRouter();
 
   const current = projects.find((p) => p.id === projectId);
+  const manageProjectsHref = workspace?.organization.id
+    ? `/admin/projects?organizationId=${workspace.organization.id}`
+    : '/admin/projects';
+
+  const selectProject = useCallback((nextProjectId: string) => {
+    switchProject(nextProjectId);
+
+    const detailPath = pathname.match(/^\/admin\/projects\/[^/]+(\/.*)?$/);
+    if (!detailPath) return;
+
+    const url = new URL(window.location.href);
+    url.pathname = `/admin/projects/${nextProjectId}${detailPath[1] ?? ''}`;
+    router.replace(`${url.pathname}${url.search}${url.hash}`, { scroll: false });
+  }, [pathname, router, switchProject]);
+
+  useEffect(() => {
+    if (isLoading) return;
+    if (projects.length === 0) {
+      if (projectId) switchProject('');
+      return;
+    }
+    if (!current) selectProject(projects[0].id);
+  }, [current, isLoading, projectId, projects, selectProject, switchProject]);
 
   return (
     <DropdownMenu>
@@ -59,7 +87,7 @@ export function ProjectSelector() {
         <DropdownMenuLabel className='px-2.5 py-2 text-[12px] text-muted-foreground uppercase tracking-wider border-b border-border'>Projects</DropdownMenuLabel>
         <div className='py-1'>
           {projects.map((project) => (
-            <ProjectDropdownItem key={project.id} project={project} isActive={project.id === projectId} />
+            <ProjectDropdownItem key={project.id} project={project} isActive={project.id === projectId} onSelect={selectProject} />
           ))}
           {projects.length === 0 && !isLoading && (
             <DropdownMenuItem disabled className='px-3 py-4 text-center text-muted-foreground'>
@@ -69,7 +97,7 @@ export function ProjectSelector() {
         </div>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild className='cursor-pointer'>
-          <Link href='/admin/projects' className='flex items-center gap-2 px-2.5 py-1.5'>
+          <Link href={manageProjectsHref} className='flex items-center gap-2 px-2.5 py-1.5'>
             <PlusIcon size={12} />
             Quản lý dự án
           </Link>

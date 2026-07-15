@@ -53,6 +53,11 @@ export function NavMain({
     '/wiki': 'knowledge', '/meetings': 'operations', '/activity': 'activity', '/reports': 'reports',
   }
   const modules = new Set(workspace?.modules ?? [])
+  const withOrganization = (url: string) => {
+    const organizationId = workspace?.organization.id
+    if (!organizationId) return url
+    return `${url}${url.includes('?') ? '&' : '?'}organizationId=${organizationId}`
+  }
   const scopedItems = workspace
     ? items.filter((item) => !moduleByRoute[item.url] || modules.has(moduleByRoute[item.url]))
     : items
@@ -101,7 +106,7 @@ export function NavMain({
                             isActive={pathname === subItem.url}
                           >
                             <Link
-                              href={subItem.url}
+                              href={withOrganization(subItem.url)}
                               onClick={() => setOpenMobile(false)}
                             >
                               <span className="w-1.5 h-1.5 rounded-full border border-current opacity-50 shrink-0" />
@@ -120,7 +125,7 @@ export function NavMain({
                   className="cursor-pointer"
                   isActive={isActive(item.url)}
                 >
-                  <Link href={item.url} onClick={() => setOpenMobile(false)}>
+                  <Link href={withOrganization(item.url)} onClick={() => setOpenMobile(false)}>
                     {item.icon && <item.icon className={item.iconClassName} />}
                     <span className="flex-1">{item.title}</span>
                     {item.badge && (

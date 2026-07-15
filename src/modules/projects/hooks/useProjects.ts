@@ -2,24 +2,29 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createProject, deleteProject, listProjects, updateProject, type ProjectWrite } from '@/modules/projects/api/projects-api';
+import { useWorkspace } from '@/lib/api/workspace';
 
 export const projectKeys = {
   all: ['platform', 'projects'] as const,
+  list: (organizationId: string | undefined) => ['platform', 'projects', 'list', organizationId] as const,
   detail: (id: string) => ['platform', 'projects', id] as const,
 };
 
 export function useProjects() {
+  const workspace = useWorkspace();
+  const organizationId = workspace.data?.organization.id;
   const query = useQuery({
-    queryKey: projectKeys.all,
-    queryFn: listProjects,
+    queryKey: projectKeys.list(organizationId),
+    queryFn: () => listProjects(organizationId!),
+    enabled: Boolean(organizationId),
   });
   const projects = query.data?.data ?? [];
 
   return {
     projects,
     activeProjects: projects.filter((project) => project.status === 'active'),
-    isLoading: query.isLoading,
-    error: query.error,
+    isLoading: workspace.isLoading || query.isLoading,
+    error: workspace.error ?? query.error,
   };
 }
 

@@ -6,7 +6,7 @@ import { apiKeys } from './queryKeys';
 
 export function createCollection<T extends object>(config: CollectionConfig<T>) {
   const { path } = config;
-  const queryPath = () => resolveApiPath(path).split('?')[0];
+  const queryPath = () => resolveApiPath(path);
   const transform = (value: WithId<T>) => config.transform ? config.transform(value) : value;
 
   function useDocument(id: string | null | undefined, queryOptions?: Omit<UseQueryOptions, 'queryKey' | 'queryFn'>) {

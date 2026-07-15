@@ -4,28 +4,33 @@ import { BellIcon, SettingsIcon } from 'lucide-react';
 import { ThemeCustomizerTrigger } from '@/components/theme-customizer';
 import { Button } from '@/components/ui/button';
 import { SidebarTrigger } from '@/components/ui/sidebar';
+import { useWorkspace } from '@/lib/api/workspace';
+import { OrganizationSelector } from '@/modules/organization/components/OrganizationSelector';
 import { ProjectSelector } from '@/modules/projects/components/ProjectSelector';
 import { SearchBar } from '@/components/layout/SearchBar';
 
 export function Topbar({ onOpenCustomizer }: { onOpenCustomizer: () => void }) {
+  const { data: workspace } = useWorkspace();
+  const organizationQuery = workspace?.organization.id ? `?organizationId=${workspace.organization.id}` : '';
   return (
     <header className='h-15 border-b border-border flex items-center px-4 gap-3 shrink-0'>
       <SidebarTrigger className='text-muted-foreground hover:text-foreground hover:bg-secondary h-8 w-8' />
 
       <div className='flex items-center gap-2 flex-1 min-w-0'>
+        <OrganizationSelector />
         <ProjectSelector />
         <SearchBar />
       </div>
 
       <div className='ml-auto flex items-center gap-2'>
         <Button asChild variant='outline' size='icon' className='bg-secondary border-border text-muted-foreground hover:border-foreground/20 hover:text-foreground hover:bg-secondary' title='Settings'>
-          <Link href='/admin/settings'>
+          <Link href={`/admin/settings${organizationQuery}`}>
             <SettingsIcon size={15} />
           </Link>
         </Button>
         <ThemeCustomizerTrigger onClick={onOpenCustomizer} />
         <Button asChild variant='outline' size='icon' className='relative bg-secondary border-border text-muted-foreground hover:border-foreground/20 hover:text-foreground hover:bg-secondary' title='Notifications'>
-          <Link href='/activity'>
+          <Link href={`/activity${organizationQuery}`}>
             <BellIcon size={15} />
             <span className='absolute top-1.5 right-1.5 w-1.75 h-1.75 bg-red-500 rounded-full pulse-dot' />
           </Link>

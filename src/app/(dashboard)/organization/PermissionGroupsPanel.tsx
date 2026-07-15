@@ -66,7 +66,7 @@ export function PermissionGroupsPanel({ organizationId }: { organizationId: stri
     });
   };
 
-  return <section className='space-y-4 rounded-lg border bg-card p-5'>
+  return <section id='permission-groups' className='space-y-4 rounded-lg border bg-card p-5'>
     <div className='flex items-start justify-between gap-3'>
       <div><div className='flex items-center gap-2 font-semibold'><ShieldCheck size={18} />Nhóm quyền & module</div>
         <p className='mt-1 text-xs text-muted-foreground'>Module được cấp theo nhóm. Kéo thả hoặc dùng nút mũi tên bằng bàn phím.</p></div>
@@ -98,7 +98,7 @@ export function PermissionGroupsPanel({ organizationId }: { organizationId: stri
         </div>
         <div><h4 className='mb-2 text-sm font-medium'>Thành viên nhóm</h4><div className='grid max-h-48 gap-2 overflow-y-auto rounded-md border bg-background p-3 sm:grid-cols-2'>
           {members.data?.map(member => <label key={member.userId} className='flex items-center gap-2 text-sm'><input type='checkbox' checked={selected.memberIds.includes(member.userId)} onChange={() => toggleMember(member.userId)} />
-            <span className='truncate'>{employeeNames.get(member.userId) ?? member.userId}<span className='ml-1 text-xs text-muted-foreground'>({member.role})</span></span></label>)}
+            <span className='truncate'>{employeeNames.get(member.userId) ?? 'Tài khoản chưa liên kết nhân sự'}<span className='ml-1 text-xs text-muted-foreground'>({member.role})</span></span></label>)}
           {!members.data?.length && <p className='text-sm text-muted-foreground'>Chưa có thành viên tổ chức để gán.</p>}
         </div></div>
       </div> : <div className='grid min-h-64 place-items-center rounded-md border border-dashed text-sm text-muted-foreground'>Chọn hoặc tạo một nhóm quyền.</div>}

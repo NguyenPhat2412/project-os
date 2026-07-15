@@ -40,6 +40,7 @@ export function useOrganizationMutations() {
     createOrganization: useMutation({ mutationFn: (body: { name: string; slug?: string; timezone?: string }) => apiClient.post<Organization>('organizations', body), onSuccess: () => refresh() }),
     createDepartment: useMutation({ mutationFn: ({ organizationId, name }: { organizationId: string; name: string }) => apiClient.post<Department>(`organizations/${organizationId}/departments`, { name }), onSuccess: (_, variables) => refresh(variables.organizationId) }),
     createEmployee: useMutation({ mutationFn: ({ organizationId, body }: { organizationId: string; body: { fullName: string; email: string; title?: string; departmentId?: string } }) => apiClient.post<Employee>(`organizations/${organizationId}/employees`, body), onSuccess: (_, variables) => refresh(variables.organizationId) }),
+    upsertMember: useMutation({ mutationFn: ({ organizationId, userId, role }: { organizationId: string; userId: string; role: string }) => apiClient.put<OrganizationMember>(`organizations/${organizationId}/members`, { userId, role, status: 'active' }), onSuccess: (_, variables) => refresh(variables.organizationId) }),
   };
 }
 

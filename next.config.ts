@@ -14,7 +14,7 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
-        // Allow popup-to-opener communication for Firebase Auth OAuth popup flow
+        // Allow popup-to-opener communication for the Google OAuth flow.
         source: '/(.*)',
         headers: [
           {

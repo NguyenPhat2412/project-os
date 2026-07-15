@@ -1,5 +1,5 @@
 'use client';
-import { useState, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { SearchIcon, UserPlusIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -15,10 +15,12 @@ import { TeamMemberViewSheet } from '@/modules/team/components/TeamMemberViewShe
 import { AddMemberModal } from '@/modules/team/components/AddMemberModal';
 import { UpdateRoleModal } from '@/modules/team/components/UpdateRoleModal';
 import { projectMembersCollection } from '@/modules/team/collections/team';
-import { projectDirectoryCollection } from '@/modules/team/collections/members';
+import { getRootDirectoryPage, projectDirectoryCollection } from '@/modules/team/collections/members';
 import { roleDefinitionsCollection } from '@/modules/project-roles/collections/role-definitions';
+import { apiClient } from '@/lib/api/client';
 import { useWorkloadReadModel } from '@/lib/api/read-models';
 import { useWorkspace } from '@/lib/api/workspace';
+import { usePermission } from '@/hooks/usePermission';
 import { useEmployees, useOrganizationMembers } from '@/lib/api/organizations';
 import { getStatusFromWorkload } from '@/modules/team/types/team';
 import type { Member, TeamMemberWithRole, ProjectTeamMember } from '@/modules/team/types/team';
@@ -34,6 +36,8 @@ interface Props {
 export function ProjectMembersPanel({ projectId, organizationId }: Props) {
   const queryClient = useQueryClient();
   const { data: workspace } = useWorkspace();
+  const { isRootAdmin } = usePermission();
+  const rootAdmin = isRootAdmin();
   const organizationScope = organizationId ?? workspace?.organization.id ?? null;
   const projectMembersCol = projectMembersCollection(projectId);
   const projectDirectory = useMemo(() => projectDirectoryCollection(projectId), [projectId]);
@@ -50,6 +54,7 @@ export function ProjectMembersPanel({ projectId, organizationId }: Props) {
 
   const globalMembers = useMemo(() => (globalMembersData ?? []) as Member[], [globalMembersData]);
   const candidateMembers = useMemo(() => {
+    if (rootAdmin) return [];
     const current = new Map(globalMembers.map((member) => [member.id, member]));
     const employees = new Map((organizationEmployees.data ?? [])
       .filter((employee) => employee.userId)
@@ -60,19 +65,23 @@ export function ProjectMembersPanel({ projectId, organizationId }: Props) {
         const member = current.get(membership.userId);
         if (member) return member;
         const employee = employees.get(membership.userId);
-        const name = employee?.fullName ?? membership.userId;
+        const name = employee?.fullName || employee?.email || 'Chưa cập nhật tên';
         return {
           id: membership.userId,
           name,
           displayName: name,
-          email: employee?.email ?? '',
+          email: employee?.email ?? 'Chưa cập nhật email',
           initials: name.split(' ').map((part) => part[0]).join('').slice(0, 2).toUpperCase(),
           gradient: 'linear-gradient(135deg,#6c63ff,#a855f7)',
           roles: [membership.role],
           status: 'Active',
         } as Member;
       });
-  }, [globalMembers, organizationEmployees.data, organizationMembers.data]);
+  }, [globalMembers, organizationEmployees.data, organizationMembers.data, rootAdmin]);
+  const organizationMembershipByUserId = useMemo(
+    () => new Map((organizationMembers.data ?? []).map((membership) => [membership.userId, membership])),
+    [organizationMembers.data],
+  );
   const roleDefs = useMemo(() => (roleDefsData ?? []) as RoleDefinition[], [roleDefsData]);
   const workloadMap = useMemo(() => new Map((workloadData?.workload ?? []).map((row) => [row.assigneeId, row])), [workloadData]);
 
@@ -112,8 +121,9 @@ export function ProjectMembersPanel({ projectId, organizationId }: Props) {
   const [viewTarget, setViewTarget] = useState<TeamMemberWithRole | null>(null);
   const [updateRoleTarget, setUpdateRoleTarget] = useState<TeamMemberWithRole | null>(null);
   const [removeTarget, setRemoveTarget] = useState<TeamMemberWithRole | null>(null);
+  const [addingMember, setAddingMember] = useState(false);
 
-  const mutating = setMember.isPending || updateMember.isPending || deleteMember.isPending;
+  const mutating = addingMember || setMember.isPending || updateMember.isPending || deleteMember.isPending;
 
   const projectMemberIds = useMemo(() => new Set(teamMembers.map((m) => m.id)), [teamMembers]);
 
@@ -126,6 +136,32 @@ export function ProjectMembersPanel({ projectId, organizationId }: Props) {
         return matchSearch && matchRole;
       }),
     [teamMembers, search, filterRole],
+  );
+
+  const handleAddMember = async (memberId: string, roles: string[]) => {
+    setAddingMember(true);
+    try {
+      const membership = organizationMembershipByUserId.get(memberId);
+      if (organizationScope && membership?.status !== 'active') {
+        await apiClient.put(`organizations/${organizationScope}/members`, {
+          userId: memberId,
+          role: membership?.role ?? 'MEMBER',
+          status: 'active',
+        });
+      }
+      await setMember.mutateAsync({ id: memberId, data: { memberId, roles, notes: '' } });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: projectDirectory.keys.lists() }),
+        queryClient.invalidateQueries({ queryKey: ['organizations', 'members', organizationScope] }),
+      ]);
+    } finally {
+      setAddingMember(false);
+    }
+  };
+
+  const loadRootDirectoryPage = useCallback(
+    (page: number, search: string) => getRootDirectoryPage(page, search),
+    [],
   );
 
   if (loadingMemberships || loadingGlobalMembers || loadingWorkload) return <PageLoader />;
@@ -172,8 +208,14 @@ export function ProjectMembersPanel({ projectId, organizationId }: Props) {
       </div>
 
       <p className='text-[12px] text-muted-foreground'>
-        {filteredMembers.length} / {teamMembers.length} thành viên trong dự án
+        Đang hiển thị {filteredMembers.length} trong tổng số {teamMembers.length} thành viên dự án
       </p>
+
+      {rootAdmin && showAddModal && (
+        <p className='text-[12px] text-muted-foreground'>
+          Tài khoản chưa thuộc tổ chức sẽ tự được thêm với vai trò Thành viên khi thêm vào dự án.
+        </p>
+      )}
 
       {view === 'list' ? (
         <div className='bg-card border border-border panel'>
@@ -191,14 +233,10 @@ export function ProjectMembersPanel({ projectId, organizationId }: Props) {
         globalMembers={candidateMembers}
         projectMemberIds={projectMemberIds}
         roleDefs={roleDefs}
-        onAdd={async (memberId, roles) => {
-          await setMember.mutateAsync({
-            id: memberId,
-            data: { memberId, roles, notes: '' },
-          });
-          await queryClient.invalidateQueries({ queryKey: projectDirectory.keys.lists() });
-        }}
-        adding={setMember.isPending}
+        onAdd={handleAddMember}
+        adding={addingMember}
+        directoryLabel={rootAdmin ? 'Tất cả tài khoản đang hoạt động' : 'Nhân sự trong tổ chức'}
+        loadDirectoryPage={rootAdmin ? loadRootDirectoryPage : undefined}
       />
 
       <UpdateRoleModal

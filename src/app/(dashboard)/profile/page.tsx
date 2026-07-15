@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getInlineErrorTextClass } from '@/lib/form-validation';
+import { MyWorkSummary } from '@/modules/profile/components/MyWorkSummary';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 const TIMEZONES = ['Asia/Ho_Chi_Minh', 'Asia/Bangkok', 'Asia/Singapore', 'Asia/Tokyo', 'Asia/Seoul', 'Asia/Shanghai', 'Asia/Dubai', 'Europe/London', 'Europe/Paris', 'Europe/Berlin', 'America/New_York', 'America/Los_Angeles', 'UTC'];
@@ -221,6 +222,8 @@ export default function ProfilePage() {
       </div>
 
       {apiError && <div className='rounded-sm px-4 py-3 bg-red-500/10 border border-red-500/30 text-[13px] text-red-500'>{apiError}</div>}
+
+      <MyWorkSummary />
 
       {/* ── 2-column layout ──────────────────────────────────────────── */}
       <div className='grid grid-cols-1 xl:grid-cols-3 gap-5'>

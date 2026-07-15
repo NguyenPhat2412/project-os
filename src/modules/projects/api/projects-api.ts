@@ -3,8 +3,8 @@ import type { Project } from '@/modules/projects/types/project';
 
 export type ProjectWrite = Omit<Project, 'id' | 'legacyId' | 'ownerId' | 'createdAt' | 'updatedAt'>;
 
-export function listProjects() {
-  return platformApi.getPage<Project>('/projects?page=0&size=100');
+export function listProjects(organizationId: string) {
+  return platformApi.getPage<Project>(`/projects?page=0&size=100&organizationId=${encodeURIComponent(organizationId)}`);
 }
 
 export function getProject(id: string) {
