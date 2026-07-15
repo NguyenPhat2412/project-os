@@ -21,7 +21,7 @@ import { apiClient } from '@/lib/api/client';
 import { useWorkloadReadModel } from '@/lib/api/read-models';
 import { useWorkspace } from '@/lib/api/workspace';
 import { usePermission } from '@/hooks/usePermission';
-import { useEmployees, useOrganizationMembers } from '@/lib/api/organizations';
+import { useEmployees, useOrganizationMembers, type Employee } from '@/lib/api/organizations';
 import { getStatusFromWorkload } from '@/modules/team/types/team';
 import type { Member, TeamMemberWithRole, ProjectTeamMember } from '@/modules/team/types/team';
 import type { RoleDefinition } from '@/modules/project-roles/types/role-definition';
@@ -31,6 +31,18 @@ const ALL = 'all' as const;
 interface Props {
   projectId: string;
   organizationId?: string;
+}
+
+function withEmployeeProfile(member: Member, employee?: Employee): Member {
+  if (!employee) return { ...member, title: member.title ?? 'Chưa gán hồ sơ nhân sự' };
+  const name = employee.fullName.trim() || member.name;
+  return {
+    ...member,
+    name,
+    displayName: name,
+    email: employee.email || member.email,
+    title: employee.title?.trim() || 'Chưa cập nhật chức danh',
+  };
 }
 
 export function ProjectMembersPanel({ projectId, organizationId }: Props) {
@@ -52,32 +64,39 @@ export function ProjectMembersPanel({ projectId, organizationId }: Props) {
   const updateMember = projectMembersCol.useUpdate();
   const deleteMember = projectMembersCol.useDelete();
 
-  const globalMembers = useMemo(() => (globalMembersData ?? []) as Member[], [globalMembersData]);
+  const employeeByUserId = useMemo(
+    () => new Map((organizationEmployees.data ?? [])
+      .filter((employee) => employee.userId)
+      .map((employee) => [employee.userId!, employee])),
+    [organizationEmployees.data],
+  );
+  const globalMembers = useMemo(
+    () => ((globalMembersData ?? []) as Member[]).map((member) => withEmployeeProfile(member, employeeByUserId.get(member.id))),
+    [employeeByUserId, globalMembersData],
+  );
   const candidateMembers = useMemo(() => {
     if (rootAdmin) return [];
     const current = new Map(globalMembers.map((member) => [member.id, member]));
-    const employees = new Map((organizationEmployees.data ?? [])
-      .filter((employee) => employee.userId)
-      .map((employee) => [employee.userId!, employee]));
     return (organizationMembers.data ?? [])
       .filter((membership) => membership.status === 'active')
       .map((membership) => {
         const member = current.get(membership.userId);
         if (member) return member;
-        const employee = employees.get(membership.userId);
+        const employee = employeeByUserId.get(membership.userId);
         const name = employee?.fullName || employee?.email || 'Chưa cập nhật tên';
         return {
           id: membership.userId,
           name,
           displayName: name,
           email: employee?.email ?? 'Chưa cập nhật email',
+          title: employee?.title ?? 'Chưa gán hồ sơ nhân sự',
           initials: name.split(' ').map((part) => part[0]).join('').slice(0, 2).toUpperCase(),
           gradient: 'linear-gradient(135deg,#6c63ff,#a855f7)',
           roles: [membership.role],
           status: 'Active',
         } as Member;
       });
-  }, [globalMembers, organizationEmployees.data, organizationMembers.data, rootAdmin]);
+  }, [employeeByUserId, globalMembers, organizationMembers.data, rootAdmin]);
   const organizationMembershipByUserId = useMemo(
     () => new Map((organizationMembers.data ?? []).map((membership) => [membership.userId, membership])),
     [organizationMembers.data],
@@ -86,7 +105,7 @@ export function ProjectMembersPanel({ projectId, organizationId }: Props) {
   const workloadMap = useMemo(() => new Map((workloadData?.workload ?? []).map((row) => [row.assigneeId, row])), [workloadData]);
 
   // Build lookup map from root member id → member data
-  const memberMap = useMemo(() => new Map((globalMembersData ?? []).map((m) => [m.id, m as Member])), [globalMembersData]);
+  const memberMap = useMemo(() => new Map(globalMembers.map((member) => [member.id, member])), [globalMembers]);
 
   const teamMembers = useMemo((): TeamMemberWithRole[] => {
     return ((projectMemberships ?? []) as (ProjectTeamMember & { id: string })[])
@@ -159,12 +178,12 @@ export function ProjectMembersPanel({ projectId, organizationId }: Props) {
     }
   };
 
-  const loadRootDirectoryPage = useCallback(
-    (page: number, search: string) => getRootDirectoryPage(page, search),
-    [],
-  );
+  const loadRootDirectoryPage = useCallback(async (page: number, search: string) => {
+    const directory = await getRootDirectoryPage(page, search);
+    return { ...directory, data: directory.data.map((member) => withEmployeeProfile(member, employeeByUserId.get(member.id))) };
+  }, [employeeByUserId]);
 
-  if (loadingMemberships || loadingGlobalMembers || loadingWorkload) return <PageLoader />;
+  if (loadingMemberships || loadingGlobalMembers || loadingWorkload || organizationEmployees.isLoading) return <PageLoader />;
 
   return (
     <div className='space-y-4'>

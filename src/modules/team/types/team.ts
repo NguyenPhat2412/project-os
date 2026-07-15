@@ -12,6 +12,8 @@ export interface Member {
   name: string;
   displayName?: string;
   email: string;
+  /** Current job title from the linked employee profile. */
+  title?: string;
   initials: string;
   gradient: string;
   /** Optional photo URL — when present, UserAvatar renders the photo; otherwise falls back to initials */

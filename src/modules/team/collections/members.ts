@@ -65,10 +65,11 @@ export interface DirectoryPage {
 
 /** Root-admin directory, always loaded from the database in pages of ten. */
 export async function getRootDirectoryPage(page: number, search: string): Promise<DirectoryPage> {
-  const result = await apiClient.getPage<DirectoryEntry>('v1/users/directory?_directoryScope=global', {
+  const result = await apiClient.getPage<DirectoryEntry>('v1/admin/users', {
     page,
     size: DIRECTORY_PAGE_SIZE,
     search: search.trim() || undefined,
+    status: 'ACTIVE',
   });
   return { data: result.data.map(toMember), meta: result.meta };
 }

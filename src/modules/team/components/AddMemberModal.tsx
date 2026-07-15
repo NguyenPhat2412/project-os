@@ -161,6 +161,7 @@ export function AddMemberModal({
                 <UserAvatar user={member} size='sm' />
                 <div className='flex-1 min-w-0'>
                   <div className='text-[13px] font-semibold truncate'>{member.name}</div>
+                  <div className='text-[11px] text-muted-foreground truncate'>{member.title ?? 'Chưa gán hồ sơ nhân sự'}</div>
                   <div className='text-[12px] text-muted-foreground truncate'>{member.email}</div>
                   <div className='text-[11px] text-muted-foreground truncate'>
                     {member.roles.length > 0 ? `Vai trò: ${member.roles.join(', ')}` : 'Vai trò dự án: chọn sau khi chọn thành viên'}
@@ -190,6 +191,7 @@ export function AddMemberModal({
               <UserAvatar user={selectedMember} size='sm' />
               <div>
                 <div className='text-[13px] font-semibold'>{selectedMember.name}</div>
+                <div className='text-[11px] text-muted-foreground'>{selectedMember.title ?? 'Chưa gán hồ sơ nhân sự'}</div>
                 <div className='text-[12px] text-muted-foreground'>{selectedMember.email}</div>
               </div>
             </div>
