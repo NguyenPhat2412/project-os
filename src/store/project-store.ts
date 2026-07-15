@@ -60,16 +60,8 @@ export const useProjectStore = create<ProjectState & ProjectActions>()(
 
         setProjectId: (projectId) => set({ projectId }),
 
-        switchProject: (id) => {
-          set({ projectId: id });
-          if (typeof window !== 'undefined') {
-            const url = new URL(window.location.href);
-            if (id) url.searchParams.set('projectId', id);
-            else url.searchParams.delete('projectId');
-            url.searchParams.delete('taskId');
-            window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`);
-          }
-        },
+        // Route components own URL navigation. Updating History here races Next's router.
+        switchProject: (projectId) => set({ projectId }),
 
         setHydrated: (hydrated) => set({ hydrated }),
       }),

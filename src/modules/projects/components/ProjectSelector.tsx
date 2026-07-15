@@ -57,10 +57,10 @@ export function ProjectSelector() {
     switchProject(nextProjectId);
 
     const detailPath = pathname.match(/^\/admin\/projects\/[^/]+(\/.*)?$/);
-    if (!detailPath) return;
-
     const url = new URL(window.location.href);
-    url.pathname = `/admin/projects/${nextProjectId}${detailPath[1] ?? ''}`;
+    url.searchParams.set('projectId', nextProjectId);
+    url.searchParams.delete('taskId');
+    if (detailPath) url.pathname = `/admin/projects/${nextProjectId}${detailPath[1] ?? ''}`;
     router.replace(`${url.pathname}${url.search}${url.hash}`, { scroll: false });
   }, [pathname, router, switchProject]);
 

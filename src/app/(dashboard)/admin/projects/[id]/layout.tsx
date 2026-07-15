@@ -16,7 +16,13 @@ export default function ProjectDetailLayout({ children }: Readonly<{ children: R
   const { projectId, setProjectId } = useProject();
 
   const linkedProjectId = searchParams.get('projectId');
-  const selectedProjectId = linkedProjectId && UUID_PATTERN.test(linkedProjectId) ? linkedProjectId : routeProjectId;
+  // The route is the canonical project identity for a project-detail page.
+  // A stale query parameter must not send the user back to a previous project.
+  const selectedProjectId = UUID_PATTERN.test(routeProjectId)
+    ? routeProjectId
+    : linkedProjectId && UUID_PATTERN.test(linkedProjectId)
+      ? linkedProjectId
+      : '';
   const needsCanonicalRoute = Boolean(selectedProjectId && selectedProjectId !== routeProjectId);
   const needsProjectQuery = linkedProjectId !== selectedProjectId;
   const needsCanonicalUrl = needsCanonicalRoute || needsProjectQuery;

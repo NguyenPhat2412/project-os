@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { PlusIcon, PencilIcon, ExternalLinkIcon, CheckIcon, EyeIcon } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -274,6 +275,7 @@ function ProjectFormModal({
 // ─── Page ────────────────────────────────────────────────────────────────────
 
 export default function AdminProjectsPage() {
+  const router = useRouter();
   const { projects, isLoading } = useProjects();
   const { projectId, switchProject } = useProject();
   const workspace = useWorkspace();
@@ -343,7 +345,12 @@ export default function AdminProjectsPage() {
     setFormError('');
     try {
       await deleteProject.mutateAsync(deleteTarget.id);
-      if (projectId === deleteTarget.id) switchProject('ecommerce');
+      if (projectId === deleteTarget.id) {
+        switchProject('');
+        const url = new URL(window.location.href);
+        url.searchParams.delete('projectId');
+        router.replace(`${url.pathname}${url.search}${url.hash}`, { scroll: false });
+      }
       setDeleteTarget(null);
     } catch (error) {
       setFormError(error instanceof Error ? error.message : 'Could not delete project. Check admin access and try again.');

@@ -54,6 +54,10 @@ export function SearchBar() {
     setFocused(false);
     if (result.projectId) {
       switchProject(result.projectId);
+      const url = new URL(window.location.href);
+      url.searchParams.set('projectId', result.projectId);
+      url.searchParams.delete('taskId');
+      router.replace(`${url.pathname}${url.search}${url.hash}`, { scroll: false });
       return;
     }
     if (result.href) router.push(result.href);
