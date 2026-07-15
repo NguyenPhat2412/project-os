@@ -9,8 +9,9 @@ import type { Member } from '@/modules/team/types/team';
  *
  * Transform maps RootMember → Member fields.
  */
-export const membersCollection = createCollection<Member>({
-  path: 'v1/users/directory',
+function directoryCollection(projectId?: string) {
+  return createCollection<Member>({
+  path: projectId ? `v1/users/directory?projectId=${projectId}` : 'v1/users/directory',
   transform: (raw): WithId<Member> => {
     const root = raw as unknown as WithId<RootMember> & { id: string; role?: string; status?: string; avatarUrl?: string };
     const name = root.displayName ?? root.email ?? '';
@@ -32,4 +33,11 @@ export const membersCollection = createCollection<Member>({
       status: root.status === 'DISABLED' ? 'Vacant' : 'Active',
     };
   },
-});
+  });
+}
+
+/** Directory scoped explicitly to the project rendered by a screen. */
+export const projectDirectoryCollection = (projectId: string) => directoryCollection(projectId);
+
+/** Backward-compatible directory for screens already scoped by the active project. */
+export const membersCollection = directoryCollection();

@@ -78,7 +78,7 @@ export default function ProjectDetailPage() {
         </TabsContent>
 
         <TabsContent value='members' className='mt-0'>
-          <ProjectMembersPanel projectId={projectId} />
+          <ProjectMembersPanel projectId={projectId} organizationId={project.organizationId} />
         </TabsContent>
 
         <TabsContent value='roles' className='mt-0'>

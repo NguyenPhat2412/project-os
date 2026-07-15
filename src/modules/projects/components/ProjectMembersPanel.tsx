@@ -1,5 +1,6 @@
 'use client';
 import { useState, useMemo } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { SearchIcon, UserPlusIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ButtonGroup } from '@/components/ui/button-group';
@@ -14,9 +15,11 @@ import { TeamMemberViewSheet } from '@/modules/team/components/TeamMemberViewShe
 import { AddMemberModal } from '@/modules/team/components/AddMemberModal';
 import { UpdateRoleModal } from '@/modules/team/components/UpdateRoleModal';
 import { projectMembersCollection } from '@/modules/team/collections/team';
-import { membersCollection } from '@/modules/team/collections/members';
+import { projectDirectoryCollection } from '@/modules/team/collections/members';
 import { roleDefinitionsCollection } from '@/modules/project-roles/collections/role-definitions';
 import { useWorkloadReadModel } from '@/lib/api/read-models';
+import { useWorkspace } from '@/lib/api/workspace';
+import { useEmployees, useOrganizationMembers } from '@/lib/api/organizations';
 import { getStatusFromWorkload } from '@/modules/team/types/team';
 import type { Member, TeamMemberWithRole, ProjectTeamMember } from '@/modules/team/types/team';
 import type { RoleDefinition } from '@/modules/project-roles/types/role-definition';
@@ -25,12 +28,19 @@ const ALL = 'all' as const;
 
 interface Props {
   projectId: string;
+  organizationId?: string;
 }
 
-export function ProjectMembersPanel({ projectId }: Props) {
+export function ProjectMembersPanel({ projectId, organizationId }: Props) {
+  const queryClient = useQueryClient();
+  const { data: workspace } = useWorkspace();
+  const organizationScope = organizationId ?? workspace?.organization.id ?? null;
   const projectMembersCol = projectMembersCollection(projectId);
+  const projectDirectory = useMemo(() => projectDirectoryCollection(projectId), [projectId]);
   const { data: projectMemberships, isLoading: loadingMemberships } = projectMembersCol.useList() as { data: (ProjectTeamMember & { id: string })[]; isLoading: boolean };
-  const { data: globalMembersData, isLoading: loadingGlobalMembers } = membersCollection.useList();
+  const { data: globalMembersData, isLoading: loadingGlobalMembers } = projectDirectory.useList();
+  const organizationMembers = useOrganizationMembers(organizationScope);
+  const organizationEmployees = useEmployees(organizationScope);
   const { data: roleDefsData } = roleDefinitionsCollection(projectId).useList();
   const { data: workloadData, isLoading: loadingWorkload } = useWorkloadReadModel();
 
@@ -39,6 +49,30 @@ export function ProjectMembersPanel({ projectId }: Props) {
   const deleteMember = projectMembersCol.useDelete();
 
   const globalMembers = useMemo(() => (globalMembersData ?? []) as Member[], [globalMembersData]);
+  const candidateMembers = useMemo(() => {
+    const current = new Map(globalMembers.map((member) => [member.id, member]));
+    const employees = new Map((organizationEmployees.data ?? [])
+      .filter((employee) => employee.userId)
+      .map((employee) => [employee.userId!, employee]));
+    return (organizationMembers.data ?? [])
+      .filter((membership) => membership.status === 'active')
+      .map((membership) => {
+        const member = current.get(membership.userId);
+        if (member) return member;
+        const employee = employees.get(membership.userId);
+        const name = employee?.fullName ?? membership.userId;
+        return {
+          id: membership.userId,
+          name,
+          displayName: name,
+          email: employee?.email ?? '',
+          initials: name.split(' ').map((part) => part[0]).join('').slice(0, 2).toUpperCase(),
+          gradient: 'linear-gradient(135deg,#6c63ff,#a855f7)',
+          roles: [membership.role],
+          status: 'Active',
+        } as Member;
+      });
+  }, [globalMembers, organizationEmployees.data, organizationMembers.data]);
   const roleDefs = useMemo(() => (roleDefsData ?? []) as RoleDefinition[], [roleDefsData]);
   const workloadMap = useMemo(() => new Map((workloadData?.workload ?? []).map((row) => [row.assigneeId, row])), [workloadData]);
 
@@ -154,7 +188,7 @@ export function ProjectMembersPanel({ projectId }: Props) {
       <AddMemberModal
         open={showAddModal}
         onClose={() => setShowAddModal(false)}
-        globalMembers={globalMembers}
+        globalMembers={candidateMembers}
         projectMemberIds={projectMemberIds}
         roleDefs={roleDefs}
         onAdd={async (memberId, roles) => {
@@ -162,6 +196,7 @@ export function ProjectMembersPanel({ projectId }: Props) {
             id: memberId,
             data: { memberId, roles, notes: '' },
           });
+          await queryClient.invalidateQueries({ queryKey: projectDirectory.keys.lists() });
         }}
         adding={setMember.isPending}
       />

@@ -109,13 +109,14 @@ interface Props {
   sprints?: (Sprint & { id: string })[];
   defaultStatus?: string;
   defaultSprintId?: string;
+  requireAssignee?: boolean;
   onClose: () => void;
   onSuccess: () => void;
   onCreateTask?: (id: string, data: Record<string, unknown>) => Promise<unknown>;
 }
 
 // ── component ─────────────────────────────────────────────────────────────────
-export function TaskDialog({ open, task, nextTaskIndex, teamMembers, statusOptions, sprints = [], defaultStatus = DEFAULT_TASK_COLUMNS[0]?.id ?? '', defaultSprintId, onClose, onSuccess, onCreateTask }: Props) {
+export function TaskDialog({ open, task, nextTaskIndex, teamMembers, statusOptions, sprints = [], defaultStatus = DEFAULT_TASK_COLUMNS[0]?.id ?? '', defaultSprintId, requireAssignee = false, onClose, onSuccess, onCreateTask }: Props) {
   const { projectId } = useProject();
   const isNew = task === null;
 
@@ -334,7 +335,7 @@ export function TaskDialog({ open, task, nextTaskIndex, teamMembers, statusOptio
       cancelDisabled={saving}
       cancelLabel='Huỷ'
       onSubmit={handleSubmit(onSubmit)}
-      submitDisabled={!isValid || (!isDirty && !isNew) || saving}
+      submitDisabled={!isValid || (!isDirty && !isNew) || saving || (requireAssignee && !watch('assigneeId'))}
       submitLoading={saving}
       submitLoadingLabel='Đang lưu...'
       submitLabel={isNew ? 'Tạo Task' : 'Lưu thay đổi'}
@@ -418,10 +419,11 @@ export function TaskDialog({ open, task, nextTaskIndex, teamMembers, statusOptio
         </div>
 
         {/* Assignee + Reporter */}
-        {teamMembers.length > 0 && (
-          <div className='grid grid-cols-2 gap-3'>
+        <div className='grid grid-cols-2 gap-3'>
             <div className='space-y-1.5'>
-              <Label className='block text-[12px] font-semibold text-muted-foreground uppercase tracking-wider'>Người thực hiện</Label>
+              <Label className='block text-[12px] font-semibold text-muted-foreground uppercase tracking-wider'>
+                Người xử lý {requireAssignee && <span className='text-red-500'>*</span>}
+              </Label>
               <Controller
                 name='assigneeId'
                 control={control}
@@ -464,7 +466,9 @@ export function TaskDialog({ open, task, nextTaskIndex, teamMembers, statusOptio
                 )}
               />
             </div>
-          </div>
+        </div>
+        {teamMembers.length === 0 && (
+          <p className='text-[12px] text-muted-foreground'>Thêm thành viên vào dự án trước khi giao việc hoặc chọn người nhận báo cáo.</p>
         )}
 
         {/* Sprint */}

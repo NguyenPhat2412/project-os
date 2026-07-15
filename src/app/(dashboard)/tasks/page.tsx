@@ -30,7 +30,7 @@ import { TaskStatsPanel } from '@/modules/tasks/components/TaskStatsPanel';
 import { TaskTable } from '@/modules/tasks/components/TaskTable';
 import { TaskViewSheet } from '@/modules/tasks/components/TaskViewSheet';
 import { DEFAULT_TASK_COLUMNS, resolveTaskColumns } from '@/modules/tasks/utils/taskColumns';
-import { membersCollection } from '@/modules/team/collections/members';
+import { projectDirectoryCollection } from '@/modules/team/collections/members';
 import { teamCollection } from '@/modules/team/collections/team';
 
 import type { Task, Priority, TaskColumn } from '@/modules/tasks/types/task';
@@ -70,6 +70,7 @@ export default function TasksPage() {
         scope: `self:${activeProjectId}`,
         fetcher: () => apiClient.get<Task>('v1/me/tasks', { projectId: activeProjectId }),
       };
+  const projectDirectory = useMemo(() => projectDirectoryCollection(activeProjectId), [activeProjectId]);
   // Batch fetch all data in parallel - much faster than multiple useList() calls
   const {
     data,
@@ -79,7 +80,7 @@ export default function TasksPage() {
     taskItem,
     createCollectionListItem('taskColumns', taskColumnsCollection),
     createCollectionListItem('teamMembers', teamCollection),
-    createCollectionListItem('rootMembers', membersCollection),
+    createCollectionListItem('rootMembers', projectDirectory),
     createCollectionListItem('sprints', sprintsCollection),
   ]);
   const loading = isLoading || workspaceLoading;
@@ -517,6 +518,7 @@ export default function TasksPage() {
             projectId: activeProjectId,
             organizationId: workspace.organization.id,
           }) : undefined}
+          requireAssignee={isDepartmentManager && !isRootAdmin()}
         />
       )}
       {deletingTask && canAdministerTasks && <ConfirmDialog title='Xoá task' message={`Bạn có chắc muốn xoá task "${deletingTask.title}"? Hành động này không thể hoàn tác.`} confirmLabel='Xoá task' danger onConfirm={confirmDeleteTask} onCancel={() => setDeletingTask(null)} />}
