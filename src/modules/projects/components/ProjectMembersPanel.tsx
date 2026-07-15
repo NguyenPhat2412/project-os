@@ -49,7 +49,9 @@ export function ProjectMembersPanel({ projectId, organizationId }: Props) {
   const queryClient = useQueryClient();
   const { data: workspace } = useWorkspace();
   const { isRootAdmin } = usePermission();
-  const rootAdmin = isRootAdmin();
+  // Workspace ownership is available before the legacy root-role store settles.
+  // The API remains the authorization boundary for the global directory.
+  const rootAdmin = isRootAdmin() || workspace?.systemRole === 'PLATFORM_ADMIN';
   const organizationScope = organizationId ?? workspace?.organization.id ?? null;
   const projectMembersCol = projectMembersCollection(projectId);
   const projectDirectory = useMemo(() => projectDirectoryCollection(projectId), [projectId]);
