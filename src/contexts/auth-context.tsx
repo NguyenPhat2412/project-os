@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { ApiError } from '@/lib/api/client';
 import { platformAuth } from '@/lib/platform-api/client';
 import { profileConfig } from '@/lib/project-config';
 import { projectsCollection } from '@/modules/projects/collections/projects';
@@ -55,8 +56,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } catch {
           if (active) setProfile(null);
         }
-      } catch {
-        if (active) clearAuth();
+      } catch (error) {
+        if (active && error instanceof ApiError && error.status === 401) clearAuth();
       } finally {
         if (active) setLoading(false);
       }

@@ -25,7 +25,7 @@ export function useAttendanceScope(organizationId: string | null) {
   });
 }
 
-export function useAttendance(organizationId: string | null, employeeId: string | null, organizationAdmin = false) {
+export function useAttendance(organizationId: string | null, employeeId: string | null, organizationAdmin = false, reportMonth = month) {
   const enabled = Boolean(organizationId);
   const reportEnabled = enabled && Boolean(employeeId);
   const employeeQuery = employeeId ? `employeeId=${encodeURIComponent(employeeId)}` : '';
@@ -33,7 +33,7 @@ export function useAttendance(organizationId: string | null, employeeId: string 
     shifts: useQuery({ queryKey: key(organizationId, 'shifts'), queryFn: () => apiClient.get<Shift>(path(organizationId!, 'shifts')), enabled }),
     schedules: useQuery({ queryKey: key(organizationId, 'schedules'), queryFn: () => apiClient.get<Schedule>(path(organizationId!, 'schedules')), enabled }),
     assignments: useQuery({ queryKey: key(organizationId, 'assignments'), queryFn: () => apiClient.get<ScheduleAssignment>(path(organizationId!, 'assignments')), enabled: enabled && organizationAdmin }),
-    monthlyReport: useQuery({ queryKey: key(organizationId, `monthly-${month}-${employeeId}`), queryFn: () => apiClient.getOne<MonthlyReport>(path(organizationId!, `reports/monthly?month=${month}&${employeeQuery}`)), enabled: reportEnabled }),
+    monthlyReport: useQuery({ queryKey: key(organizationId, `monthly-${reportMonth}-${employeeId}`), queryFn: () => apiClient.getOne<MonthlyReport>(path(organizationId!, `reports/monthly?month=${reportMonth}&${employeeQuery}`)), enabled: reportEnabled, refetchInterval: 15_000, refetchOnWindowFocus: true }),
     adjustments: useQuery({ queryKey: key(organizationId, 'adjustments'), queryFn: () => apiClient.get<Adjustment>(path(organizationId!, 'adjustments')), enabled }),
     leaves: useQuery({ queryKey: key(organizationId, 'leaves'), queryFn: () => apiClient.get<LeaveRequest>(path(organizationId!, 'leave-requests')), enabled }),
   };
@@ -46,6 +46,7 @@ export function useAttendanceMutations(organizationId: string | null) {
   return {
     checkIn: useMutation({ mutationFn: () => post('check-in'), onSuccess: refresh }),
     checkOut: useMutation({ mutationFn: () => post('check-out'), onSuccess: refresh }),
+    markAttendancePeriod: useMutation({ mutationFn: (body: { employeeId: string; workDate: string; period: 'MORNING' | 'AFTERNOON' }) => post('records/manual', body), onSuccess: refresh }),
     createShift: useMutation({ mutationFn: (body: { name: string; startTime: string; endTime: string; breakMinutes: number }) => post('shifts', body), onSuccess: refresh }),
     createSchedule: useMutation({ mutationFn: (body: { name: string; slots: { shiftId: string; dayOfWeek: number }[] }) => post('schedules', body), onSuccess: refresh }),
     createAssignment: useMutation({ mutationFn: (body: { employeeId: string; scheduleId: string; effectiveFrom: string }) => post('assignments', body), onSuccess: refresh }),

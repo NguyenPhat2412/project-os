@@ -1,4 +1,4 @@
-import { ApiError } from '@/lib/api/client';
+import { ApiError, refreshSession } from '@/lib/api/client';
 
 const API_PREFIX = '/api/v1';
 const UNSAFE_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
@@ -62,12 +62,7 @@ async function request<T>(path: string, init: RequestInit = {}, retry = true): P
   });
 
   if (response.status === 401 && retry && isRefreshable(path)) {
-    try {
-      await request<DataEnvelope<unknown>>('/auth/refresh', { method: 'POST' }, false);
-      return request<T>(path, init, false);
-    } catch {
-      // Preserve the original 401 below so callers can clear local auth state.
-    }
+    if (await refreshSession()) return request<T>(path, init, false);
   }
 
   if (!response.ok) {

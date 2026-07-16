@@ -41,6 +41,7 @@ export function useWorkspace() {
       ? `v1/me/workspace?organizationId=${encodeURIComponent(organizationId)}`
       : 'v1/me/workspace'),
     staleTime: 30_000,
+    refetchOnWindowFocus: 'always',
     retry: false,
   });
 }

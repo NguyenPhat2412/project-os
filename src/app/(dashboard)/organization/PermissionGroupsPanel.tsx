@@ -15,7 +15,7 @@ const MODULES = [
   ['dashboard', 'Tổng hợp'], ['projects', 'Dự án'], ['tasks', 'Công việc'],
   ['daily-reports', 'Báo cáo ngày'], ['attendance', 'Chấm công'], ['organization', 'Tổ chức'],
   ['employees', 'Nhân sự'], ['project-management', 'Quản lý dự án'], ['operations', 'Vận hành'],
-  ['knowledge', 'Tài liệu & Wiki'], ['activity', 'Hoạt động'], ['reports', 'Báo cáo'],
+  ['knowledge', 'Tài liệu & Wiki'], ['meetings', 'Cuộc họp'], ['activity', 'Hoạt động'], ['reports', 'Báo cáo'],
   ['admin', 'Quản trị'], ['profile', 'Hồ sơ cá nhân'],
 ] as const;
 
@@ -86,6 +86,7 @@ export function PermissionGroupsPanel({ organizationId }: { organizationId: stri
       {selected ? <div className='space-y-4'>
         <div className='flex items-center justify-between gap-2'><div><h3 className='font-medium'>{selected.name}</h3><p className='text-xs text-muted-foreground'>{selected.description || 'Chưa có mô tả'}</p></div>
           <button type='button' aria-label='Xóa nhóm quyền' onClick={() => { if (window.confirm(`Xóa nhóm “${selected.name}”?`)) deleteGroup.mutate({ organizationId, groupId: selected.id }); }} className='rounded-md border p-2 text-destructive hover:bg-destructive/10'><Trash2 size={16} /></button></div>
+        {selected.memberIds.length === 0 && <p className='rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-700 dark:text-amber-300'>Nhóm này chưa có thành viên, nên các module đang gán chưa được cấp cho tài khoản nào.</p>}
         <div className='grid items-center gap-3 md:grid-cols-[1fr_auto_1fr]'>
           <ModuleList title='Module khả dụng' modules={available.map(([key]) => key)} selected={selectedAvailable}
             onSelect={setSelectedAvailable} onDrop={module => unassign(module)} />

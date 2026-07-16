@@ -6,10 +6,12 @@ import { useRouter } from 'next/navigation';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from '@/components/ui/sidebar';
 import { useAuth } from '@/contexts/auth-context';
+import { useWorkspace } from '@/lib/api/workspace';
 
 export function NavUser() {
   const { isMobile } = useSidebar();
   const { user, loading, logout } = useAuth();
+  const { data: workspace } = useWorkspace();
   const router = useRouter();
 
   if (loading) {
@@ -34,6 +36,9 @@ export function NavUser() {
 
   const displayName = user.displayName || user.email?.split('@')[0] || 'User';
   const email = user.email ?? '';
+  const groupLabel = workspace?.permissionGroups?.length
+    ? workspace.permissionGroups.join(', ')
+    : 'Chưa gán nhóm quyền';
 
   const handleLogout = async () => {
     await logout();
@@ -57,6 +62,7 @@ export function NavUser() {
               <div className='grid flex-1 text-left text-sm leading-tight'>
                 <span className='truncate font-medium'>{displayName}</span>
                 <span className='truncate text-xs text-muted-foreground'>{email}</span>
+                <span className='truncate text-[11px] text-muted-foreground'>Nhóm: {groupLabel}</span>
               </div>
               <EllipsisVertical className='ml-auto size-4' />
             </SidebarMenuButton>
@@ -76,6 +82,7 @@ export function NavUser() {
                 <div className='grid flex-1 text-left text-sm leading-tight'>
                   <span className='truncate font-medium'>{displayName}</span>
                   <span className='truncate text-xs text-muted-foreground'>{email}</span>
+                  <span className='truncate text-[11px] text-muted-foreground'>Nhóm: {groupLabel}</span>
                 </div>
               </div>
             </DropdownMenuLabel>

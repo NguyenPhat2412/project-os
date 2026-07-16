@@ -114,6 +114,21 @@ function csrfToken() {
   return item ? decodeURIComponent(item.slice('XSRF-TOKEN='.length)) : null;
 }
 
+let refreshPromise: Promise<boolean> | null = null;
+
+export function refreshSession(): Promise<boolean> {
+  if (!refreshPromise) {
+    const headers = new Headers();
+    const csrf = csrfToken();
+    if (csrf) headers.set('X-XSRF-TOKEN', csrf);
+    refreshPromise = fetch('/api/v1/auth/refresh', { method: 'POST', headers, credentials: 'include' })
+      .then((response) => response.ok)
+      .catch(() => false)
+      .finally(() => { refreshPromise = null; });
+  }
+  return refreshPromise;
+}
+
 class ApiClient {
   private baseUrl: string;
 
@@ -143,15 +158,7 @@ class ApiClient {
     });
 
     if (res.status === 401 && retry && !url.endsWith('/api/v1/auth/refresh')) {
-      const refreshHeaders = new Headers();
-      const csrf = csrfToken();
-      if (csrf) refreshHeaders.set('X-XSRF-TOKEN', csrf);
-      const refresh = await fetch('/api/v1/auth/refresh', {
-        method: 'POST',
-        headers: refreshHeaders,
-        credentials: 'include',
-      });
-      if (refresh.ok) return this.request<T>(path, options, false);
+      if (await refreshSession()) return this.request<T>(path, options, false);
     }
 
     if (!res.ok) {

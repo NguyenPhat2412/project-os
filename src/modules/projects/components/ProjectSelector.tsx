@@ -23,7 +23,7 @@ function ProjectDropdownItem({ project, isActive, onSelect }: { project: WithId<
   return (
     <DropdownMenuItem
       key={project.id}
-      onClick={() => {
+      onSelect={() => {
         if (!isActive) onSelect(project.id);
       }}
       className={cn('flex items-center gap-2.5 px-2.5 py-2 cursor-pointer', isActive && 'bg-primary/10 text-primary')}
@@ -42,7 +42,7 @@ function ProjectDropdownItem({ project, isActive, onSelect }: { project: WithId<
 }
 
 export function ProjectSelector() {
-  const { projectId, switchProject } = useProject();
+  const { projectId, hydrated, switchProject } = useProject();
   const { projects, isLoading } = useProjects();
   const { data: workspace } = useWorkspace();
   const pathname = usePathname();
@@ -65,13 +65,13 @@ export function ProjectSelector() {
   }, [pathname, router, switchProject]);
 
   useEffect(() => {
-    if (isLoading) return;
+    if (!hydrated || isLoading) return;
     if (projects.length === 0) {
       if (projectId) switchProject('');
       return;
     }
     if (!current) selectProject(projects[0].id);
-  }, [current, isLoading, projectId, projects, selectProject, switchProject]);
+  }, [current, hydrated, isLoading, projectId, projects, selectProject, switchProject]);
 
   return (
     <DropdownMenu>

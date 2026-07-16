@@ -85,11 +85,13 @@ export const useProjectStore = create<ProjectState & ProjectActions>()(
 
 export function useProject() {
   const projectId = useProjectStore((s) => s.projectId);
+  const hydrated = useProjectStore((s) => s.hydrated);
   const setProjectId = useProjectStore((s) => s.setProjectId);
   const switchProject = useProjectStore((s) => s.switchProject);
 
   return {
     projectId,
+    hydrated,
     setProjectId,
     switchProject,
   };

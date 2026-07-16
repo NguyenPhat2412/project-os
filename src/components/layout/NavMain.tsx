@@ -50,9 +50,10 @@ export function NavMain({
     '/backlog': 'project-management', '/sprint': 'project-management', '/tasks': 'tasks',
     '/bugs': 'project-management', '/organization': 'organization', '/attendance': 'attendance',
     '/team': 'employees', '/budget': 'operations', '/risk': 'operations', '/docs': 'knowledge',
-    '/wiki': 'knowledge', '/meetings': 'operations', '/activity': 'activity', '/reports': 'reports',
+    '/wiki': 'knowledge', '/meetings': 'meetings', '/activity': 'activity', '/reports': 'reports',
   }
   const modules = new Set(workspace?.modules ?? [])
+  if (modules.has('operations')) modules.add('meetings')
   const withOrganization = (url: string) => {
     const organizationId = workspace?.organization.id
     if (!organizationId) return url
