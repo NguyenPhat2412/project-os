@@ -11,9 +11,10 @@ import { priorityVariantMap } from './types';
 
 export { priorityVariantMap };
 
-export function KanbanCard({ tag, category, title, priority, points, assigneeInitials, assigneeColor, assigneePhotoURL, progress, faded, onClick, itemTypeIcon, draggable, onDragStart, onDragEnd, onDragOver, onDrop, showDropIndicator }: import('./types').KanbanCardProps) {
+export function KanbanCard({ id, tag, category, title, priority, points, assigneeInitials, assigneeColor, assigneePhotoURL, progress, faded, onClick, itemTypeIcon, draggable, onDragStart, onDragEnd, onDragOver, onDrop, showDropIndicator }: import('./types').KanbanCardProps) {
   return (
     <div
+      data-testid={`kanban-card-${id}`}
       className='relative bg-background border border-border rounded-sm px-3.25 py-3 mb-2 cursor-pointer hover:border-primary hover:-translate-y-0.5 hover:shadow-sm transition-all last:mb-0'
       style={{ opacity: faded ? 0.65 : 1 }}
       onClick={onClick}

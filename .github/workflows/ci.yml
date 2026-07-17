@@ -24,3 +24,7 @@ jobs:
       - run: npm run build
         env:
           PROJECT_OS_API_INTERNAL_URL: http://127.0.0.1:18080
+      - run: npx playwright install --with-deps chromium
+      - run: npm run e2e:public
+        env:
+          E2E_WEB_SERVER_COMMAND: npm run start

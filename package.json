@@ -8,6 +8,9 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
+    "e2e": "playwright test",
+    "e2e:public": "playwright test e2e/public-login.spec.ts",
+    "e2e:full": "playwright test e2e/authenticated-flows.spec.ts",
     "api:types": "openapi-typescript http://127.0.0.1:18080/v3/api-docs -o src/lib/api/generated/gateway.ts && openapi-typescript http://127.0.0.1:18080/api/v1/openapi/identity -o src/lib/api/generated/identity.ts && openapi-typescript http://127.0.0.1:18080/api/v1/openapi/organization -o src/lib/api/generated/organization.ts && openapi-typescript http://127.0.0.1:18080/api/v1/openapi/attendance -o src/lib/api/generated/attendance.ts && openapi-typescript http://127.0.0.1:18080/api/v1/openapi/project -o src/lib/api/generated/project.ts && openapi-typescript http://127.0.0.1:18080/api/v1/openapi/work -o src/lib/api/generated/work.ts && openapi-typescript http://127.0.0.1:18080/api/v1/openapi/operations -o src/lib/api/generated/operations.ts && openapi-typescript http://127.0.0.1:18080/api/v1/openapi/knowledge -o src/lib/api/generated/knowledge.ts && openapi-typescript http://127.0.0.1:18080/api/v1/openapi/activity -o src/lib/api/generated/activity.ts"
   },
   "dependencies": {
@@ -63,6 +66,7 @@
     "zustand": "^5.0.12"
   },
   "devDependencies": {
+    "@playwright/test": "1.51.1",
     "@tailwindcss/postcss": "^4",
     "@tanstack/react-query-devtools": "^5.91.3",
     "@types/node": "^20.19.41",

@@ -11,8 +11,7 @@
 
 import { ChevronDownIcon, SparklesIcon } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
-import { z } from 'zod';
+import { Controller } from 'react-hook-form';
 
 import { FileAttachmentsField, FileAttachmentsFieldHandle } from '@/components/ui/shared/file-attachments-field';
 import { MarkdownEditor } from '@/components/ui/shared/markdown-editor';
@@ -33,13 +32,14 @@ import { useAILanguage } from '@/lib/ai/useAILanguage';
 import { getFieldErrorInputClass, getInlineErrorTextClass } from '@/lib/form-validation';
 import { useProject } from '@/store/project-store';
 import { tasksCollection } from '@/modules/tasks/collections/tasks';
+import { useTaskForm } from '@/modules/tasks/hooks/useTaskForm';
 import { DEFAULT_TASK_COLUMNS } from '@/modules/tasks/utils/taskColumns';
-import { zodResolver } from '@hookform/resolvers/zod';
 
 import type { Priority, TaskColumn } from '@/modules/tasks/types/task';
 import type { TeamMember } from '@/modules/team/types/team';
 import type { Sprint } from '@/modules/sprint/types/sprint';
 import type { Attachment } from '@/lib/types/attachment';
+import type { TaskDialogTask, TaskFormValues } from '@/modules/tasks/hooks/useTaskForm';
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 const roleLabel = (roles?: string[]) => roles?.[0] ?? roles?.join(', ');
@@ -60,21 +60,6 @@ function formatDate(d: Date) {
 }
 
 // ── schema ────────────────────────────────────────────────────────────────────
-const taskSchema = z.object({
-  title: z.string().trim().min(1, 'Tiêu đề không được để trống'),
-  priority: z.enum(['High', 'Normal', 'Low'] as const),
-  status: z.string().trim().min(1, 'Trạng thái không được để trống'),
-  description: z.string().optional(),
-  deadline: z.string().optional(),
-  startDate: z.string().optional(),
-  completedAt: z.string().optional(),
-  points: z.string().optional(),
-  assigneeId: z.string().optional(),
-  reporterId: z.string().optional(),
-  sprintId: z.string().optional(),
-});
-type TaskFormValues = z.infer<typeof taskSchema>;
-
 // ── constants ─────────────────────────────────────────────────────────────────
 const PRIORITIES: { value: Priority; label: string; color: string }[] = [
   { value: 'High', label: 'High', color: 'oklch(0.577 0.245 27.325)' },
@@ -87,22 +72,7 @@ const NONE = '__none__';
 // ── props ─────────────────────────────────────────────────────────────────────
 interface Props {
   open: boolean;
-  task: {
-    id: string;
-    uuid?: string;
-    title: string;
-    priority: Priority;
-    status: string;
-    description?: string;
-    deadline?: string;
-    startDate?: string;
-    completedAt?: string;
-    points?: number;
-    assigneeId?: string;
-    reporterId?: string;
-    sprintId?: string;
-    attachments?: Attachment[];
-  } | null;
+  task: TaskDialogTask | null;
   nextTaskIndex: number;
   teamMembers: TeamMember[];
   statusOptions: TaskColumn[];
@@ -129,14 +99,6 @@ export function TaskDialog({ open, task, nextTaskIndex, teamMembers, statusOptio
   const saving = customSaving || createTask.isPending || updateTask.isPending || deleteTask.isPending;
   const [attachments, setAttachments] = useState<Attachment[]>(task?.attachments ?? []);
   const attachmentsRef = useRef<FileAttachmentsFieldHandle>(null);
-  const resolvedStatusOptions = statusOptions.length > 0 ? statusOptions : DEFAULT_TASK_COLUMNS;
-
-  const resolveInitialStatus = () => {
-    if (task?.status) return task.status;
-    if (resolvedStatusOptions.some((option) => option.id === defaultStatus)) return defaultStatus;
-    return resolvedStatusOptions[0]?.id ?? '';
-  };
-
   const [improving, setImproving] = useState<'title' | 'description' | null>(null);
   const [aiError, setAiError] = useState('');
   const [aiLanguage, setAiLanguage] = useAILanguage();
@@ -145,46 +107,17 @@ export function TaskDialog({ open, task, nextTaskIndex, teamMembers, statusOptio
     register,
     handleSubmit,
     control,
-    reset,
     watch,
     setValue,
     formState: { errors, isValid, isDirty },
-  } = useForm<TaskFormValues>({
-    resolver: zodResolver(taskSchema),
-    mode: 'onChange',
-    defaultValues: {
-      title: task?.title ?? '',
-      priority: task?.priority ?? 'Normal',
-      status: resolveInitialStatus(),
-      description: task?.description ?? '',
-      deadline: task?.deadline ?? '',
-      startDate: task?.startDate ?? '',
-      completedAt: task?.completedAt ?? '',
-      points: task?.points !== undefined ? String(task.points) : '',
-      assigneeId: task?.assigneeId ?? '',
-      reporterId: task?.reporterId ?? '',
-      sprintId: task?.sprintId ?? defaultSprintId ?? '',
-    },
-  });
+    resolvedStatusOptions,
+  } = useTaskForm({ open, task, statusOptions, defaultStatus, defaultSprintId });
 
   // Reset form when dialog opens or task changes
   useEffect(() => {
     if (!open) return;
-    reset({
-      title: task?.title ?? '',
-      priority: task?.priority ?? 'Normal',
-      status: resolveInitialStatus(),
-      description: task?.description ?? '',
-      deadline: task?.deadline ?? '',
-      startDate: task?.startDate ?? '',
-      completedAt: task?.completedAt ?? '',
-      points: task?.points !== undefined ? String(task.points) : '',
-      assigneeId: task?.assigneeId ?? '',
-      reporterId: task?.reporterId ?? '',
-      sprintId: task?.sprintId ?? defaultSprintId ?? '',
-    });
     setAttachments(task?.attachments ?? []);
-  }, [open, task, defaultStatus, defaultSprintId, reset, statusOptions]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [open, task]);
 
   const handleImprove = async (type: 'title' | 'description') => {
     setImproving(type);

@@ -77,6 +77,22 @@ function useProjectTeamCollection(projectId: string, globalMembers: Member[]) {
   return { members, isLoading, collection: teamCol };
 }
 
+function useProjectMembersData(projectId: string) {
+  const { data: globalData, isLoading: globalLoading } = membersCollection.useList();
+  const globalMembers = (globalData ?? []) as Member[];
+  const { members, isLoading, collection: teamCol } = useProjectTeamCollection(projectId, globalMembers);
+
+  const defCol = roleDefinitionsCollection(projectId);
+  const { data: defsData } = defCol.useList();
+  const roleDefs = (defsData ?? []) as RoleDefinition[];
+
+  const rbacCol = projectRolesCollection(projectId);
+  const { data: rbacData } = rbacCol.useList();
+  const rbacRoles = useMemo(() => (rbacData ?? []) as ProjectRole[], [rbacData]);
+
+  return { globalMembers, globalLoading, members, isLoading, teamCol, roleDefs, rbacCol, rbacRoles };
+}
+
 // ─── Add Member Modal ────────────────────────────────────────────────────────
 
 interface AddMemberModalProps {
@@ -286,23 +302,7 @@ const columnHelper = createColumnHelper<TeamMemberWithRole>();
 
 export function ProjectMembersTable({ projectId }: { projectId: string }) {
   const queryClient = useQueryClient();
-
-  // Global members (root members collection)
-  const { data: globalData, isLoading: globalLoading } = membersCollection.useList();
-  const globalMembers = (globalData ?? []) as Member[];
-
-  // Project-level team members (joined with root members)
-  const { members, isLoading } = useProjectTeamCollection(projectId, globalMembers);
-
-  // Role definitions (for badges)
-  const defCol = roleDefinitionsCollection(projectId);
-  const { data: defsData } = defCol.useList();
-  const roleDefs = (defsData ?? []) as RoleDefinition[];
-
-  // RBAC roles per member
-  const rbacCol = projectRolesCollection(projectId);
-  const { data: rbacData } = rbacCol.useList();
-  const rbacRoles = useMemo(() => (rbacData ?? []) as ProjectRole[], [rbacData]);
+  const { globalMembers, globalLoading, members, isLoading, teamCol, roleDefs, rbacCol, rbacRoles } = useProjectMembersData(projectId);
 
   // Map: memberId → roles[]
   const rbacMap = useMemo((): Map<string, string[]> => {
@@ -314,24 +314,6 @@ export function ProjectMembersTable({ projectId }: { projectId: string }) {
   }, [rbacRoles]);
 
   // API mutations
-  const teamCol = useMemo(
-    () =>
-      createSubcollection<ProjectTeamMember>({
-        path: (pid: string) => `projects/${pid}/members`,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        transform: (raw: any): ProjectTeamMember & { id: string } => {
-          const ref: unknown = raw.memberRef;
-          const memberId: string =
-            typeof ref === 'object' && ref !== null && 'id' in (ref as object)
-              ? ((ref as { id: string }).id || '')
-              : typeof ref === 'string'
-                ? (ref as string).split('/').pop() ?? ''
-                : '';
-          return { ...raw, id: memberId };
-        },
-      })(projectId),
-    [projectId],
-  );
   const setMember = teamCol.useSet();
   const deleteMember = teamCol.useDelete();
   const setRbacRole = rbacCol.useSet();
@@ -485,7 +467,7 @@ export function ProjectMembersTable({ projectId }: { projectId: string }) {
       }),
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [rbacMap, defsData],
+    [rbacMap, roleDefs],
   );
 
   const table = useReactTable({

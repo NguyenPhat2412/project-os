@@ -49,6 +49,7 @@ export interface KanbanCardProps {
 // ── Kanban column ────────────────────────────────────────────────────────────
 
 export interface KanbanColumnProps {
+  id: string;
   title: string;
   color: string;
   cards: KanbanCardProps[];

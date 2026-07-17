@@ -29,6 +29,7 @@ import { TaskPageHeader } from '@/modules/tasks/components/TaskPageHeader';
 import { TaskStatsPanel } from '@/modules/tasks/components/TaskStatsPanel';
 import { TaskTable } from '@/modules/tasks/components/TaskTable';
 import { TaskViewSheet } from '@/modules/tasks/components/TaskViewSheet';
+import { useTaskUrlState } from '@/modules/tasks/hooks/useTaskUrlState';
 import { DEFAULT_TASK_COLUMNS, resolveTaskColumns } from '@/modules/tasks/utils/taskColumns';
 import { projectDirectoryCollection } from '@/modules/team/collections/members';
 import { teamCollection } from '@/modules/team/collections/team';
@@ -40,20 +41,11 @@ import type { Sprint } from '@/modules/sprint/types/sprint';
 type ViewMode = 'list' | 'kanban' | 'calendar';
 
 const ALL = 'all' as const;
-const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-
-function urlParam(name: string): string | null {
-  if (typeof window === 'undefined') return null;
-  return new URLSearchParams(window.location.search).get(name);
-}
-
 export default function TasksPage() {
   const { projectId, setProjectId } = useProject();
-  const linkedProjectId = urlParam('projectId');
-  const linkedTaskId = urlParam('taskId');
-  const activeProjectId = linkedProjectId && UUID_PATTERN.test(linkedProjectId) ? linkedProjectId : projectId;
   const { isRootAdmin } = usePermission();
   const { data: workspace, isLoading: workspaceLoading } = useWorkspace();
+  const { activeProjectId, linkedTaskId, syncTaskUrl } = useTaskUrlState({ projectId, organizationId: workspace?.organization.id, setProjectId });
   const isDepartmentManager = workspace?.systemRole === 'DEPARTMENT_MANAGER';
   const canAdministerTasks = isRootAdmin() || workspace?.systemRole === 'PLATFORM_ADMIN';
   const canCreateTasks = canAdministerTasks || isDepartmentManager;
@@ -84,28 +76,6 @@ export default function TasksPage() {
     createCollectionListItem('sprints', sprintsCollection),
   ]);
   const loading = isLoading || workspaceLoading;
-
-  const syncTaskUrl = useCallback((task?: Task | null) => {
-    if (typeof window === 'undefined' || !activeProjectId) return;
-    const url = new URL(window.location.href);
-    url.searchParams.set('projectId', activeProjectId);
-    if (workspace?.organization.id) url.searchParams.set('organizationId', workspace.organization.id);
-    if (task !== undefined) {
-      if (task) url.searchParams.set('taskId', task.uuid ?? task.id);
-      else url.searchParams.delete('taskId');
-    }
-    window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`);
-  }, [activeProjectId, workspace?.organization.id]);
-
-  useEffect(() => {
-    if (linkedProjectId && UUID_PATTERN.test(linkedProjectId) && linkedProjectId !== projectId) {
-      setProjectId(linkedProjectId);
-    }
-  }, [linkedProjectId, projectId, setProjectId]);
-
-  useEffect(() => {
-    syncTaskUrl();
-  }, [syncTaskUrl]);
 
   // Optimistic task updates — merged with batch data, no refetch needed
   const [optimisticTasks, setOptimisticTasks] = useState<Record<string, Partial<Task>>>({});

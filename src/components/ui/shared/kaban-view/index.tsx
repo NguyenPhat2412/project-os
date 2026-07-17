@@ -99,7 +99,9 @@ export function KanbanView<T extends { id: string; status: string }>({
   return (
     <div className='grid gap-4 max-xl:grid-cols-2 max-sm:grid-cols-1' style={{ gridTemplateColumns: `repeat(${Math.max(columns.length, 1)}, minmax(0, 1fr))` }}>
       {columns.map((col, index) => {
-        const colItems = items.filter((item) => String(item[statusField]) === col.id).sort((a, b) => (a as unknown as { order?: number }).order ?? 0 - ((b as unknown as { order?: number }).order ?? 0));
+        const colItems = items
+          .filter((item) => String(item[statusField]) === col.id)
+          .sort((a, b) => ((a as unknown as { order?: number }).order ?? 0) - ((b as unknown as { order?: number }).order ?? 0));
 
         const cards: KanbanCardProps[] = colItems.map((item) => {
           const { id } = item;
@@ -121,6 +123,7 @@ export function KanbanView<T extends { id: string; status: string }>({
         return (
           <KanbanColumn
             key={col.id}
+            id={col.id}
             title={col.title}
             color={col.color}
             cards={cards}

@@ -76,7 +76,7 @@ export function ProjectSelector() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className='bg-secondary border border-border rounded-sm px-3 py-2 flex items-center gap-2.5 cursor-pointer hover:border-primary transition-colors text-left'>
+        <button aria-label='Chọn dự án' className='bg-secondary border border-border rounded-sm px-3 py-2 flex items-center gap-2.5 cursor-pointer hover:border-primary transition-colors text-left'>
           <div className='flex-1 min-w-0'>
             <div className='text-[13px] font-semibold truncate text-foreground'>{current?.name ?? (isLoading ? '...' : 'Select project')}</div>
           </div>

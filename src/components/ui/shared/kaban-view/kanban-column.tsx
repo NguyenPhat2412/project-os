@@ -9,6 +9,7 @@ import { PencilIcon, Trash2Icon } from 'lucide-react';
 import { KanbanCard } from './kanban-card';
 
 export function KanbanColumn({
+  id,
   title,
   color,
   cards,
@@ -26,6 +27,7 @@ export function KanbanColumn({
 }: import('./types').KanbanColumnProps) {
   return (
     <div
+      data-testid={`kanban-column-${id}`}
       className={['group/col bg-card border panel p-3.5 transition-colors', isDragOver ? 'border-primary' : 'border-border hover:border-foreground/20'].join(' ')}
       onDragOver={onDragOver}
       onDragEnter={onDragEnter}
