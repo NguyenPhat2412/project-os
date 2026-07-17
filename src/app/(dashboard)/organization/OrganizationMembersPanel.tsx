@@ -39,7 +39,7 @@ export function OrganizationMembersPanel({ organizationId }: { organizationId: s
     await upsertMember.mutateAsync({
       organizationId,
       userId: selected.id,
-      role: selectedMembership?.role.toUpperCase() ?? role,
+      role,
       fullName: selected.name,
       email: selected.email,
     });
@@ -66,7 +66,7 @@ export function OrganizationMembersPanel({ organizationId }: { organizationId: s
           {ROLES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
         </select>
         <button type='button' disabled={!selected || upsertMember.isPending} onClick={addMember} className='inline-flex h-9 items-center justify-center gap-2 rounded-md bg-primary px-3 text-sm text-primary-foreground disabled:opacity-50'>
-          <UserPlusIcon size={15} /> {selectedMembership ? 'Đồng bộ hồ sơ' : 'Thêm & đồng bộ'}
+          <UserPlusIcon size={15} /> {selectedMembership ? 'Cập nhật quyền & đồng bộ' : 'Thêm & đồng bộ'}
         </button>
       </div>
       {directory.isLoading ? <p className='py-5 text-center text-sm text-muted-foreground'>Đang tải tài khoản...</p> : (

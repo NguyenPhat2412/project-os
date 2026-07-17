@@ -1,11 +1,10 @@
 'use client';
 
 import { FormEvent, useMemo, useState } from 'react';
-import { ArrowLeft, ArrowRight, GripVertical, History, ShieldCheck, Trash2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, GripVertical, ShieldCheck, Trash2 } from 'lucide-react';
 import {
   PermissionGroup,
   useEmployees,
-  useOrganizationAudit,
   useOrganizationMembers,
   usePermissionGroupMutations,
   usePermissionGroups,
@@ -25,7 +24,6 @@ export function PermissionGroupsPanel({ organizationId }: { organizationId: stri
   const groups = usePermissionGroups(organizationId);
   const members = useOrganizationMembers(organizationId);
   const employees = useEmployees(organizationId);
-  const audit = useOrganizationAudit(organizationId);
   const { createGroup, updateGroup, deleteGroup } = usePermissionGroupMutations();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedAvailable, setSelectedAvailable] = useState<string | null>(null);
@@ -103,10 +101,6 @@ export function PermissionGroupsPanel({ organizationId }: { organizationId: stri
           {!members.data?.length && <p className='text-sm text-muted-foreground'>Chưa có thành viên tổ chức để gán.</p>}
         </div></div>
       </div> : <div className='grid min-h-64 place-items-center rounded-md border border-dashed text-sm text-muted-foreground'>Chọn hoặc tạo một nhóm quyền.</div>}
-    </div>
-    <div className='border-t pt-4'><div className='mb-2 flex items-center gap-2 text-sm font-medium'><History size={16} />Audit gần đây</div>
-      <div className='divide-y rounded-md border bg-background'>{audit.data?.slice(0, 8).map(item => <div key={item.id} className='flex flex-wrap items-center justify-between gap-2 px-3 py-2 text-xs'><span><b>{item.eventType}</b> · {item.entityType}</span><time className='text-muted-foreground'>{new Date(item.createdAt).toLocaleString('vi-VN')}</time></div>)}
-        {!audit.data?.length && <p className='p-3 text-sm text-muted-foreground'>Chưa có thay đổi quyền hoặc cơ cấu được ghi nhận.</p>}</div>
     </div>
   </section>;
 }

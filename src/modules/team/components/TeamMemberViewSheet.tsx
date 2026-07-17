@@ -42,7 +42,7 @@ interface Props {
   removingRole?: boolean;
 }
 
-export function TeamMemberViewSheet({ open, member, rbacRoles = [], rolesLabel = 'Vai tro', onClose, onEdit, onRemoveRole, onAddRole, removingRole = false }: Props) {
+export function TeamMemberViewSheet({ open, member, rbacRoles = [], rolesLabel = 'Vai trò', onClose, onEdit, onRemoveRole, onAddRole, removingRole = false }: Props) {
   const [removeTarget, setRemoveTarget] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('details');
 
@@ -95,12 +95,12 @@ export function TeamMemberViewSheet({ open, member, rbacRoles = [], rolesLabel =
                 <span className='font-mono-dm text-[12px] text-muted-foreground'>{member.email}</span>
               </Field>
 
-              <Field label='Trang thai'>
+              <Field label='Trạng thái'>
                 <PageBadge variant={statusVariant[status] ?? 'muted'}>{status}</PageBadge>
               </Field>
 
               <div className='grid grid-cols-2 gap-4'>
-                <Field label='Tasks dang lam'>
+                <Field label='Tasks đang làm'>
                   <span className='font-mono-dm text-[20px] font-bold text-foreground'>{taskCount}</span>
                 </Field>
                 <Field label='Workload'>
@@ -108,7 +108,7 @@ export function TeamMemberViewSheet({ open, member, rbacRoles = [], rolesLabel =
                 </Field>
               </div>
 
-              <Field label='Workload chi tiet'>
+              <Field label='Workload chi tiết'>
                 <ProgressBar label={`${workload}%`} value={workload} noMargin color={workload >= 90 ? 'oklch(0.577 0.245 27.325)' : workload >= 75 ? 'oklch(0.769 0.188 70.08)' : 'oklch(0.646 0.222 142.116)'} />
               </Field>
 
@@ -116,10 +116,10 @@ export function TeamMemberViewSheet({ open, member, rbacRoles = [], rolesLabel =
               <Field label={rolesLabel}>
                 {rbacRoles.length === 0 ? (
                   <div className='flex items-center gap-2'>
-                    <span className='text-[12px] text-muted-foreground italic'>Chua co vai tro.</span>
+                    <span className='text-[12px] text-muted-foreground italic'>Chưa có vai trò.</span>
                     {onAddRole && (
                       <button onClick={onAddRole} className='text-[11px] text-primary hover:underline transition-colors'>
-                        + Gan vai tro
+                        + Gán vai trò
                       </button>
                     )}
                   </div>
@@ -129,7 +129,7 @@ export function TeamMemberViewSheet({ open, member, rbacRoles = [], rolesLabel =
                       <div key={r} className='flex items-center justify-between px-2.5 py-2 bg-secondary border border-border panel-inner'>
                         <span className='text-[12px] font-medium text-foreground'>{r}</span>
                         {onRemoveRole && (
-                          <button onClick={() => setRemoveTarget(r)} disabled={removingRole} className='text-muted-foreground hover:text-red-500 transition-colors disabled:opacity-40' title='Xoa vai tro'>
+                          <button onClick={() => setRemoveTarget(r)} disabled={removingRole} className='text-muted-foreground hover:text-red-500 transition-colors disabled:opacity-40' title='Xóa vai trò'>
                             <XIcon size={13} />
                           </button>
                         )}
@@ -138,7 +138,7 @@ export function TeamMemberViewSheet({ open, member, rbacRoles = [], rolesLabel =
                     {onAddRole && (
                       <button onClick={onAddRole} className='flex items-center gap-1.5 text-[11px] text-primary hover:underline transition-colors px-1 py-0.5 mt-1'>
                         <PlusIcon size={11} />
-                        Them vai tro
+                        Thêm vai trò
                       </button>
                     )}
                   </div>
@@ -156,7 +156,7 @@ export function TeamMemberViewSheet({ open, member, rbacRoles = [], rolesLabel =
             <div className='p-5 border-t border-border shrink-0'>
               <Button onClick={onEdit} className='w-full text-[13px] font-semibold'>
                 <PencilIcon size={14} />
-                Chinh sua thong tin
+                Chỉnh sửa thông tin
               </Button>
             </div>
           )}
@@ -164,7 +164,7 @@ export function TeamMemberViewSheet({ open, member, rbacRoles = [], rolesLabel =
       </Sheet>
 
       {/* ConfirmDialog outside Sheet so it's not hidden */}
-      {removeTarget && member && <ConfirmDialog danger title='Xoa vai tro' message={`Xoa vai tro "${removeTarget}" khoi ${member.name}?`} confirmLabel='Xoa' onCancel={() => setRemoveTarget(null)} onConfirm={handleRemoveConfirm} />}
+      {removeTarget && member && <ConfirmDialog danger title='Xóa vai trò' message={`Xóa vai trò "${removeTarget}" khỏi ${member.name}?`} confirmLabel='Xóa' onCancel={() => setRemoveTarget(null)} onConfirm={handleRemoveConfirm} />}
     </>
   );
 }

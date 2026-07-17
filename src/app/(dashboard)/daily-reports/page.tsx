@@ -17,7 +17,11 @@ interface DailyReport {
   summary: string;
   blockers?: string;
   nextPlan?: string;
+  recipientName?: string;
+  recipientTitle?: string;
 }
+
+interface ReportRecipient { userId: string; fullName: string; title?: string | null; }
 
 export default function DailyReportsPage() {
   const { projectId } = useProject();
@@ -28,6 +32,12 @@ export default function DailyReportsPage() {
   const [blockers, setBlockers] = useState('');
   const [nextPlan, setNextPlan] = useState('');
   const managerView = workspace?.systemRole === 'DEPARTMENT_MANAGER';
+
+  const recipient = useQuery({
+    queryKey: ['daily-report-recipient', workspace?.organization.id],
+    enabled: !managerView && !!workspace?.organization.id,
+    queryFn: () => apiClient.getOne<ReportRecipient>(`v1/me/daily-reports/recipient?organizationId=${encodeURIComponent(workspace!.organization.id)}`),
+  });
 
   const reports = useQuery({
     queryKey: ['daily-reports', managerView ? 'team' : 'self', projectId, workspace?.organization.id, managerView ? date : 'all'],
@@ -44,6 +54,7 @@ export default function DailyReportsPage() {
   const submit = useMutation({
     mutationFn: () => apiClient.post<DailyReport>('v1/me/daily-reports', {
       projectId,
+      organizationId: workspace?.organization.id,
       date,
       summary,
       blockers: blockers || undefined,
@@ -70,11 +81,18 @@ export default function DailyReportsPage() {
         <section className='rounded-lg border bg-card p-5 space-y-3'>
           <h2 className='font-semibold'>Gửi báo cáo hôm nay</h2>
           <Input type='date' value={date} onChange={(event) => setDate(event.target.value)} />
+          <div className='rounded-md border bg-muted/30 px-3 py-2 text-sm'>
+            <p className='text-xs font-medium uppercase tracking-wide text-muted-foreground'>Gửi cho</p>
+            {recipient.isLoading ? <p className='mt-1 text-muted-foreground'>Đang xác định quản lý trực tiếp…</p>
+              : recipient.data ? <p className='mt-1 font-medium'>Đề xuất: {recipient.data.fullName}{recipient.data.title ? <span className='font-normal text-muted-foreground'> · {recipient.data.title}</span> : null}</p>
+                : <p className='mt-1 text-muted-foreground'>Chưa có quản lý trực tiếp. Quản trị cần gán người quản lý trong hồ sơ nhân sự trước khi gửi.</p>}
+            {recipient.error && <p className='mt-1 text-destructive'>Không thể xác định người nhận báo cáo.</p>}
+          </div>
           <Textarea value={summary} onChange={(event) => setSummary(event.target.value)} placeholder='Kết quả đã hoàn thành' rows={4} />
           <Textarea value={blockers} onChange={(event) => setBlockers(event.target.value)} placeholder='Vướng mắc (nếu có)' rows={2} />
           <Textarea value={nextPlan} onChange={(event) => setNextPlan(event.target.value)} placeholder='Kế hoạch tiếp theo' rows={2} />
           {submit.error && <p className='text-sm text-destructive'>{submit.error.message}</p>}
-          <Button disabled={!projectId || !summary.trim() || submit.isPending} onClick={() => submit.mutate()}>
+          <Button disabled={!projectId || !summary.trim() || !recipient.data || recipient.isLoading || !!recipient.error || submit.isPending} onClick={() => submit.mutate()}>
             {submit.isPending ? 'Đang gửi…' : 'Gửi báo cáo'}
           </Button>
         </section>
@@ -97,6 +115,7 @@ export default function DailyReportsPage() {
             <p className='text-sm whitespace-pre-wrap'>{report.summary}</p>
             {report.blockers && <p className='text-sm text-amber-700 dark:text-amber-400'>Vướng mắc: {report.blockers}</p>}
             {report.nextPlan && <p className='text-sm text-muted-foreground'>Tiếp theo: {report.nextPlan}</p>}
+            {report.recipientName && <p className='text-sm text-muted-foreground'>Đã gửi cho: {report.recipientName}{report.recipientTitle ? ` · ${report.recipientTitle}` : ''}</p>}
           </article>
         ))}
       </section>

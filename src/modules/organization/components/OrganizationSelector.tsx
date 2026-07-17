@@ -2,7 +2,7 @@
 
 import { Building2Icon, CheckIcon, ChevronDownIcon, Settings2Icon } from 'lucide-react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,17 +20,23 @@ export function OrganizationSelector() {
   const { data: workspace } = useWorkspace();
   const { setProjectId } = useProject();
   const pathname = usePathname();
-  const router = useRouter();
-  const currentId = workspace?.organization.id;
+  const searchParams = useSearchParams();
+  const currentId = searchParams.get('organizationId') ?? workspace?.organization.id;
 
-  const selectOrganization = (organizationId: string) => {
+  const organizationHref = (organizationId: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (organizationId !== currentId) {
+      params.set('organizationId', organizationId);
+      params.delete('projectId');
+    }
+    const query = params.toString();
+    return `${pathname}${query ? `?${query}` : ''}`;
+  };
+
+  const rememberSelection = (organizationId: string) => {
     if (organizationId === currentId) return;
     rememberOrganization(organizationId);
     setProjectId('');
-    const url = new URL(window.location.href);
-    url.searchParams.set('organizationId', organizationId);
-    url.searchParams.delete('projectId');
-    router.replace(`${pathname}?${url.searchParams.toString()}${url.hash}`, { scroll: false });
   };
 
   return (
@@ -53,17 +59,15 @@ export function OrganizationSelector() {
         </DropdownMenuLabel>
         <div className='py-1'>
           {organizations.map((organization) => (
-            <DropdownMenuItem
-              key={organization.id}
-              onClick={() => selectOrganization(organization.id)}
-              className='flex items-center gap-2.5 px-2.5 py-2 cursor-pointer'
-            >
+            <DropdownMenuItem key={organization.id} asChild>
+              <Link href={organizationHref(organization.id)} onClick={() => rememberSelection(organization.id)} className='flex items-center gap-2.5 px-2.5 py-2 cursor-pointer'>
               <Building2Icon size={14} className='text-muted-foreground' />
               <div className='min-w-0 flex-1'>
                 <div className='truncate text-[12px] font-medium'>{organization.name}</div>
                 <div className='truncate text-[11px] text-muted-foreground'>{organization.timezone}</div>
               </div>
               {organization.id === currentId && <CheckIcon size={13} className='text-primary' />}
+              </Link>
             </DropdownMenuItem>
           ))}
           {!organizations.length && !isLoading && (

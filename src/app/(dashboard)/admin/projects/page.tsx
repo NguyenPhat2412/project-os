@@ -40,6 +40,55 @@ const COLOR_OPTIONS = [
   { label: 'Teal', value: 'from-teal-500 to-cyan-600' },
   { label: 'Red', value: 'from-red-500 to-rose-600' },
 ];
+const EMPTY_SELECT_VALUE = '__none__';
+const SPRINT_OPTIONS = Array.from({ length: 6 }, (_, index) => `Sprint ${index + 1}`);
+const QUARTER_PATTERN = /^Q([1-4])\s+(\d{4})$/;
+
+type QuarterRange = {
+  startDate: string;
+  endDate: string;
+};
+
+function getQuarterRange(quarter?: string): QuarterRange | null {
+  const match = quarter?.trim().match(QUARTER_PATTERN);
+  if (!match) return null;
+
+  const quarterNumber = Number(match[1]);
+  const year = Number(match[2]);
+  const startMonth = (quarterNumber - 1) * 3 + 1;
+  const endDate = new Date(Date.UTC(year, startMonth + 2, 0));
+
+  return {
+    startDate: `${year}-${String(startMonth).padStart(2, '0')}-01`,
+    endDate: `${year}-${String(endDate.getUTCMonth() + 1).padStart(2, '0')}-${String(endDate.getUTCDate()).padStart(2, '0')}`,
+  };
+}
+
+function getQuarterOptions() {
+  const currentYear = new Date().getFullYear();
+  return Array.from({ length: 5 }, (_, yearOffset) => currentYear - 2 + yearOffset)
+    .flatMap((year) => [1, 2, 3, 4].map((quarter) => `Q${quarter} ${year}`));
+}
+
+function validateProjectSchedule(form: Pick<Project, 'quarter' | 'startDate' | 'endDate'>) {
+  const startDate = form.startDate?.trim();
+  const endDate = form.endDate?.trim();
+  if (startDate && endDate && startDate > endDate) {
+    return 'Ngày bắt đầu phải trước hoặc bằng ngày kết thúc.';
+  }
+
+  const quarter = form.quarter?.trim();
+  if (!quarter) return null;
+
+  const range = getQuarterRange(quarter);
+  if (!range) return 'Quý phải có định dạng Q1 2026.';
+  if (!startDate || !endDate) return 'Chọn quý yêu cầu có đủ ngày bắt đầu và ngày kết thúc.';
+  if (startDate < range.startDate || endDate > range.endDate) {
+    return `Khoảng thời gian dự án phải nằm trong ${quarter} (${range.startDate} đến ${range.endDate}).`;
+  }
+
+  return null;
+}
 
 const EMPTY_FORM: Omit<Project, 'id'> = {
   name: '',
@@ -156,6 +205,27 @@ function ProjectFormModal({
   onTechStackChange: (v: string) => void;
 }) {
   const inputCls = 'w-full h-9 px-3 rounded-sm bg-secondary border border-foreground/20 text-[13px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary';
+  const sprintOptions = SPRINT_OPTIONS.includes(form.currentSprint ?? '')
+    ? SPRINT_OPTIONS
+    : form.currentSprint
+      ? [form.currentSprint, ...SPRINT_OPTIONS]
+      : SPRINT_OPTIONS;
+  const quarterOptions = getQuarterOptions();
+  const availableQuarterOptions = quarterOptions.includes(form.quarter ?? '')
+    ? quarterOptions
+    : form.quarter
+      ? [form.quarter, ...quarterOptions]
+      : quarterOptions;
+
+  const selectQuarter = (value: string) => {
+    if (value === EMPTY_SELECT_VALUE) {
+      onChange({ quarter: '' });
+      return;
+    }
+    const range = getQuarterRange(value);
+    onChange(range ? { quarter: value, ...range } : { quarter: value });
+  };
+
   return (
     <ModalShell
       open={open}
@@ -233,12 +303,28 @@ function ProjectFormModal({
         {/* Sprint + Quarter */}
         <div className='grid grid-cols-2 gap-3'>
           <div>
-            <label className='text-[12px] font-medium text-muted-foreground mb-1.5 block'>Current Sprint</label>
-            <input value={form.currentSprint ?? ''} onChange={(e) => onChange({ currentSprint: e.target.value })} placeholder='Sprint 1' className={inputCls} />
+            <label className='text-[12px] font-medium text-muted-foreground mb-1.5 block'>Sprint hiện tại</label>
+            <Select value={form.currentSprint || EMPTY_SELECT_VALUE} onValueChange={(value) => onChange({ currentSprint: value === EMPTY_SELECT_VALUE ? '' : value })}>
+              <SelectTrigger className={inputCls}>
+                <SelectValue placeholder='Chọn sprint' />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={EMPTY_SELECT_VALUE}>Chưa chọn</SelectItem>
+                {sprintOptions.map((sprint) => <SelectItem key={sprint} value={sprint}>{sprint}</SelectItem>)}
+              </SelectContent>
+            </Select>
           </div>
           <div>
-            <label className='text-[12px] font-medium text-muted-foreground mb-1.5 block'>Quarter</label>
-            <input value={form.quarter ?? ''} onChange={(e) => onChange({ quarter: e.target.value })} placeholder='Q1 2025' className={inputCls} />
+            <label className='text-[12px] font-medium text-muted-foreground mb-1.5 block'>Quý thực hiện</label>
+            <Select value={form.quarter || EMPTY_SELECT_VALUE} onValueChange={selectQuarter}>
+              <SelectTrigger className={inputCls}>
+                <SelectValue placeholder='Chọn quý' />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={EMPTY_SELECT_VALUE}>Chưa chọn</SelectItem>
+                {availableQuarterOptions.map((quarter) => <SelectItem key={quarter} value={quarter}>{quarter}</SelectItem>)}
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
@@ -253,6 +339,9 @@ function ProjectFormModal({
             <DatePicker value={form.endDate} onChange={(v) => onChange({ endDate: v as string })} format='YYYY-MM-DD' />
           </div>
         </div>
+        {form.quarter && getQuarterRange(form.quarter) && (
+          <p className='-mt-2 text-[12px] text-muted-foreground'>Chọn quý sẽ tự đặt ngày bắt đầu và kết thúc theo khoảng thời gian của quý.</p>
+        )}
 
         {/* Tech stack */}
         <div>
@@ -311,10 +400,19 @@ export default function AdminProjectsPage() {
       setFormError('Project name is required.');
       return;
     }
+    const scheduleError = validateProjectSchedule(form);
+    if (scheduleError) {
+      setFormError(scheduleError);
+      return;
+    }
     setFormError('');
 
     const data: Omit<Project, 'id'> = {
       ...form,
+      currentSprint: form.currentSprint?.trim() || undefined,
+      quarter: form.quarter?.trim() || undefined,
+      startDate: form.startDate || undefined,
+      endDate: form.endDate || undefined,
       techStack: techStackInput
         .split(',')
         .map((s) => s.trim())

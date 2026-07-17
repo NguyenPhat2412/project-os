@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import type { Task, TaskColumn, Priority } from '@/modules/tasks/types/task';
-import { isTaskDoneStatus } from '@/modules/tasks/utils/taskColumns';
+import { getTaskColumnProgress, isTaskDoneStatus } from '@/modules/tasks/utils/taskColumns';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { BreakdownBarChart } from '@/components/ui/shared/breakdown-bar-chart';
 import { TASK_PRIORITY_META } from '@/lib/constants/work-item-colors';
@@ -19,14 +19,23 @@ const PRIORITY_CONFIG: { key: Priority; label: string; color: string }[] = [
 
 // ─── Overdue detection ────────────────────────────────────────────────────────
 
-/** Parse DD/MM/YYYY string to Date (null-safe) */
-function parseDDMMYYYY(value: unknown): Date | null {
-  if (typeof value !== 'string') return null;
-  const parts = value.split('/');
-  if (parts.length !== 3) return null;
-  const [dd, mm, yyyy] = parts.map(Number);
-  if (!dd || !mm || !yyyy) return null;
-  return new Date(yyyy, mm - 1, dd);
+function parseTaskDate(value: unknown): Date | null {
+  if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
+  if (typeof value !== 'string' || !value.trim()) return null;
+
+  const vietnameseDate = value.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if (vietnameseDate) {
+    const [, day, month, year] = vietnameseDate;
+    const date = new Date(Number(year), Number(month) - 1, Number(day));
+    return Number.isNaN(date.getTime()) ? null : date;
+  }
+
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function calendarDay(date: Date): number {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
 }
 
 /** Returns true if deadline is a past date and task is not done */
@@ -39,9 +48,8 @@ function isOverdue(deadline: string | Date | null | undefined, isDone: boolean):
 
   if (deadline instanceof Date) return deadline < today;
 
-  const parsed = parseDDMMYYYY(deadline);
-  if (!parsed) return false;
-  return parsed < today;
+  const parsed = parseTaskDate(deadline);
+  return parsed ? calendarDay(parsed) < today.getTime() : false;
 }
 
 interface Props {
@@ -49,18 +57,79 @@ interface Props {
   columns: TaskColumn[];
 }
 
-// ─── SVG Donut chart (overdue vs on-track) ───────────────────────────────────
+// ─── SVG Donut chart (completion, deadline and progress) ─────────────────────
 
 const DONUT_CONFIG = {
+  onTime: { label: 'Hoàn thành đúng hạn', color: 'oklch(0.646 0.222 142.116)' },
+  completedLate: { label: 'Hoàn thành muộn', color: 'oklch(0.705 0.173 58.8)' },
   overdue: { label: 'Quá hạn', color: 'oklch(0.577 0.245 27.325)' },
-  onTrack: { label: 'Đúng hạn', color: 'oklch(0.646 0.222 142.116)' },
+  inProgress: { label: 'Đang thực hiện', color: 'oklch(0.585 0.219 275.5)' },
+  notStarted: { label: 'Chưa thực hiện', color: 'oklch(0.551 0.027 264.4)' },
+  incompleteData: { label: 'Thiếu ngày hoàn thành/hết hạn', color: 'oklch(0.795 0.159 83.7)' },
 } as const;
 
-type DonutCategory = keyof typeof DONUT_CONFIG;
+type DonutCategory = 'onTime' | 'completedLate' | 'overdue' | 'inProgress' | 'notStarted' | 'incompleteData';
 
 interface DonutSeg {
   category: DonutCategory;
   value: number;
+  detail?: string;
+}
+
+function buildDeadlineSegments(tasks: TaskWithId[], columns: TaskColumn[]): DonutSeg[] {
+  const counts: Record<DonutCategory, number> = {
+    onTime: 0,
+    completedLate: 0,
+    overdue: 0,
+    inProgress: 0,
+    notStarted: 0,
+    incompleteData: 0,
+  };
+  let inProgressTotal = 0;
+
+  for (const task of tasks) {
+    const done = isTaskDoneStatus(task.status, columns);
+    const deadline = parseTaskDate(task.deadline);
+
+    if (done) {
+      const completedAt = parseTaskDate(task.completedAt);
+      if (!deadline || !completedAt) {
+        counts.incompleteData += 1;
+      } else if (calendarDay(completedAt) <= calendarDay(deadline)) {
+        counts.onTime += 1;
+      } else {
+        counts.completedLate += 1;
+      }
+      continue;
+    }
+
+    if (!deadline) {
+      counts.incompleteData += 1;
+      continue;
+    }
+
+    if (isOverdue(deadline, false)) {
+      counts.overdue += 1;
+      continue;
+    }
+
+    const progress = getTaskColumnProgress(task.status, columns);
+    if (progress > 0) {
+      counts.inProgress += 1;
+      inProgressTotal += progress;
+    } else {
+      counts.notStarted += 1;
+    }
+  }
+
+  const inProgressAverage = counts.inProgress > 0 ? Math.round(inProgressTotal / counts.inProgress) : 0;
+  return (Object.keys(counts) as DonutCategory[])
+    .map((category) => ({
+      category,
+      value: counts[category],
+      detail: category === 'inProgress' && counts.inProgress > 0 ? `Tiến độ TB ${inProgressAverage}%` : undefined,
+    }))
+    .filter((segment) => segment.value > 0);
 }
 
 function polar(angleDeg: number, r: number) {
@@ -82,15 +151,11 @@ function arcPath(startDeg: number, endDeg: number, r: number, innerR: number) {
 function TaskDonut({ tasks, columns }: { tasks: TaskWithId[]; columns: TaskColumn[] }) {
   const [hovered, setHovered] = React.useState<DonutCategory | null>(null);
 
-  const overdueTasks = tasks.filter((t) => isOverdue(t.deadline, isTaskDoneStatus(t.status, columns))).length;
-  const onTrack = Math.max(0, tasks.length - overdueTasks);
-
-  const segments: DonutSeg[] = [
-    { category: 'overdue' as const, value: overdueTasks },
-    { category: 'onTrack' as const, value: onTrack },
-  ].filter((s) => s.value > 0);
+  const segments = buildDeadlineSegments(tasks, columns);
 
   const total = segments.reduce((sum, s) => sum + s.value, 0);
+  const completed = tasks.filter((task) => isTaskDoneStatus(task.status, columns)).length;
+  const completionRate = tasks.length > 0 ? Math.round((completed / tasks.length) * 100) : 0;
   const R = 44;
   const r = 30;
 
@@ -101,15 +166,12 @@ function TaskDonut({ tasks, columns }: { tasks: TaskWithId[]; columns: TaskColum
     return acc;
   }, []);
 
-  const activeSeg = hovered !== null ? (segments.find((s) => s.category === hovered) ?? segments[0]) : segments[0];
-  const activePct = total > 0 && activeSeg ? Math.round((activeSeg.value / total) * 100) : 0;
-
   return (
     <Card className='col-span-1 flex flex-col'>
       <CardHeader className='flex flex-col space-y-1 pb-2 sm:flex-row sm:items-center sm:justify-between sm:space-y-0'>
         <div>
           <CardTitle className='text-sm'>Cơ cấu Tasks</CardTitle>
-          <CardDescription>Tình trạng deadline</CardDescription>
+          <CardDescription>Deadline và tiến độ thực tế</CardDescription>
         </div>
       </CardHeader>
       <CardContent className='flex flex-1 justify-center'>
@@ -130,9 +192,7 @@ function TaskDonut({ tasks, columns }: { tasks: TaskWithId[]; columns: TaskColum
 
                 {/* Center label */}
                 <div className='pointer-events-none absolute inset-0 flex flex-col items-center justify-center'>
-                  <span className='text-2xl font-bold tabular-nums' style={{ color: activeSeg ? DONUT_CONFIG[activeSeg.category].color : 'var(--foreground)' }}>
-                    {activePct}%
-                  </span>
+                  <span className='text-2xl font-bold tabular-nums'>{completionRate}%</span>
                   <span className='text-[9px] text-muted-foreground'>hoàn thành</span>
                 </div>
               </div>
@@ -158,7 +218,7 @@ function TaskDonut({ tasks, columns }: { tasks: TaskWithId[]; columns: TaskColum
                     </div>
                     <div className='text-right'>
                       <div className='font-bold tabular-nums'>{seg.value}</div>
-                      <div className='text-[10px] text-muted-foreground'>{pct}%</div>
+                      <div className='text-[10px] text-muted-foreground'>{seg.detail ?? `${pct}%`}</div>
                     </div>
                   </div>
                 );
@@ -188,6 +248,7 @@ interface SummaryValues {
   overdue: number;
   todo: number;
   inProgress: number;
+  inProgressRate: number;
   doneRate: number; // percent
 }
 
@@ -199,11 +260,15 @@ export function TaskStatsPanel({ tasks, columns }: Props) {
   const highPriority = tasks.filter((t) => t.priority === 'High' && !isTaskDoneStatus(t.status, columns)).length;
   const overdue = tasks.filter((t) => isOverdue(t.deadline, isTaskDoneStatus(t.status, columns))).length;
   const todo = tasks.filter((t) => t.status === 'todo').length;
-  const inProgress = tasks.filter((t) => !isTaskDoneStatus(t.status, columns)).length;
+  const activeTasks = tasks.filter((t) => !isTaskDoneStatus(t.status, columns) && getTaskColumnProgress(t.status, columns) > 0);
+  const inProgress = activeTasks.length;
+  const inProgressRate = inProgress > 0
+    ? Math.round(activeTasks.reduce((sum, task) => sum + getTaskColumnProgress(task.status, columns), 0) / inProgress)
+    : 0;
   const total = tasks.length;
   const doneRate = total > 0 ? Math.round((done / total) * 100) : 0;
 
-  const summaryValues: SummaryValues = { total, highPriority, overdue, todo, inProgress, doneRate };
+  const summaryValues: SummaryValues = { total, highPriority, overdue, todo, inProgress, inProgressRate, doneRate };
 
   // Breakdown items
   const priorityItems = PRIORITY_CONFIG.map((p) => ({
@@ -225,6 +290,7 @@ export function TaskStatsPanel({ tasks, columns }: Props) {
         {SUMMARY_CARDS.map(({ label, sub, valueKey, isPercent }) => {
           const raw = summaryValues[valueKey];
           const display = isPercent ? `${raw}%` : raw;
+          const detail = valueKey === 'inProgress' && inProgress > 0 ? `Tiến độ TB ${inProgressRate}%` : sub;
           return (
             <Card key={label}>
               <CardHeader className='pb-2'>
@@ -232,7 +298,7 @@ export function TaskStatsPanel({ tasks, columns }: Props) {
                 <CardTitle className='text-xl font-semibold tabular-nums'>{display}</CardTitle>
               </CardHeader>
               <CardContent className='pt-0'>
-                <p className='text-[11px] text-muted-foreground'>{sub}</p>
+                <p className='text-[11px] text-muted-foreground'>{detail}</p>
               </CardContent>
             </Card>
           );

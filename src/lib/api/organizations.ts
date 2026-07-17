@@ -9,6 +9,8 @@ export interface Employee { id: string; organizationId: string; departmentId?: s
 export interface OrganizationMember { id: string; organizationId: string; userId: string; role: string; status: string; }
 export interface PermissionGroup { id: string; organizationId: string; name: string; description?: string | null; modules: string[]; memberIds: string[]; createdAt: string; updatedAt: string; }
 export interface OrganizationAudit { id: string; actorId: string; eventType: string; entityType: string; entityId?: string | null; beforeState?: unknown; afterState?: unknown; reason?: string | null; createdAt: string; }
+export interface CompanyPolicy { organizationId: string; morningStart: string; morningEnd: string; afternoonStart: string; afternoonEnd: string; rules: string[]; updatedAt?: string | null; }
+export type CompanyPolicyInput = Pick<CompanyPolicy, 'morningStart' | 'morningEnd' | 'afternoonStart' | 'afternoonEnd' | 'rules'>;
 
 const key = (scope: string, organizationId?: string) => ['organizations', scope, organizationId] as const;
 
@@ -30,6 +32,9 @@ export function usePermissionGroups(organizationId: string | null) {
 export function useOrganizationAudit(organizationId: string | null) {
   return useQuery({ queryKey: key('audit', organizationId ?? undefined), queryFn: () => apiClient.get<OrganizationAudit>(`organizations/${organizationId}/audit`, { size: 20 }), enabled: !!organizationId });
 }
+export function useCompanyPolicy(organizationId: string | null) {
+  return useQuery({ queryKey: key('company-policy', organizationId ?? undefined), queryFn: () => apiClient.getOne<CompanyPolicy>(`organizations/${organizationId}/company-policy`), enabled: !!organizationId });
+}
 export function useOrganizationMutations() {
   const queryClient = useQueryClient();
   const refresh = (organizationId?: string) => {
@@ -39,8 +44,16 @@ export function useOrganizationMutations() {
   return {
     createOrganization: useMutation({ mutationFn: (body: { name: string; slug?: string; timezone?: string }) => apiClient.post<Organization>('organizations', body), onSuccess: () => refresh() }),
     createDepartment: useMutation({ mutationFn: ({ organizationId, name }: { organizationId: string; name: string }) => apiClient.post<Department>(`organizations/${organizationId}/departments`, { name }), onSuccess: (_, variables) => refresh(variables.organizationId) }),
-    createEmployee: useMutation({ mutationFn: ({ organizationId, body }: { organizationId: string; body: { fullName: string; email: string; title?: string; departmentId?: string } }) => apiClient.post<Employee>(`organizations/${organizationId}/employees`, body), onSuccess: (_, variables) => refresh(variables.organizationId) }),
+    createEmployee: useMutation({ mutationFn: ({ organizationId, body }: { organizationId: string; body: { fullName: string; email: string; title?: string; departmentId?: string; supervisorId?: string } }) => apiClient.post<Employee>(`organizations/${organizationId}/employees`, body), onSuccess: (_, variables) => refresh(variables.organizationId) }),
+    updateEmployee: useMutation({ mutationFn: ({ organizationId, employeeId, body }: { organizationId: string; employeeId: string; body: { supervisorId: string } }) => apiClient.patch<Employee>(`organizations/${organizationId}/employees/${employeeId}`, body), onSuccess: (_, variables) => refresh(variables.organizationId) }),
     upsertMember: useMutation({ mutationFn: ({ organizationId, userId, role, fullName, email }: { organizationId: string; userId: string; role: string; fullName?: string; email?: string }) => apiClient.put<OrganizationMember>(`organizations/${organizationId}/members`, { userId, role, status: 'active', fullName, email }), onSuccess: (_, variables) => { refresh(variables.organizationId); void queryClient.invalidateQueries({ queryKey: ['me', 'workspace'] }); } }),
+    updateCompanyPolicy: useMutation({
+      mutationFn: ({ organizationId, body }: { organizationId: string; body: CompanyPolicyInput }) => apiClient.put<CompanyPolicy>(`organizations/${organizationId}/company-policy`, body),
+      onSuccess: (_, variables) => {
+        void queryClient.invalidateQueries({ queryKey: key('company-policy', variables.organizationId) });
+        void queryClient.invalidateQueries({ queryKey: key('audit', variables.organizationId) });
+      },
+    }),
   };
 }
 
