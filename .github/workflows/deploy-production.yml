@@ -1,0 +1,43 @@
+name: deploy-production
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Tested Git commit SHA or branch to deploy
+        required: true
+        default: main
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v6
+      - name: Configure SSH
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+          test -s ~/.ssh/known_hosts
+      - name: Deploy tested frontend release
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_RELEASE_ROOT: ${{ vars.DEPLOY_FRONTEND_RELEASE_ROOT }}
+          DEPLOY_REF: ${{ inputs.ref }}
+        run: |
+          {
+            printf 'DEPLOY_RELEASE_ROOT=%q\n' "$DEPLOY_RELEASE_ROOT"
+            printf 'REPOSITORY_URL=%q\n' 'https://github.com/NguyenPhat2412/project-os.git'
+            printf 'DEPLOY_REF=%q\n' "$DEPLOY_REF"
+            cat deploy/release/deploy-frontend.sh
+          } | ssh "$DEPLOY_USER@$DEPLOY_HOST" "tr -d '\015' | bash -s"
